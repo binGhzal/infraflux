@@ -1,11 +1,7 @@
 name: infraflux
-description: A minimal Python Pulumi program
-runtime:
-  name: python
-  options:
-    toolchain: pip
-    virtualenv: venv
-config:
-  pulumi:tags:
-    value:
-      pulumi:template: python
+description: a pulumi declaritive yaml program to deploy virtual machines and kubernetes to proxmox
+runtime: yaml
+config: {'pulumi:tags': {value: {'pulumi:template': yaml}}}
+variables: {}
+resources: {}
+outputs: {}
