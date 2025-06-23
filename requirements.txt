@@ -1,3 +1,0 @@
-pulumi>=3.0.0,<4.0.0
-pulumi-proxmoxve>=0.0.0,<10.0.0
-dotenv>=0.19.0,<1.0.0
