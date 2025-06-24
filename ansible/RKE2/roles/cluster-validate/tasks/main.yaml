@@ -1,0 +1,72 @@
+# Simple cluster validation without MetalLB deployment
+# MetalLB will be deployed via FluxCD/GitOps later
+
+# Wait for all nodes to be ready
+- name: Wait for all nodes to be ready
+  ansible.builtin.command:
+    cmd: "kubectl get nodes --no-headers"
+  register: nodes_status
+  until: nodes_status.stdout_lines | length >= (groups['servers'] | length + groups['agents'] | length)
+  retries: 30
+  delay: 10
+  changed_when: false
+  become_user: "{{ ansible_user }}"
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Wait for all nodes to be in Ready state
+  ansible.builtin.command:
+    cmd: "kubectl wait --for=condition=Ready nodes --all --timeout=600s"
+  changed_when: false
+  become_user: "{{ ansible_user }}"
+  when: inventory_hostname == groups['servers'][0]
+
+# Validate cluster deployment
+- name: Get cluster status
+  ansible.builtin.command:
+    cmd: "kubectl get nodes -o wide"
+  register: cluster_nodes
+  become_user: "{{ ansible_user }}"
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Display cluster status
+  ansible.builtin.debug:
+    var: cluster_nodes.stdout_lines
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Get cluster info
+  ansible.builtin.command:
+    cmd: "kubectl cluster-info"
+  register: cluster_info
+  become_user: "{{ ansible_user }}"
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Display cluster info
+  ansible.builtin.debug:
+    var: cluster_info.stdout_lines
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Check system pods
+  ansible.builtin.command:
+    cmd: "kubectl get pods -n kube-system"
+  register: system_pods
+  become_user: "{{ ansible_user }}"
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Display system pods status
+  ansible.builtin.debug:
+    var: system_pods.stdout_lines
+  when: inventory_hostname == groups['servers'][0]
+
+- name: Cluster deployment summary
+  ansible.builtin.debug:
+    msg:
+      - "=== RKE2 Cluster Deployment Complete ==="
+      - "Cluster endpoint: https://{{ vip }}:6443"
+      - "Nodes: {{ groups['servers'] | length }} servers, {{ groups['agents'] | length }} agents"
+      - ""
+      - "Next steps:"
+      - "1. Kubeconfig will be configured automatically"
+      - "2. Deploy MetalLB and other applications via FluxCD/GitOps"
+      - "3. Test cluster access with: kubectl get nodes"
+  when: inventory_hostname == groups['servers'][0]
+  run_once: true

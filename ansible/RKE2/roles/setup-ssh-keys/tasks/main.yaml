@@ -2,54 +2,44 @@
 - name: Get current user's home directory
   ansible.builtin.set_fact:
     user_home: "{{ lookup('env', 'HOME') }}"
-  delegate_to: localhost
-  run_once: true
-  become: false
-  connection: local
+
+- name: Debug inventory groups
+  ansible.builtin.debug:
+    msg:
+      - "Available groups: {{ groups.keys() | list }}"
+      - "Servers: {{ groups.get('servers', []) }}"
+      - "Agents: {{ groups.get('agents', []) }}"
 
 - name: Ensure .ssh directory exists
   ansible.builtin.file:
     path: "{{ user_home }}/.ssh"
     state: directory
     mode: '0700'
-  delegate_to: localhost
-  run_once: true
-  become: false
-  connection: local
 
 - name: Scan and add server SSH host keys to known_hosts
   ansible.builtin.shell: |
     ssh-keyscan -H {{ hostvars[item]['ansible_host'] }} >> {{ user_home }}/.ssh/known_hosts 2>/dev/null || true
-  loop: "{{ groups['servers'] }}"
-  delegate_to: localhost
-  run_once: true
+  loop: "{{ groups.get('servers', []) }}"
+  when: groups.get('servers', []) | length > 0
   changed_when: false
-  become: false
-  connection: local
 
 - name: Scan and add agent SSH host keys to known_hosts
   ansible.builtin.shell: |
     ssh-keyscan -H {{ hostvars[item]['ansible_host'] }} >> {{ user_home }}/.ssh/known_hosts 2>/dev/null || true
-  loop: "{{ groups['agents'] }}"
-  delegate_to: localhost
-  run_once: true
+  loop: "{{ groups.get('agents', []) }}"
+  when: groups.get('agents', []) | length > 0
   changed_when: false
-  become: false
-  connection: local
 
 - name: Remove duplicate entries from known_hosts
   ansible.builtin.shell: |
-    sort -u {{ user_home }}/.ssh/known_hosts > {{ user_home }}/.ssh/known_hosts.tmp
-    mv {{ user_home }}/.ssh/known_hosts.tmp {{ user_home }}/.ssh/known_hosts
-  delegate_to: localhost
-  run_once: true
+    if [ -f {{ user_home }}/.ssh/known_hosts ]; then
+      sort -u {{ user_home }}/.ssh/known_hosts > {{ user_home }}/.ssh/known_hosts.tmp
+      mv {{ user_home }}/.ssh/known_hosts.tmp {{ user_home }}/.ssh/known_hosts
+    fi
   changed_when: false
-  become: false
-  connection: local
 
 - name: Display SSH host key management info
   ansible.builtin.debug:
     msg:
       - "SSH host keys have been added to {{ user_home }}/.ssh/known_hosts"
       - "This prevents SSH host key verification prompts during deployment"
-  run_once: true

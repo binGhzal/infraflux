@@ -43,18 +43,18 @@
   roles:
     - add-agent
 
-# Final cluster validation and setup
-- name: Validate cluster and complete setup
+# Final cluster validation
+- name: Validate cluster deployment
   hosts: servers[0]
   gather_facts: true
   become: true
   roles:
-    - apply-manifests
+    - cluster-validate
 
 # Download and configure kubeconfig for local access
 - name: Configure kubeconfig for local access
   hosts: servers[0]
   gather_facts: true
-  become: true
+  become: false
   roles:
     - kubeconfig-manager

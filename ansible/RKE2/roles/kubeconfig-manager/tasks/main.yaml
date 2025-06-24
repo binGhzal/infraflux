@@ -13,7 +13,6 @@
   delegate_to: localhost
   when: inventory_hostname == groups['servers'][0]
   run_once: true
-  become: false
   connection: local
 
 - name: Parse kubeconfig content
@@ -52,7 +51,6 @@
   when: inventory_hostname == groups['servers'][0]
   run_once: true
 
-# Create kubeconfig backup with timestamp
 - name: Write updated kubeconfig to project directory
   ansible.builtin.copy:
     content: "{{ updated_kubeconfig | to_nice_yaml(indent=2) }}"
@@ -61,7 +59,6 @@
   delegate_to: localhost
   when: inventory_hostname == groups['servers'][0]
   run_once: true
-  become: false
   connection: local
 
 - name: Create timestamped kubeconfig backup
@@ -71,7 +68,6 @@
   delegate_to: localhost
   when: inventory_hostname == groups['servers'][0]
   run_once: true
-  become: false
   connection: local
 
 # Optionally merge with local kubeconfig
@@ -82,7 +78,6 @@
   delegate_to: localhost
   when: inventory_hostname == groups['servers'][0]
   run_once: true
-  become: false
   connection: local
 
 - name: Create local .kube directory if it doesn't exist
@@ -93,7 +88,6 @@
   delegate_to: localhost
   when: inventory_hostname == groups['servers'][0]
   run_once: true
-  become: false
   connection: local
 
 - name: Backup existing local kubeconfig
@@ -105,7 +99,6 @@
     - inventory_hostname == groups['servers'][0]
     - local_kubeconfig.stat.exists
   run_once: true
-  become: false
   connection: local
 
 - name: Copy kubeconfig to local .kube directory
@@ -116,7 +109,6 @@
   delegate_to: localhost
   when: inventory_hostname == groups['servers'][0]
   run_once: true
-  become: false
   connection: local
 
 # Merge with existing kubeconfig if available
@@ -127,7 +119,6 @@
   ignore_errors: true
   when: inventory_hostname == groups['servers'][0]
   run_once: true
-  become: false
   connection: local
 
 - name: Create separate context file
@@ -138,7 +129,6 @@
   delegate_to: localhost
   when: inventory_hostname == groups['servers'][0]
   run_once: true
-  become: false
   connection: local
 
 - name: Merge kubeconfig contexts if kubectl is available and backup exists
@@ -166,7 +156,6 @@
     - inventory_hostname == groups['servers'][0]
     - local_kubeconfig.stat.exists
   run_once: true
-  become: false
   connection: local
 
 - name: Display kubeconfig information
