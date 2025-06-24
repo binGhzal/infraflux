@@ -1,0 +1,187 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-helm-chart-value-overrides
+  namespace: authentik
+data:
+  values.yaml: |
+    # Global configuration
+    global:
+      # Image configuration
+      image:
+        repository: ghcr.io/goauthentik/server
+        tag: "2025.6.2"
+        pullPolicy: IfNotPresent
+      
+      # Environment type
+      env: production
+      
+      # Volumes for persistent storage
+      volumes:
+        media:
+          enabled: true
+          storageClass: "longhorn"
+          size: 4Gi
+          accessMode: ReadWriteOnce
+        backups:
+          enabled: true
+          storageClass: "longhorn"
+          size: 2Gi
+          accessMode: ReadWriteOnce
+    
+    # Authentik server configuration
+    server:
+      # Scaling
+      replicas: 2
+      
+      # Resources
+      resources:
+        requests:
+          cpu: 500m
+          memory: 512Mi
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+      
+      # Environment variables (use secrets for sensitive data)
+      env:
+        - name: AUTHENTIK_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: authentik-secrets
+              key: secret-key
+        - name: AUTHENTIK_ERROR_REPORTING__ENABLED
+          value: "false"
+        - name: AUTHENTIK_DISABLE_UPDATE_CHECK
+          value: "true"
+        - name: AUTHENTIK_DISABLE_STARTUP_ANALYTICS
+          value: "true"
+        - name: AUTHENTIK_AVATARS
+          value: "none"
+      
+      # Ingress configuration
+      ingress:
+        enabled: true
+        ingressClassName: "traefik"
+        hosts:
+          - host: auth.local.cluster
+            paths:
+              - path: "/"
+                pathType: Prefix
+        # TLS configuration (uncomment when cert-manager is ready)
+        # tls:
+        #   - secretName: authentik-tls
+        #     hosts:
+        #       - auth.your-domain.com
+        annotations:
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+          # cert-manager.io/cluster-issuer: "letsencrypt"
+    
+    # Worker configuration
+    worker:
+      # Scaling
+      replicas: 2
+      
+      # Resources
+      resources:
+        requests:
+          cpu: 300m
+          memory: 512Mi
+        limits:
+          cpu: 600m
+          memory: 1Gi
+    
+    # Database configuration (PostgreSQL)
+    postgresql:
+      enabled: true
+      auth:
+        postgresPassword: "change-this-password"
+        database: "authentik"
+      primary:
+        persistence:
+          enabled: true
+          storageClass: "longhorn"
+          size: 8Gi
+        resources:
+          requests:
+            cpu: 250m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+    
+    # Redis configuration
+    redis:
+      enabled: true
+      auth:
+        enabled: true
+        password: "change-this-redis-password"
+      master:
+        persistence:
+          enabled: true
+          storageClass: "longhorn"
+          size: 2Gi
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+    
+    # Service account
+    serviceAccount:
+      create: true
+      annotations: {}
+      name: ""
+    
+    # Security context
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+      capabilities:
+        drop:
+          - ALL
+      readOnlyRootFilesystem: false
+      allowPrivilegeEscalation: false
+    
+    # Node selection
+    nodeSelector: {}
+    
+    # Tolerations
+    tolerations: []
+    
+    # Affinity rules
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: authentik
+            topologyKey: kubernetes.io/hostname
+    
+    # Extra manifests for secrets (use SealedSecrets in production)
+    extraManifests:
+      - |
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: authentik-secrets
+          namespace: authentik
+        type: Opaque
+        data:
+          # Generate with: openssl rand -base64 32
+          secret-key: Y2hhbmdlLXRoaXMtc2VjcmV0LWtleS1pbi1wcm9kdWN0aW9u  # change-this-secret-key-in-production (base64)
+    
+    # Bootstrap configuration
+    bootstrap:
+      enabled: true
+      # Default admin credentials (change in production)
+      user:
+        email: "admin@local.cluster"
+        password: "change-this-password"

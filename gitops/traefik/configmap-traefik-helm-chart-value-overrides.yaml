@@ -1,0 +1,174 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-helm-chart-value-overrides
+  namespace: traefik-system
+data:
+  values.yaml: |
+    # Deployment configuration
+    deployment:
+      enabled: true
+      replicas: 3
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                - traefik
+            topologyKey: kubernetes.io/hostname
+    
+    # Service configuration - using LoadBalancer for external access
+    service:
+      enabled: true
+      type: LoadBalancer
+      # annotations:
+      #   metallb.universe.tf/loadBalancer-class: metallb
+      spec:
+        # loadBalancerIP: "192.168.3.80"  # Specific IP from MetalLB range
+        externalTrafficPolicy: Local
+      ports:
+        web:
+          port: 80
+          expose: true
+          exposedPort: 80
+          protocol: TCP
+        websecure:
+          port: 443
+          expose: true
+          exposedPort: 443
+          protocol: TCP
+        # Admin dashboard port
+        traefik:
+          port: 9000
+          expose: true
+          exposedPort: 9000
+          protocol: TCP
+    
+    # Configure entry points
+    ports:
+      web:
+        redirectTo:
+          port: websecure
+          scheme: https
+          permanent: true
+      websecure:
+        tls:
+          enabled: true
+      traefik:
+        port: 9000
+        expose: true
+    
+    # Global configuration
+    globalArguments:
+      - "--global.checknewversion=false"
+      - "--global.sendanonymoususage=false"
+    
+    # Additional arguments
+    additionalArguments:
+      - "--serverstransport.insecureskipverify=true"
+      - "--log.level=INFO"
+      - "--accesslog=true"
+      - "--entrypoints.websecure.http.tls.options=default@kubernetescrd"
+      - "--providers.kubernetescrd.ingressclass=traefik"
+      - "--providers.kubernetesingress.ingressclass=traefik"
+      - "--entrypoints.websecure.http.middlewares=default-security@kubernetescrd"
+    
+    # Ingress configuration
+    ingressClass:
+      enabled: true
+      isDefaultClass: true
+    
+    # Provider configuration
+    providers:
+      kubernetesCRD:
+        enabled: true
+        ingressClass: traefik
+        allowCrossNamespace: true
+        allowExternalNameServices: true
+      kubernetesIngress:
+        enabled: true
+        ingressClass: traefik
+        allowExternalNameServices: true
+        publishedService:
+          enabled: true
+    
+    # Resource settings
+    resources:
+      requests:
+        cpu: 100m
+        memory: 50Mi
+      limits:
+        cpu: 300m
+        memory: 150Mi
+    
+    # Security context
+    securityContext:
+      capabilities:
+        drop: [ALL]
+        add: [NET_BIND_SERVICE]
+      readOnlyRootFilesystem: true
+      runAsGroup: 65532
+      runAsNonRoot: true
+      runAsUser: 65532
+    
+    podSecurityContext:
+      fsGroup: 65532
+      runAsGroup: 65532
+      runAsNonRoot: true
+      runAsUser: 65532
+    
+    # Enable dashboard
+    api:
+      dashboard: true
+      debug: false
+    
+    # Metrics configuration
+    metrics:
+      prometheus:
+        addEntryPointsLabels: true
+        addServicesLabels: true
+        addRoutersLabels: true
+    
+    # Certificate resolvers (Let's Encrypt)
+    certificatesResolvers:
+      letsencrypt:
+        acme:
+          tlsChallenge: {}
+          email: admin@example.com
+          storage: /data/acme.json
+          # caServer: https://acme-staging-v02.api.letsencrypt.org/directory # staging
+          caServer: https://acme-v02.api.letsencrypt.org/directory # production
+    
+    # Persistence for ACME certificates
+    persistence:
+      enabled: true
+      name: data
+      accessMode: ReadWriteOnce
+      size: 128Mi
+      storageClass: "longhorn"
+      path: /data
+    
+    # Additional volumes for config
+    volumes: []
+    
+    # Additional volumeMounts
+    additionalVolumeMounts: []
+    
+    # Environment variables
+    env: []
+    
+    # Node selection
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    
+    # Update strategy
+    updateStrategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: 1
+        maxSurge: 1

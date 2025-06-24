@@ -1,0 +1,172 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubernetes-dashboard-helm-chart-value-overrides
+  namespace: kubernetes-dashboard
+data:
+  values.yaml: |
+    # App configuration
+    app:
+      # Ingress configuration for external access
+      ingress:
+        enabled: true
+        ingressClassName: "traefik"
+        hosts:
+          - host: dashboard.local.cluster
+            paths:
+              - path: /
+                pathType: Prefix
+        # TLS configuration (uncomment when cert-manager is ready)
+        # tls:
+        #   - secretName: dashboard-tls
+        #     hosts:
+        #       - dashboard.your-domain.com
+        annotations:
+          traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          traefik.ingress.kubernetes.io/router.tls: "true"
+          # cert-manager.io/cluster-issuer: "letsencrypt"
+      
+      # Scaling configuration
+      scaling:
+        replicas: 2
+      
+      # Security settings
+      security:
+        # Disable insecure access
+        allowInsecureLogin: false
+        # Deny all unauthorized access by default
+        securityContext:
+          runAsUser: 1001
+          runAsGroup: 2001
+          runAsNonRoot: true
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+    
+    # API server configuration
+    api:
+      # Scaling
+      scaling:
+        replicas: 2
+      
+      # Resource limits
+      containers:
+        resources:
+          limits:
+            cpu: 250m
+            memory: 400Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+    
+    # Web server configuration  
+    web:
+      # Scaling
+      scaling:
+        replicas: 2
+      
+      # Resource limits
+      containers:
+        resources:
+          limits:
+            cpu: 250m
+            memory: 400Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+    
+    # Auth configuration
+    auth:
+      # Scaling
+      scaling:
+        replicas: 2
+    
+    # Kong gateway configuration (proxy)
+    kong:
+      # Proxy service configuration
+      proxy:
+        http:
+          enabled: true
+        tls:
+          enabled: true
+        # Service configuration
+        annotations: {}
+        labels: {}
+      
+      # Admin API (disable for security)
+      admin:
+        enabled: false
+      
+      # Manager (disable for security)  
+      manager:
+        enabled: false
+      
+      # Environment variables
+      env:
+        # Disable Kong's admin API
+        admin_listen: "off"
+        # Security headers
+        headers:
+          - "X-Frame-Options: DENY"
+          - "X-Content-Type-Options: nosniff"
+          - "X-XSS-Protection: 1; mode=block"
+          - "Strict-Transport-Security: max-age=31536000; includeSubDomains"
+      
+      # Resource limits for Kong
+      resources:
+        limits:
+          cpu: 200m
+          memory: 256Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+    
+    # Extra manifests for RBAC
+    extraManifests:
+      - |
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: dashboard-admin-user
+          namespace: kubernetes-dashboard
+        ---
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRoleBinding
+        metadata:
+          name: dashboard-admin-user
+        roleRef:
+          apiGroup: rbac.authorization.k8s.io
+          kind: ClusterRole
+          name: cluster-admin
+        subjects:
+        - kind: ServiceAccount
+          name: dashboard-admin-user
+          namespace: kubernetes-dashboard
+        ---
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: dashboard-admin-user
+          namespace: kubernetes-dashboard
+          annotations:
+            kubernetes.io/service-account.name: "dashboard-admin-user"
+        type: kubernetes.io/service-account-token
+    
+    # Node selection
+    nodeSelector: {}
+    
+    # Tolerations
+    tolerations: []
+    
+    # Affinity rules
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: kubernetes-dashboard
+            topologyKey: kubernetes.io/hostname
