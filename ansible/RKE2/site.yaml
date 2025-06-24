@@ -27,6 +27,33 @@
   roles:
     - rke2-prepare
 
+# Fetch and share RKE2 token across all hosts
+- name: Fetch and share RKE2 token
+  hosts: servers,agents
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Fetch the token from the first server node
+      ansible.builtin.slurp:
+        src: /var/lib/rancher/rke2/server/node-token
+      register: rke2_token
+      when: inventory_hostname == groups['servers'][0]
+      run_once: true
+
+    - name: Save Master node-token as fact on first server
+      ansible.builtin.set_fact:
+        token: "{{ rke2_token['content'] | b64decode | regex_replace('\n', '') }}"
+      when:
+        - inventory_hostname == groups['servers'][0]
+        - rke2_token is defined
+
+    - name: Share token with all other hosts
+      ansible.builtin.set_fact:
+        token: "{{ hostvars[groups['servers'][0]]['token'] }}"
+      when:
+        - inventory_hostname != groups['servers'][0]
+        - hostvars[groups['servers'][0]]['token'] is defined
+
 # Add additional servers to the cluster
 - name: Add additional RKE2 Servers
   hosts: servers

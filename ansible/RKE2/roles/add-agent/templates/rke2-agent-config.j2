@@ -1,5 +1,5 @@
 write-kubeconfig-mode: "0644"
-token: {{ hostvars[groups['servers'][0]]['token'] }}
+token: {{ token }}
 server: https://{{ vip }}:9345
 node-label:
   - "agent=true"
