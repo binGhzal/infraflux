@@ -1,3 +1,8 @@
+# Ensure facts are gathered first
+- name: Gather facts
+  ansible.builtin.setup:
+  tags: always
+
 # Update package cache and install required packages
 - name: Update package cache
   ansible.builtin.apt:

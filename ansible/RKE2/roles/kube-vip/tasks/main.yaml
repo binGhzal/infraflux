@@ -1,9 +1,16 @@
-# Create directory to deploy kube-vip manifest
-- name: Create directory for Kube VIP Manifest
+# Create directories for RKE2 and kube-vip manifests
+- name: Create RKE2 server directory structure
   ansible.builtin.file:
-    path: "/var/lib/rancher/rke2/server/manifests"
+    path: "{{ item }}"
     state: directory
     mode: "0755"
+    owner: root
+    group: root
+  loop:
+    - "/var/lib/rancher"
+    - "/var/lib/rancher/rke2"
+    - "/var/lib/rancher/rke2/server"
+    - "/var/lib/rancher/rke2/server/manifests"
   when: inventory_hostname in groups['servers']
 
 # Copy kube-vip to server 1 manifest folder for auto deployment at bootstrap

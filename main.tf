@@ -26,6 +26,7 @@ resource "proxmox_virtual_environment_vm" "rke2_server" {
   node_name = var.proxmox_node
   pool_id = proxmox_virtual_environment_pool.rke2_pool.pool_id
   vm_id = var.rke2_servers.vm_id_start + count.index
+  started = true
 
   clone {
     vm_id = var.template_vm_id
@@ -59,7 +60,12 @@ resource "proxmox_virtual_environment_vm" "rke2_server" {
 
     ip_config {
       ipv4 {
-        address = "${cidrhost(var.network_config.subnet, tonumber(split(".", var.rke2_servers.ip_start)[3]) + count.index)}/${var.network_config.subnet_mask}"
+        address = "${join(".", [
+          split(".", var.rke2_servers.ip_start)[0],
+          split(".", var.rke2_servers.ip_start)[1],
+          split(".", var.rke2_servers.ip_start)[2],
+          tostring(tonumber(split(".", var.rke2_servers.ip_start)[3]) + count.index)
+        ])}/${var.network_config.subnet_mask}"
         gateway = var.network_config.gateway
       }
     }
@@ -113,7 +119,12 @@ resource "proxmox_virtual_environment_vm" "rke2_agent" {
 
     ip_config {
       ipv4 {
-        address = "${cidrhost(var.network_config.subnet, tonumber(split(".", var.rke2_agents.ip_start)[3]) + count.index)}/${var.network_config.subnet_mask}"
+        address = "${join(".", [
+          split(".", var.rke2_agents.ip_start)[0],
+          split(".", var.rke2_agents.ip_start)[1],
+          split(".", var.rke2_agents.ip_start)[2],
+          tostring(tonumber(split(".", var.rke2_agents.ip_start)[3]) + count.index)
+        ])}/${var.network_config.subnet_mask}"
         gateway = var.network_config.gateway
       }
     }
