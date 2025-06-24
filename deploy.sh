@@ -130,6 +130,41 @@ deploy_rke2() {
     print_success "RKE2 cluster deployed successfully"
 
     cd ../..
+
+    # Generate kubeconfig after successful deployment
+    generate_kubeconfig
+}
+
+# Function to generate kubeconfig
+generate_kubeconfig() {
+    print_status "Generating kubeconfig file..."
+
+    cd ansible/RKE2
+
+    # Run only the kubeconfig manager role
+    print_status "Running kubeconfig generation..."
+    if ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory/hosts.ini -l servers[0] --tags kubeconfig_manager site.yaml; then
+        cd ../..
+
+        # Validate the generated kubeconfig
+        if [ -f "kubeconfig" ]; then
+            print_success "Kubeconfig generated successfully"
+
+            # Run validation
+            if ./validate-kubeconfig.sh; then
+                print_success "Kubeconfig validation passed"
+            else
+                print_warning "Kubeconfig validation failed, but file exists"
+            fi
+        else
+            print_error "Kubeconfig file was not generated"
+            return 1
+        fi
+    else
+        print_error "Failed to generate kubeconfig"
+        cd ../..
+        return 1
+    fi
 }
 
 # Function to validate cluster deployment
@@ -204,6 +239,7 @@ show_help() {
     echo "  infra      - Deploy only infrastructure (Terraform)"
     echo "  rke2       - Deploy only RKE2 cluster (Ansible)"
     echo "  validate   - Validate cluster deployment"
+    echo "  kubeconfig - Generate kubeconfig file"
     echo "  destroy    - Destroy infrastructure"
     echo "  status     - Show cluster status"
     echo "  help       - Show this help message"
@@ -234,6 +270,9 @@ case "${1:-}" in
     ;;
 "validate")
     validate_cluster
+    ;;
+"kubeconfig")
+    generate_kubeconfig
     ;;
 "destroy")
     destroy_infrastructure

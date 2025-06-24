@@ -5,7 +5,9 @@
     path: "{{ playbook_dir }}/../../kubeconfig"
   register: existing_kubeconfig
   delegate_to: localhost
+  become: false
   run_once: true
+  tags: kubeconfig_manager
 
 - name: Backup existing kubeconfig
   ansible.builtin.copy:
@@ -13,21 +15,37 @@
     dest: "{{ playbook_dir }}/../../kubeconfig.backup.{{ ansible_date_time.epoch }}"
     mode: '0600'
   delegate_to: localhost
+  become: false
   when: existing_kubeconfig.stat.exists
   run_once: true
+  tags: kubeconfig_manager
+
+# Ensure kubeconfig directory exists
+- name: Ensure kubeconfig directory exists
+  ansible.builtin.file:
+    path: "{{ playbook_dir }}/../.."
+    state: directory
+    mode: '0755'
+  delegate_to: localhost
+  become: false
+  run_once: true
+  tags: kubeconfig_manager
 
 # Read the original kubeconfig from the server
 - name: Read original kubeconfig from server
   ansible.builtin.slurp:
     src: /etc/rancher/rke2/rke2.yaml
   register: original_kubeconfig
+  become: true
   run_once: true
+  tags: kubeconfig_manager
 
 # Parse the original kubeconfig
 - name: Parse original kubeconfig
   ansible.builtin.set_fact:
     kubeconfig_data: "{{ original_kubeconfig.content | b64decode | from_yaml }}"
   run_once: true
+  tags: kubeconfig_manager
 
 # Extract certificate data from the original kubeconfig
 - name: Extract certificate data
@@ -36,6 +54,43 @@
     client_cert_data: "{{ kubeconfig_data.users[0].user['client-certificate-data'] }}"
     client_key_data: "{{ kubeconfig_data.users[0].user['client-key-data'] }}"
   run_once: true
+  tags: kubeconfig_manager
+
+# Debug: Show what we extracted
+- name: Debug certificate data extraction
+  ansible.builtin.debug:
+    msg:
+      - "🔍 Extracted certificate data:"
+      - "CA data length: {{ cluster_ca_data | length if cluster_ca_data is defined else 'undefined' }}"
+      - "Client cert length: {{ client_cert_data | length if client_cert_data is defined else 'undefined' }}"
+      - "Client key length: {{ client_key_data | length if client_key_data is defined else 'undefined' }}"
+  run_once: true
+  tags: kubeconfig_manager
+
+# Validate certificate data exists
+- name: Validate certificate data extraction
+  ansible.builtin.fail:
+    msg: "Failed to extract required certificate data from kubeconfig"
+  when:
+    - cluster_ca_data is not defined or cluster_ca_data == "" or cluster_ca_data is none
+  run_once: true
+  tags: kubeconfig_manager
+
+- name: Validate client certificate data extraction
+  ansible.builtin.fail:
+    msg: "Failed to extract client certificate data from kubeconfig"
+  when:
+    - client_cert_data is not defined or client_cert_data == "" or client_cert_data is none
+  run_once: true
+  tags: kubeconfig_manager
+
+- name: Validate client key data extraction
+  ansible.builtin.fail:
+    msg: "Failed to extract client key data from kubeconfig"
+  when:
+    - client_key_data is not defined or client_key_data == "" or client_key_data is none
+  run_once: true
+  tags: kubeconfig_manager
 
 # Generate clean kubeconfig with proper naming and VIP
 - name: Generate clean kubeconfig with proper naming
@@ -51,6 +106,7 @@
       - context:
           cluster: infraflux-rke2
           user: infraflux-admin
+          namespace: default
         name: infraflux-rke2
       current-context: infraflux-rke2
       kind: Config
@@ -63,7 +119,9 @@
     dest: "{{ playbook_dir }}/../../kubeconfig"
     mode: '0600'
   delegate_to: localhost
+  become: false
   run_once: true
+  tags: kubeconfig_manager
 
 # Verify kubeconfig was created successfully
 - name: Verify kubeconfig file exists
@@ -71,7 +129,9 @@
     path: "{{ playbook_dir }}/../../kubeconfig"
   register: kubeconfig_file
   delegate_to: localhost
+  become: false
   run_once: true
+  tags: kubeconfig_manager
 
 - name: Display kubeconfig generation results
   ansible.builtin.debug:
@@ -85,12 +145,14 @@
       - "🧪 Test: kubectl get nodes"
   when: kubeconfig_file.stat.exists
   run_once: true
+  tags: kubeconfig_manager
 
 - name: Fail if kubeconfig generation failed
   ansible.builtin.fail:
     msg: "❌ Failed to generate kubeconfig file"
   when: not kubeconfig_file.stat.exists
   run_once: true
+  tags: kubeconfig_manager
 
 # Validate that the generated kubeconfig is functional
 - name: Test kubeconfig functionality
@@ -98,9 +160,11 @@
     cmd: kubectl --kubeconfig="{{ playbook_dir }}/../../kubeconfig" get nodes --no-headers
   register: kubectl_test
   delegate_to: localhost
+  become: false
   run_once: true
   failed_when: false
   changed_when: false
+  tags: kubeconfig_manager
 
 - name: Display kubeconfig validation results
   ansible.builtin.debug:
@@ -109,9 +173,11 @@
       - "{% if kubectl_test.rc == 0 %}✅ SUCCESS: kubectl command executed successfully{% else %}❌ FAILED: kubectl command failed with error: {{ kubectl_test.stderr }}{% endif %}"
       - "{% if kubectl_test.rc == 0 %}📊 Cluster nodes detected: {{ kubectl_test.stdout_lines | length }}{% endif %}"
   run_once: true
+  tags: kubeconfig_manager
 
 - name: Fail if kubeconfig validation failed
   ansible.builtin.fail:
     msg: "❌ Generated kubeconfig failed validation test"
   when: kubectl_test.rc != 0
   run_once: true
+  tags: kubeconfig_manager
