@@ -55,7 +55,6 @@
 - name: Configure kubeconfig for local access
   hosts: servers[0]
   gather_facts: true
-  vars:
-    ansible_become: false
+  become: false
   roles:
     - kubeconfig-manager

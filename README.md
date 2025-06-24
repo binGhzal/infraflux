@@ -1,151 +1,149 @@
 # InfraFlux - RKE2 Kubernetes Cluster Automation
 
-This project provides a complete automation solution for deploying highly available RKE2 Kubernetes clusters on Proxmox using Infrastructure as Code principles.
+InfraFlux provides a complete automation solution for deploying production-ready, highly available RKE2 Kubernetes clusters on Proxmox using Infrastructure as Code principles.
 
-## Features
+## 🚀 Features
 
-- **Automated Infrastructure**: Terraform provisions VMs on Proxmox
-- **Cluster Deployment**: Ansible installs and configures RKE2
-- **High Availability**: 3-node control plane with etcd clustering
-- **Load Balancing**: Kube-VIP for API server, MetalLB for services
-- **One-Command Deployment**: Simple script-based deployment
-- **Validation Tools**: Built-in cluster validation and health checks
+- **🏗️ Automated Infrastructure**: Terraform provisions VMs on Proxmox
+- **⚙️ Cluster Deployment**: Ansible installs and configures RKE2
+- **🔄 High Availability**: 3-node control plane with etcd clustering
+- **⚖️ Load Balancing**: Kube-VIP for API server, MetalLB for services
+- **🎯 One-Command Deployment**: Simple script-based deployment
+- **✅ Validation Tools**: Built-in cluster validation and health checks
+- **🔐 Production Security**: FIPS 140-2 and CIS Kubernetes Benchmark compliance
 
-## Architecture
+## 🏛️ Architecture
 
-The solution consists of:
+### Infrastructure Components
+
+- **Control Plane (3 Servers)**: RKE2 server nodes for HA control plane (VM IDs: 500-502)
+- **Worker Nodes (2+ Agents)**: RKE2 agent nodes for workload execution (VM IDs: 550+)
+- **Virtual IP**: Kube-VIP provides floating IP for API server access
+- **Load Balancer**: MetalLB manages LoadBalancer service IPs
+- **Network**: Static IP configuration with VLAN support
+- **Storage**: Configurable disk allocation per node
+
+### Solution Layers
 
 - **Infrastructure Layer**: Proxmox VMs managed by Terraform
 - **Kubernetes Layer**: RKE2 cluster managed by Ansible
 - **Network Layer**: Kube-VIP for control plane HA, MetalLB for LoadBalancer services
 - **Management Layer**: Deployment and validation scripts
 
-## Quick Start
+## 🏃‍♂️ Quick Start
 
-1. **Prerequisites**:
+### Prerequisites
 
-   - Proxmox VE with API access
-   - VM template with cloud-init support
-   - Local tools: Terraform, Ansible, SSH keys
+- Proxmox VE 8.x with API access
+- Ubuntu cloud image template with cloud-init support
+- Terraform >= 1.0 and Ansible >= 2.9
+- SSH key pair for VM access
 
-2. **Configuration**:
+### Deploy in 3 Steps
+
+1. **Configure**:
 
    ```bash
    cp terraform.tfvars.example terraform.tfvars
    # Edit terraform.tfvars with your environment details
    ```
 
-3. **Deploy**:
+2. **Deploy**:
 
    ```bash
    ./deploy.sh deploy
    ```
 
-4. **Validate**:
+3. **Access**:
    ```bash
-   ./deploy.sh validate
+   export KUBECONFIG=$(pwd)/kubeconfig
+   kubectl get nodes
    ```
 
-## Deployment Commands
+## 🛠️ Deployment Commands
 
-- `./deploy.sh deploy` - Full deployment (infrastructure + RKE2)
-- `./deploy.sh infra` - Deploy only infrastructure
-- `./deploy.sh rke2` - Deploy only RKE2 cluster
-- `./deploy.sh validate` - Validate cluster deployment
-- `./deploy.sh status` - Show cluster information
-- `./deploy.sh destroy` - Destroy all infrastructure
+| Command                | Description                             |
+| ---------------------- | --------------------------------------- |
+| `./deploy.sh deploy`   | Full deployment (infrastructure + RKE2) |
+| `./deploy.sh infra`    | Deploy only infrastructure              |
+| `./deploy.sh rke2`     | Deploy only RKE2 cluster                |
+| `./deploy.sh validate` | Validate cluster deployment             |
+| `./deploy.sh status`   | Show cluster information                |
+| `./deploy.sh destroy`  | Destroy all infrastructure              |
 
-## Configuration
+## ⚙️ Configuration
 
-See `terraform.tfvars.example` for all configuration options including:
+### Key Configuration Options (terraform.tfvars)
 
-- Proxmox connection details
-- VM specifications (CPU, memory, disk)
-- Network configuration
-- RKE2 cluster settings
-- Kube-VIP and MetalLB configuration
+```hcl
+# Proxmox Connection
+proxmox_api_url = "https://proxmox.example.com:8006/api2/json"
+proxmox_node = "proxmox-node1"
+proxmox_api_token_id = "root@pam!terraform"
+proxmox_api_token_secret = "your-secret-token"
 
-## Architecture
+# Cluster Configuration
+rke2_servers = {
+  count       = 3
+  vm_id_start = 500
+  ip_start    = "192.168.3.21"
+  cpu_cores   = 2
+  memory      = 4096
+  disk_size   = 50
+}
 
-The infrastructure consists of:
+rke2_agents = {
+  count       = 2
+  vm_id_start = 550
+  ip_start    = "192.168.3.24"
+  cpu_cores   = 2
+  memory      = 4096
+  disk_size   = 50
+}
 
-- **RKE2 Server Nodes**: 3 control plane nodes (default VM IDs: 500-502) for high availability
-- **RKE2 Agent Nodes**: 2 worker nodes (default VM IDs: 550-551) for workload execution
-- **Kube-VIP**: Provides virtual IP for cluster API endpoint high availability
-- **MetalLB**: Bare-metal load balancer for service LoadBalancer type
-- All nodes are created from an Ubuntu cloud image template
-- Nodes are configured with static IP addresses
-- All VMs are placed in a dedicated Proxmox resource pool named "rke2"
+# Network & RKE2 Settings
+network_config = {
+  bridge      = "vmbr0"
+  subnet      = "192.168.3.0/24"
+  gateway     = "192.168.3.1"
+}
 
-## Why RKE2?
-
-RKE2 (Rancher Kubernetes Engine 2) offers several advantages for production workloads:
-
-- **Security**: FIPS 140-2 compliance and CIS Kubernetes Benchmark compliance
-- **High Availability**: Built-in HA support with etcd clustering
-- **Production Ready**: Designed for enterprise and government workloads
-- **Compliance**: Better suited for regulated environments
-- **Stability**: More stable and feature-complete than K3s
-- **Container Runtime**: Uses containerd by default
-
-## Prerequisites
-
-1. Proxmox VE server (tested with version 8.x)
-2. SSH key pair for VM access
-3. Ubuntu cloud image template in Proxmox (Ubuntu 20.04+ recommended)
-4. Terraform installed locally (version 1.0+)
-5. Proxmox API token with appropriate permissions
-6. Ansible installed locally with required collections
-
-## Quick Start
-
-1. Clone this repository:
-
-   ```bash
-   git clone <repository-url>
-   cd infraflux
-   ```
-
-2. Copy `terraform.tfvars.example` to `terraform.tfvars`:
-
-   ```bash
-   cp terraform.tfvars.example terraform.tfvars
-   ```
-
-3. Edit `terraform.tfvars` with your specific configuration:
-
-   - Proxmox API credentials and node
-   - Network settings (IPs, gateway, subnet)
-   - SSH public key
-   - VM resource allocations
-   - RKE2 cluster configuration
-
-4. Initialize and apply Terraform:
-
-   ```bash
-   terraform init
-   terraform plan
-   terraform apply
-   ```
-
-5. Deploy RKE2 cluster using Ansible:
-   ```bash
-   cd ansible/RKE2
-   ansible-playbook -i inventory/hosts.ini site.yaml
-   ```
-
-## Detailed Setup Instructions
-
-### 1. Install Ansible Collections
-
-Install the required Ansible collections:
-
-```bash
-cd ansible/RKE2
-ansible-galaxy collection install -r collections/requirements.yaml
+rke2_config = {
+  vip              = "192.168.3.50"     # Cluster API VIP
+  lb_range         = "192.168.3.80-192.168.3.90"  # MetalLB range
+  rke2_version     = "v1.29.4+rke2r1"
+  kube_vip_version = "v0.8.0"
+}
 ```
 
-### 2. Create Ubuntu Cloud Image Template
+## 🎯 Why RKE2?
+
+RKE2 (Rancher Kubernetes Engine 2) is ideal for production workloads:
+
+- **🔒 Security**: FIPS 140-2 compliance and CIS Kubernetes Benchmark compliance
+- **🔄 High Availability**: Built-in HA support with etcd clustering
+- **🏭 Production Ready**: Designed for enterprise and government workloads
+- **📋 Compliance**: Better suited for regulated environments
+- **💪 Stability**: More stable and feature-complete than K3s
+- **🐳 Container Runtime**: Uses containerd by default
+
+## 📋 Prerequisites & Setup
+
+### System Requirements
+
+1. **Proxmox Environment**:
+
+   - Proxmox VE 8.x with API access
+   - VM template with cloud-init support (Ubuntu 22.04+ recommended)
+   - Network bridge configuration
+   - Sufficient resources for cluster nodes
+
+2. **Local Tools**:
+   - Terraform >= 1.0
+   - Ansible >= 2.9
+   - SSH key pair for VM access
+
+### Create Ubuntu Cloud Image Template
 
 First, create the Ubuntu cloud image template in Proxmox:
 
@@ -166,42 +164,18 @@ qm set 9000 --agent 1
 qm template 9000
 ```
 
-### 3. Configure Terraform Variables
-
-Edit `terraform.tfvars` with your specific settings. Key variables to configure:
-
-- **Proxmox Connection**: API URL, node name, and credentials
-- **Network Settings**: Ensure IP ranges don't conflict with existing infrastructure
-- **RKE2 VIP**: Choose an unused IP for the cluster API endpoint
-- **MetalLB Range**: Choose IP range for LoadBalancer services
-
-### 4. Deploy Infrastructure
-
-Run Terraform to create the VM infrastructure:
-
-```bash
-terraform init
-terraform plan
-terraform apply
-```
-
-This will:
-
-- Create RKE2 server and agent VMs
-- Configure static IP addresses
-- Generate Ansible inventory automatically
-- Set up VM templates with cloud-init
-
-### 5. Deploy RKE2 Cluster
-
-The Ansible playbook will automatically configure the entire RKE2 cluster:
+### Install Ansible Collections
 
 ```bash
 cd ansible/RKE2
-ansible-playbook -i inventory/hosts.ini site.yaml
+ansible-galaxy collection install -r collections/requirements.yaml
 ```
 
-The playbook performs these tasks:
+## 🚀 Deployment Process
+
+### Automated Deployment
+
+The Ansible playbook performs these tasks automatically:
 
 1. **Prepare all nodes**: System updates, kernel parameters, IP forwarding
 2. **Download RKE2**: Install RKE2 binaries on all nodes
@@ -211,13 +185,27 @@ The playbook performs these tasks:
 6. **Add agents**: Join worker nodes to the cluster
 7. **Apply manifests**: Deploy MetalLB for LoadBalancer services
 
-## Cluster Operations
+### Manual Step-by-Step (Alternative)
+
+1. **Initialize Infrastructure**:
+
+   ```bash
+   terraform init
+   terraform plan
+   terraform apply
+   ```
+
+2. **Deploy RKE2 Cluster**:
+   ```bash
+   cd ansible/RKE2
+   ansible-playbook -i inventory/hosts.ini site.yaml
+   ```
+
+## 🔍 Cluster Access & Operations
+
+### Access the Cluster
 
 After successful deployment:
-
-### 1. Access the Cluster
-
-The kubeconfig file will be available on the first server node:
 
 ```bash
 # SSH to first server
@@ -232,9 +220,13 @@ kubectl get nodes
 kubectl get pods -A
 ```
 
-### 2. Verify Cluster Components
+### Cluster Endpoints
 
-Check that all components are running:
+- **API Server**: `https://<vip>:6443`
+- **LoadBalancer Services**: IPs from MetalLB range
+- **Kubeconfig**: Available at `/etc/rancher/rke2/rke2.yaml` or `~/.kube/config`
+
+### Verify Cluster Components
 
 ```bash
 # Check node status
@@ -254,106 +246,9 @@ kubectl get pods -n kube-system | grep kube-vip
 kubectl get pods -n metallb-system
 ```
 
-terraform plan
-terraform apply
+## ⚡ Scaling & Customization
 
-````
-
-### 4. Configure Ansible
-
-The Ansible playbooks are located in the `ansible` directory. The setup process is automated and will:
-
-1. Configure all nodes with:
-
-   - System updates
-   - Required packages
-   - Disabled swap
-   - Required kernel modules and parameters
-
-2. Set up the first master node with:
-
-   - RKE2 server installation
-   - Cluster initialization
-   - Token generation
-   - Kubeconfig setup
-
-3. Configure additional master nodes with:
-
-   - RKE2 server installation
-   - Cluster joining using token
-   - High availability setup
-
-4. Configure worker nodes with:
-
-   - RKE2 agent installation
-   - Cluster joining as workers
-
-To run the setup:
-
-```bash
-cd ansible
-ansible-playbook -i hosts setup-rke2.yml
-````
-
-The playbook will automatically:
-
-- Use the correct IP addresses from your Terraform configuration
-- Generate and save the kubeconfig files locally (single and HA versions)
-- Configure all necessary system requirements
-- Set up the complete RKE2 cluster with high availability
-
-## Post-Deployment
-
-After the infrastructure and RKE2 are set up:
-
-1. Access the cluster:
-
-   ```bash
-   # The kubeconfig files will be automatically saved in the ansible directory
-   export KUBECONFIG=./ansible/rke2.yaml
-   kubectl get nodes
-
-   # For HA access (recommended for production)
-   export KUBECONFIG=./ansible/rke2-ha.yaml
-   kubectl get nodes
-   ```
-
-2. Verify the cluster:
-
-   ```bash
-   kubectl get nodes
-   kubectl get pods -A
-   kubectl cluster-info
-   ```
-
-### 3. Configuration Details
-
-#### Network Configuration
-
-The cluster uses the following network configuration:
-
-- **Cluster Network**: Defined by `network_config.subnet`
-- **Virtual IP (VIP)**: High availability endpoint for the Kubernetes API
-- **MetalLB Range**: IP pool for LoadBalancer services
-- **VLAN Support**: Optional VLAN tagging for network isolation
-
-#### Security Features
-
-- **Node-to-node encryption**: All communication encrypted with TLS
-- **RBAC**: Role-based access control enabled by default
-- **Network Policies**: Supported through CNI
-- **Pod Security Standards**: Configurable security policies
-
-#### High Availability
-
-- **Multiple Control Plane**: 3 server nodes for API server redundancy
-- **etcd Clustering**: Distributed etcd for data redundancy
-- **Kube-VIP**: Virtual IP failover for API endpoint
-- **Load Balancing**: MetalLB for service load balancing
-
-## Customization
-
-### Scaling the Cluster
+### Adding More Nodes
 
 To add more nodes, update the `terraform.tfvars` file:
 
@@ -374,7 +269,6 @@ rke2_agents = {
 Then run:
 
 ```bash
-terraform plan
 terraform apply
 cd ansible/RKE2
 ansible-playbook -i inventory/hosts.ini site.yaml
@@ -382,7 +276,7 @@ ansible-playbook -i inventory/hosts.ini site.yaml
 
 ### Custom RKE2 Configuration
 
-To customize RKE2 settings, edit the role variables in:
+Customize RKE2 settings by editing:
 
 - `ansible/RKE2/inventory/group_vars/all.yaml`
 - Individual role defaults in `ansible/RKE2/roles/*/defaults/main.yaml`
@@ -394,24 +288,39 @@ Common customizations:
 - Node taints and labels
 - Resource reservations
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
-### Common Issues
+### Common Issues & Solutions
 
-1. **VMs fail to start**: Check template exists and has correct permissions
-2. **Network connectivity**: Verify IP ranges don't conflict
-3. **RKE2 installation fails**: Check internet connectivity and DNS resolution
-4. **Cluster join fails**: Verify firewall rules and token validity
-5. **Kubeconfig authentication issues**: Run `./test-kubeconfig.sh` to validate kubeconfig generation
+1. **VMs fail to start**:
+
+   - Check template exists and has correct permissions
+   - Verify Proxmox API credentials
+
+2. **Network connectivity**:
+
+   - Verify IP ranges don't conflict
+   - Check firewall rules
+
+3. **RKE2 installation fails**:
+
+   - Check internet connectivity and DNS resolution
+   - Verify system resources
+
+4. **Cluster join fails**:
+
+   - Verify firewall rules and token validity
+   - Check system clock synchronization
+
+5. **Kubeconfig authentication issues**:
+   - Run validation tools to check kubeconfig generation
+   - Verify certificate authority data
 
 ### Validation Tools
 
 The project includes several validation tools:
 
 ```bash
-# Test kubeconfig generation and structure
-./test-kubeconfig.sh
-
 # Full cluster validation
 ./deploy.sh validate
 
@@ -422,7 +331,7 @@ The project includes several validation tools:
 ./cluster-validate.sh
 ```
 
-### Useful Commands
+### Log Locations & Debugging
 
 ```bash
 # Check RKE2 server logs
@@ -441,23 +350,78 @@ kubectl get pods -A
 kubectl top nodes
 ```
 
-### Log Locations
+**Log Locations**:
 
 - RKE2 Server logs: `/var/lib/rancher/rke2/server/logs/`
+- RKE2 Agent logs: `/var/lib/rancher/rke2/agent/logs/`
 - Containerd logs: `journalctl -u containerd`
 - Kubelet logs: `journalctl -u kubelet`
 
-## Clean Up
+## 🔐 Security & Best Practices
+
+### Security Features
+
+- **Node-to-node encryption**: All communication encrypted with TLS
+- **RBAC**: Role-based access control enabled by default
+- **Network Policies**: Supported through CNI
+- **Pod Security Standards**: Configurable security policies
+- **Secure token handling**: Automatic token generation and secure sharing
+
+### High Availability Features
+
+- **Multiple Control Plane**: 3 server nodes for API server redundancy
+- **etcd Clustering**: Distributed etcd for data redundancy
+- **Kube-VIP**: Virtual IP failover for API endpoint
+- **Load Balancing**: MetalLB for service load balancing
+
+### Maintenance & Backup
+
+**Backup**:
+
+- **etcd**: Automatic snapshots are configured by RKE2
+- **Configuration**: Backup `terraform.tfvars` and any custom Ansible files
+
+**Updates**:
+
+- **OS Updates**: Use Ansible to manage OS updates across nodes
+- **RKE2 Updates**: Follow RKE2 upgrade documentation
+- **Application Updates**: Use standard Kubernetes deployment practices
+
+## ✅ Known Issues Fixed
+
+### Major Fixes Implemented
+
+1. **Installation Method**: Replaced manual binary download with official RKE2 installer script
+2. **Dynamic Server References**: Updated templates to use dynamic group references instead of hard-coded names
+3. **Service Configuration**: Enhanced systemd service files with proper restart policies and resource limits
+4. **Token Security**: Implemented secure token sharing using Ansible facts
+5. **Directory Permissions**: Fixed incorrect directory permissions (0644 → 0755)
+6. **Kubeconfig Authentication**: Complete rewrite with template-based generation ensuring consistent naming
+7. **MetalLB Configuration**: Updated to current version with proper L2Advertisement configuration
+8. **Node Preparation**: Added essential system configuration for Kubernetes
+9. **Cluster Validation**: Added comprehensive validation logic
+
+### Authentication & Access Improvements
+
+- Fixed certificate authority data mismatch
+- Changed cluster name from "default" to "infraflux-rke2"
+- Changed user name from "default" to "infraflux-admin"
+- Added backup functionality for existing kubeconfig files
+- VIP access now working correctly with proper certificates
+
+## 🧹 Clean Up
 
 To destroy the infrastructure:
 
 ```bash
+./deploy.sh destroy
+# or manually:
 terraform destroy
 ```
 
 This will remove all VMs and associated resources from Proxmox.
 
-## Contributing
+## 🤝 Contributing
 
 Contributions are welcome! Please:
 
@@ -467,11 +431,11 @@ Contributions are welcome! Please:
 4. Test thoroughly
 5. Submit a pull request
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
 - RKE2 team at Rancher for the excellent Kubernetes distribution
 - Proxmox team for the robust virtualization platform
