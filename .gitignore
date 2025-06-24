@@ -68,3 +68,5 @@ id_ed25519*
 *.tmp
 *.temp
 *~
+
+.claude

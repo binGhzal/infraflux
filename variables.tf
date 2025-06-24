@@ -136,3 +136,9 @@ variable "network_config" {
     vlan_id     = null
   }
 }
+
+variable "external_endpoint" {
+  description = "External endpoint for accessing the cluster from outside the internal network (e.g., public IP or FQDN)"
+  type        = string
+  default     = ""
+}
