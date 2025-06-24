@@ -2,6 +2,13 @@
 # Deploys a highly available RKE2 cluster with kube-vip for control plane HA
 ############################################################
 
+# Setup SSH known_hosts before starting deployment
+- name: Setup SSH known_hosts
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - ssh-setup
+
 # Prepare all nodes (servers and agents)
 - name: Prepare all nodes
   hosts: rke2
@@ -50,3 +57,11 @@
   become: true
   roles:
     - apply-manifests
+
+# Download and configure kubeconfig for local access
+- name: Configure kubeconfig for local access
+  hosts: servers[0]
+  gather_facts: true
+  become: true
+  roles:
+    - kubeconfig-manager

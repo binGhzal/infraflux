@@ -13,6 +13,7 @@ datastore_id = "local-lvm"
 
 # SSH Configuration
 ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2E... your-ssh-key"
+ssh_private_key_file = "~/.ssh/id_rsa"
 
 # VM User Configuration
 vm_username = "ansible"

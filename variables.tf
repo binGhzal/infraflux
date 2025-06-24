@@ -35,6 +35,12 @@ variable "ssh_public_key" {
   type        = string
 }
 
+variable "ssh_private_key_file" {
+  description = "Path to SSH private key file for Ansible"
+  type        = string
+  default     = "~/.ssh/id_rsa"
+}
+
 variable "datastore_id" {
   description = "Proxmox datastore ID"
   type        = string

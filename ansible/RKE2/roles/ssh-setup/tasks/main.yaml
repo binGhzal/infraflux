@@ -1,0 +1,19 @@
+---
+- name: Add all cluster VMs to known_hosts
+  ansible.builtin.known_hosts:
+    name: "{{ item }}"
+    key: "{{ lookup('pipe', 'ssh-keyscan -H ' + item) }}"
+    state: present
+    path: "{{ lookup('env', 'HOME') }}/.ssh/known_hosts"
+  loop: "{{ groups['rke2'] | map('extract', hostvars, 'ansible_host') | list }}"
+  delegate_to: localhost
+  run_once: true
+  ignore_errors: true
+
+- name: Display known_hosts update status
+  ansible.builtin.debug:
+    msg:
+      - "SSH host keys have been added to known_hosts"
+      - "Location: {{ lookup('env', 'HOME') }}/.ssh/known_hosts"
+      - "Added hosts: {{ groups['rke2'] | map('extract', hostvars, 'ansible_host') | join(', ') }}"
+  run_once: true

@@ -151,6 +151,7 @@ resource "local_file" "ansible_inventory" {
       ip   = split("/", agent.initialization[0].ip_config[0].ipv4[0].address)[0]
     }]
     ansible_user = var.vm_username
+    ssh_private_key_file = var.ssh_private_key_file
   })
 
   depends_on = [
@@ -173,6 +174,20 @@ resource "local_file" "ansible_group_vars" {
     lb_pool_name      = var.rke2_config.lb_pool_name
     rke2_version      = var.rke2_config.rke2_version
     kube_vip_version  = var.rke2_config.kube_vip_version
+  })
+
+  depends_on = [
+    proxmox_virtual_environment_vm.rke2_server,
+    proxmox_virtual_environment_vm.rke2_agent
+  ]
+}
+
+# Generate Ansible configuration file
+resource "local_file" "ansible_config" {
+  filename = "${path.module}/ansible.cfg"
+  content = templatefile("${path.module}/ansible_config.tpl", {
+    ansible_user = var.vm_username
+    ssh_private_key_file = var.ssh_private_key_file
   })
 
   depends_on = [
@@ -209,4 +224,9 @@ output "ansible_inventory_path" {
 output "metallb_ip_range" {
   description = "MetalLB IP range for load balancer services"
   value = var.rke2_config.lb_range
+}
+
+output "ansible_config_path" {
+  description = "Path to generated Ansible configuration file"
+  value = local_file.ansible_config.filename
 }

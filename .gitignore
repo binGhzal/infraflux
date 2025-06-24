@@ -35,6 +35,7 @@ terraform.rc
 # Ignore any local environment files
 .env
 .env.*
+ansible.cfg
 
 # Ignore any local IDE files
 .vscode/

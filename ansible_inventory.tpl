@@ -21,4 +21,4 @@ agents
 ansible_user=${ansible_user}
 ansible_become=true
 ansible_become_method=sudo
-ansible_ssh_private_key_file=~/.ssh/id_rsa
+ansible_ssh_private_key_file=${ssh_private_key_file}
