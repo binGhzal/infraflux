@@ -141,16 +141,18 @@
 # Convert token to fact and share it with all nodes
 - name: Save Master node-token for later use
   ansible.builtin.set_fact:
-    token: "{{ hostvars[groups['servers'][0]]['rke2_token']['content'] | b64decode | regex_replace('\n', '') }}"
-  when: hostvars[groups['servers'][0]]['rke2_token'] is defined
+    token: "{{ rke2_token['content'] | b64decode | regex_replace('\n', '') }}"
+  when:
+    - inventory_hostname == groups['servers'][0]
+    - rke2_token is defined
 
 # Share token with all nodes
 - name: Share token with all nodes
   ansible.builtin.set_fact:
     token: "{{ hostvars[groups['servers'][0]]['token'] }}"
   when:
-    - hostvars[groups['servers'][0]]['token'] is defined
     - inventory_hostname != groups['servers'][0]
+    - hostvars[groups['servers'][0]]['token'] is defined
 
 # Setup kubeconfig for user
 - name: Ensure .kube directory exists in user's home
