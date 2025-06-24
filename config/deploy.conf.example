@@ -1,0 +1,65 @@
+# TODO: InfraFlux Refactoring Tasks
+# - [x] Created deployment configuration file template
+# - [ ] Add validation for configuration values
+# - [ ] Add support for environment-specific configs
+# - [ ] Add encrypted secrets support
+
+# InfraFlux Deployment Configuration
+# Copy this file to deploy.conf and customize as needed
+
+# Deployment Options
+AUTO_APPROVE=false              # Skip confirmation prompts (true/false)
+DRY_RUN=false                  # Show what would be done without executing (true/false)
+VERBOSE=false                  # Enable verbose output (true/false)
+BACKUP_ENABLED=true            # Create backups before destructive operations (true/false)
+
+# SSH Configuration
+CLEANUP_SSH_KNOWN_HOSTS=false  # Clean up SSH known_hosts after destruction (true/false)
+SSH_TIMEOUT=30                 # SSH connection timeout in seconds
+
+# Terraform Options
+TF_PLAN_FILE="tfplan"          # Terraform plan file name
+TF_PARALLELISM=10              # Terraform parallelism setting
+TF_REFRESH=true                # Refresh state before operations (true/false)
+
+# Ansible Options
+ANSIBLE_TIMEOUT=300            # Ansible task timeout in seconds
+ANSIBLE_RETRIES=3              # Number of retries for failed tasks
+ANSIBLE_VERBOSITY=0            # Ansible verbosity level (0-4)
+ANSIBLE_STRATEGY="linear"      # Ansible strategy (linear, free, etc.)
+
+# Cluster Validation
+VALIDATION_TIMEOUT=120         # Cluster validation timeout in seconds
+SKIP_VALIDATION=false          # Skip cluster validation (true/false)
+
+# Kubeconfig Options
+KUBECONFIG_BACKUP=true         # Backup existing kubeconfig (true/false)
+KUBECONFIG_MERGE=false         # Merge with existing kubeconfig (true/false)
+KUBECONFIG_CONTEXT="infraflux-rke2"  # Custom kubeconfig context name
+
+# External Access Configuration
+# Leave empty to use internal VIP only
+EXTERNAL_ENDPOINT=""           # External endpoint for cluster access (IP or FQDN)
+EXTERNAL_PORT="6443"           # External port for cluster access
+
+# Deployment Phases
+SKIP_PREREQUISITES=false       # Skip prerequisites check (true/false)
+SKIP_INFRASTRUCTURE=false     # Skip infrastructure deployment (true/false)
+SKIP_ANSIBLE_SETUP=false      # Skip Ansible setup (true/false)
+SKIP_RKE2_DEPLOYMENT=false    # Skip RKE2 deployment (true/false)
+SKIP_KUBECONFIG=false         # Skip kubeconfig generation (true/false)
+
+# Logging and Monitoring
+LOG_FILE=""                    # Log file path (empty for console only)
+LOG_LEVEL="INFO"               # Log level (DEBUG, INFO, WARN, ERROR)
+METRICS_ENABLED=false          # Enable deployment metrics collection (true/false)
+
+# Custom Paths
+CUSTOM_TERRAFORM_DIR=""        # Custom Terraform directory path
+CUSTOM_ANSIBLE_DIR=""          # Custom Ansible directory path
+CUSTOM_SCRIPTS_DIR=""          # Custom scripts directory path
+
+# Development and Testing
+DEV_MODE=false                 # Enable development mode (true/false)
+TEST_MODE=false                # Enable test mode (true/false)
+FORCE_REBUILD=false            # Force rebuild of all components (true/false)

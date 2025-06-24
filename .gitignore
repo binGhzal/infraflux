@@ -48,8 +48,9 @@ ansible.cfg
 Thumbs.db
 
 # Ansible generated files
-ansible/RKE2/inventory/hosts.ini
-ansible/RKE2/inventory/group_vars/all.yaml
+configuration/inventory/hosts.ini
+configuration/inventory/group_vars/all.yaml
+configuration/ansible.cfg
 
 # Kubeconfig files
 kubeconfig*

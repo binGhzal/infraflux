@@ -1,3 +1,8 @@
+# TODO: InfraFlux Refactoring Tasks
+# - [x] Added external_endpoint variable for external cluster access
+# - [ ] Consider moving all cluster endpoint configuration to a dedicated object
+# - [ ] Add validation for external_endpoint format (URL/IP)
+
 variable "proxmox_api_url" {
   description = "Proxmox API URL"
   type        = string

@@ -1,0 +1,24 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: longhorn
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./gitops/longhorn
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: sealed-secrets
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: longhorn-driver-deployer
+      namespace: longhorn-system
+    - apiVersion: apps/v1
+      kind: DaemonSet
+      name: longhorn-manager
+      namespace: longhorn-system
+  timeout: 10m

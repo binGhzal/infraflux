@@ -71,6 +71,34 @@ InfraFlux provides a complete automation solution for deploying production-ready
 | `./deploy.sh status`   | Show cluster information                |
 | `./deploy.sh destroy`  | Destroy all infrastructure              |
 
+### Advanced Options
+
+```bash
+# Automated deployment (skip confirmations)
+./deploy.sh deploy --auto-approve
+
+# Show what would be done without executing
+./deploy.sh deploy --dry-run
+
+# Run individual modular scripts
+./scripts/check-prerequisites.sh
+./scripts/deploy-infrastructure.sh
+./scripts/setup-ansible.sh
+./scripts/deploy-rke2.sh
+./scripts/generate-kubeconfig.sh
+./scripts/validate-cluster.sh
+./scripts/show-cluster-info.sh
+./scripts/destroy-infrastructure.sh
+```
+
+### Configuration Files
+
+| File | Purpose |
+|------|---------|
+| `terraform.tfvars` | Infrastructure configuration |
+| `config/deploy.conf` | Deployment behavior settings |
+| `config/deploy.conf.example` | Configuration template |
+
 ## ⚙️ Configuration
 
 ### Key Configuration Options (terraform.tfvars)
@@ -114,7 +142,67 @@ rke2_config = {
   rke2_version     = "v1.29.4+rke2r1"
   kube_vip_version = "v0.8.0"
 }
+
+# External Access (for GitOps tools and remote kubectl)
+external_endpoint = "203.0.113.10"  # Your public IP or FQDN
 ```
+
+## 🌐 External Access Configuration
+
+InfraFlux now supports external access for GitOps tools and remote kubectl usage. This fixes the common issue where kubeconfig files only work from within the internal network.
+
+### Configuring External Access
+
+1. **Set External Endpoint**: Add your public IP or FQDN to `terraform.tfvars`:
+   ```hcl
+   external_endpoint = "203.0.113.10"  # Your public IP
+   # or
+   external_endpoint = "k8s.yourdomain.com"  # Your FQDN
+   ```
+
+2. **Network Requirements**:
+   - External firewall must allow port 6443 to your Proxmox network
+   - Port forwarding or NAT rules should forward external:6443 → VIP:6443
+   - Example: External IP:6443 → 192.168.3.50:6443
+
+3. **SSL Certificate Considerations**:
+   - RKE2 generates certificates with internal IPs by default
+   - For FQDN access, consider adding certificate SANs
+   - Or use `--insecure-skip-tls-verify` for testing
+
+### Deployment Modes
+
+| Mode | Configuration | Use Case |
+|------|---------------|----------|
+| **Internal Only** | `external_endpoint = ""` | Local network access only |
+| **External Access** | `external_endpoint = "1.2.3.4"` | GitOps tools, remote kubectl |
+| **FQDN Access** | `external_endpoint = "k8s.example.com"` | Production with proper DNS |
+
+### Generated Kubeconfig Behavior
+
+- **Internal Only**: Kubeconfig uses VIP (`192.168.3.50:6443`)
+- **External Configured**: Kubeconfig uses external endpoint for remote access
+- **Automatic Selection**: Scripts automatically choose the appropriate endpoint
+
+### GitOps Integration
+
+With external access configured, you can now use GitOps tools:
+
+```bash
+# ArgoCD installation
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+# FluxCD installation  
+curl -s https://fluxcd.io/install.sh | sudo bash
+flux bootstrap github --owner=yourusername --repository=fleet-infra
+```
+
+### Troubleshooting External Access
+
+1. **Connection Refused**: Check firewall and port forwarding
+2. **Certificate Issues**: Use `--insecure-skip-tls-verify` for testing
+3. **DNS Resolution**: Verify FQDN resolves to correct IP
+4. **Network Path**: Ensure external traffic can reach internal VIP
 
 ## 🎯 Why RKE2?
 

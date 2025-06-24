@@ -1,16 +1,13 @@
-terraform {
-  required_providers {
-    proxmox = {
-      source = "bpg/proxmox"
-      version = "0.73.2"
-    }
-  }
-}
+# TODO: InfraFlux Refactoring Tasks
+# - [x] Moved terraform and provider blocks to versions.tf
+# - [x] Added external_endpoint variable to templatefile for ansible_group_vars
+# - [ ] Consider breaking this file into modules (network, compute, templates)
+# - [ ] Consider adding validation for IP ranges and network configurations
 
 provider "proxmox" {
-  endpoint = var.proxmox_api_url
+  endpoint  = var.proxmox_api_url
   api_token = "${var.proxmox_api_token_id}=${var.proxmox_api_token_secret}"
-  insecure = true
+  insecure  = true
 }
 
 # Resource pool for our RKE2 cluster
@@ -140,8 +137,8 @@ resource "proxmox_virtual_environment_vm" "rke2_agent" {
 
 # Generate Ansible inventory file
 resource "local_file" "ansible_inventory" {
-  filename = "${path.module}/ansible/RKE2/inventory/hosts.ini"
-  content = templatefile("${path.module}/ansible_inventory.tpl", {
+  filename = "${path.module}/../configuration/inventory/hosts.ini"
+  content = templatefile("${path.module}/templates/ansible_inventory.tpl", {
     servers = [for i, server in proxmox_virtual_environment_vm.rke2_server : {
       name = server.name
       ip   = split("/", server.initialization[0].ip_config[0].ipv4[0].address)[0]
@@ -162,13 +159,14 @@ resource "local_file" "ansible_inventory" {
 
 # Generate Ansible group variables
 resource "local_file" "ansible_group_vars" {
-  filename = "${path.module}/ansible/RKE2/inventory/group_vars/all.yaml"
-  content = templatefile("${path.module}/ansible_group_vars.tpl", {
+  filename = "${path.module}/../configuration/inventory/group_vars/all.yaml"
+  content = templatefile("${path.module}/templates/ansible_group_vars.tpl", {
     os                = var.rke2_config.os
     arch              = var.rke2_config.arch
     ansible_user      = var.vm_username
     vip               = var.rke2_config.vip
     vip_interface     = var.rke2_config.vip_interface
+    external_endpoint = var.external_endpoint
     metallb_version   = var.rke2_config.metallb_version
     lb_range          = var.rke2_config.lb_range
     lb_pool_name      = var.rke2_config.lb_pool_name
@@ -184,8 +182,8 @@ resource "local_file" "ansible_group_vars" {
 
 # Generate Ansible configuration file
 resource "local_file" "ansible_config" {
-  filename = "${path.module}/ansible.cfg"
-  content = templatefile("${path.module}/ansible_config.tpl", {
+  filename = "${path.module}/../configuration/ansible.cfg"
+  content = templatefile("${path.module}/templates/ansible_config.tpl", {
     ansible_user = var.vm_username
     ssh_private_key_file = var.ssh_private_key_file
   })
