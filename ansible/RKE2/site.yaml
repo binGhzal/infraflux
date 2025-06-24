@@ -49,16 +49,25 @@
 
     - name: Share token with all other hosts
       ansible.builtin.set_fact:
-        token: "{{ hostvars[groups['servers'][0]]['token'] }}"
-      when:
-        - inventory_hostname != groups['servers'][0]
-        - hostvars[groups['servers'][0]]['token'] is defined
+        token: "{{ hostvars[groups['servers'][0]]['token'] | default('') }}"
+      when: inventory_hostname != groups['servers'][0]
+
+    - name: Debug token sharing
+      ansible.builtin.debug:
+        msg: "Token on {{ inventory_hostname }}: {{ token | default('NOT SET') }}"
+
+    - name: Fail if token is not available
+      ansible.builtin.fail:
+        msg: "RKE2 token is not available. Make sure the first server is running and has generated a token."
+      when: token is not defined or token == ""
 
 # Add additional servers to the cluster
 - name: Add additional RKE2 Servers
   hosts: servers
   gather_facts: true
   become: true
+  vars:
+    token: "{{ hostvars[groups['servers'][0]]['token'] | default('') }}"
   roles:
     - add-server
 
@@ -67,6 +76,8 @@
   hosts: agents
   gather_facts: true
   become: true
+  vars:
+    token: "{{ hostvars[groups['servers'][0]]['token'] | default('') }}"
   roles:
     - add-agent
 
@@ -82,6 +93,6 @@
 - name: Configure kubeconfig for local access
   hosts: servers[0]
   gather_facts: true
-  become: false
+  become: false  # Disable become for this entire play
   roles:
     - kubeconfig-manager

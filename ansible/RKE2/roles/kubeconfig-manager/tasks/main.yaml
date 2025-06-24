@@ -5,7 +5,11 @@
     path: "{{ playbook_dir }}/../../kubeconfig"
   register: existing_kubeconfig
   delegate_to: localhost
+  connection: local
   become: false
+  vars:
+    ansible_become: false
+    ansible_become_user: "{{ ansible_user | default(ansible_env.USER) }}"
   run_once: true
   tags: kubeconfig_manager
 
@@ -15,7 +19,11 @@
     dest: "{{ playbook_dir }}/../../kubeconfig.backup.{{ ansible_date_time.epoch }}"
     mode: '0600'
   delegate_to: localhost
+  connection: local
   become: false
+  vars:
+    ansible_become: false
+    ansible_become_user: "{{ ansible_user | default(ansible_env.USER) }}"
   when: existing_kubeconfig.stat.exists
   run_once: true
   tags: kubeconfig_manager
@@ -27,7 +35,11 @@
     state: directory
     mode: '0755'
   delegate_to: localhost
+  connection: local
   become: false
+  vars:
+    ansible_become: false
+    ansible_become_user: "{{ ansible_user | default(ansible_env.USER) }}"
   run_once: true
   tags: kubeconfig_manager
 
@@ -119,7 +131,11 @@
     dest: "{{ playbook_dir }}/../../kubeconfig"
     mode: '0600'
   delegate_to: localhost
+  connection: local
   become: false
+  vars:
+    ansible_become: false
+    ansible_become_user: "{{ ansible_user | default(ansible_env.USER) }}"
   run_once: true
   tags: kubeconfig_manager
 
@@ -129,7 +145,11 @@
     path: "{{ playbook_dir }}/../../kubeconfig"
   register: kubeconfig_file
   delegate_to: localhost
+  connection: local
   become: false
+  vars:
+    ansible_become: false
+    ansible_become_user: "{{ ansible_user | default(ansible_env.USER) }}"
   run_once: true
   tags: kubeconfig_manager
 
@@ -160,7 +180,11 @@
     cmd: kubectl --kubeconfig="{{ playbook_dir }}/../../kubeconfig" get nodes --no-headers
   register: kubectl_test
   delegate_to: localhost
+  connection: local
   become: false
+  vars:
+    ansible_become: false
+    ansible_become_user: "{{ ansible_user | default(ansible_env.USER) }}"
   run_once: true
   failed_when: false
   changed_when: false
