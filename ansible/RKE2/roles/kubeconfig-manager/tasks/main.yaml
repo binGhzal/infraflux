@@ -144,17 +144,17 @@
 - name: Merge kubeconfig contexts if kubectl is available and backup exists
   ansible.builtin.shell: |
     set -e
-    HOME_DIR={{ lookup('env', 'HOME') | quote }}
-    BACKUP_FILE=${HOME_DIR}/.kube/config.backup-{{ ansible_date_time.epoch }}
-    CLUSTER_FILE=${HOME_DIR}/.kube/config-{{ cluster_name }}
-    MAIN_CONFIG=${HOME_DIR}/.kube/config
+    HOME_DIR="{{ lookup('env', 'HOME') }}"
+    BACKUP_FILE="${HOME_DIR}/.kube/config.backup-{{ ansible_date_time.epoch }}"
+    CLUSTER_FILE="${HOME_DIR}/.kube/config-{{ cluster_name }}"
+    MAIN_CONFIG="${HOME_DIR}/.kube/config"
 
     if [ -f "${BACKUP_FILE}" ] && command -v kubectl > /dev/null 2>&1; then
       echo "Merging kubeconfig contexts..."
       KUBECONFIG="${BACKUP_FILE}:${CLUSTER_FILE}" kubectl config view --flatten > /tmp/merged-kubeconfig
       mv /tmp/merged-kubeconfig "${MAIN_CONFIG}"
       chmod 600 "${MAIN_CONFIG}"
-      kubectl config use-context {{ cluster_name | quote }}
+      kubectl config use-context "{{ cluster_name }}"
       echo "Kubeconfig merged and context switched to {{ cluster_name }}"
     else
       echo "Using new kubeconfig as primary config..."

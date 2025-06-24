@@ -108,6 +108,22 @@ deploy_rke2() {
         exit 1
     fi
 
+    # Pre-populate SSH known_hosts to avoid host key prompts
+    print_status "Adding SSH host keys for cluster nodes..."
+    mkdir -p ~/.ssh
+    chmod 700 ~/.ssh
+
+    # Extract IPs from inventory and add to known_hosts
+    grep "ansible_host=" inventory/hosts.ini | awk -F'ansible_host=' '{print $2}' | while read ip; do
+        ssh-keyscan -H "$ip" >>~/.ssh/known_hosts 2>/dev/null || true
+    done
+
+    # Remove duplicates
+    if [ -f ~/.ssh/known_hosts ]; then
+        sort -u ~/.ssh/known_hosts >~/.ssh/known_hosts.tmp
+        mv ~/.ssh/known_hosts.tmp ~/.ssh/known_hosts
+    fi
+
     print_status "Running Ansible playbook..."
     ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory/hosts.ini site.yaml
 

@@ -2,39 +2,7 @@
 # Deploys a highly available RKE2 cluster with kube-vip for control plane HA
 ############################################################
 
-# Prepare all nodes (servers and agents)
-- name: Add SSH host keys for all VMs
-  hosts: localhost
-  gather_facts: false
-  become: false
-  tasks:
-    - name: Get current user's home directory
-      ansible.builtin.set_fact:
-        user_home: "{{ lookup('env', 'HOME') }}"
-
-    - name: Ensure .ssh directory exists
-      ansible.builtin.file:
-        path: "{{ user_home }}/.ssh"
-        state: directory
-        mode: '0700'
-
-    - name: Scan and add server SSH host keys to known_hosts
-      ansible.builtin.shell: |
-        ssh-keyscan -H {{ hostvars[item]['ansible_host'] | default(item) }} >> {{ user_home }}/.ssh/known_hosts 2>/dev/null || true
-      loop: "{{ groups['servers'] }}"
-      changed_when: false
-
-    - name: Scan and add agent SSH host keys to known_hosts
-      ansible.builtin.shell: |
-        ssh-keyscan -H {{ hostvars[item]['ansible_host'] | default(item) }} >> {{ user_home }}/.ssh/known_hosts 2>/dev/null || true
-      loop: "{{ groups['agents'] }}"
-      changed_when: false
-
-    - name: Remove duplicate entries from known_hosts
-      ansible.builtin.shell: |
-        sort -u {{ user_home }}/.ssh/known_hosts > {{ user_home }}/.ssh/known_hosts.tmp && mv {{ user_home }}/.ssh/known_hosts.tmp {{ user_home }}/.ssh/known_hosts
-      changed_when: false
-
+# Prepare all nodes
 - name: Prepare all nodes
   hosts: rke2
   gather_facts: true
