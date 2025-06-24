@@ -1,81 +1,117 @@
 ---
-# Copy kubeconfig from server to local machine with proper naming
-- name: Copy kubeconfig from server to local machine
-  ansible.builtin.fetch:
+# Backup existing kubeconfig if it exists
+- name: Check if kubeconfig already exists
+  ansible.builtin.stat:
+    path: "{{ playbook_dir }}/../../kubeconfig"
+  register: existing_kubeconfig
+  delegate_to: localhost
+  run_once: true
+
+- name: Backup existing kubeconfig
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../kubeconfig"
+    dest: "{{ playbook_dir }}/../../kubeconfig.backup.{{ ansible_date_time.epoch }}"
+    mode: '0600'
+  delegate_to: localhost
+  when: existing_kubeconfig.stat.exists
+  run_once: true
+
+# Read the original kubeconfig from the server
+- name: Read original kubeconfig from server
+  ansible.builtin.slurp:
     src: /etc/rancher/rke2/rke2.yaml
+  register: original_kubeconfig
+  run_once: true
+
+# Parse the original kubeconfig
+- name: Parse original kubeconfig
+  ansible.builtin.set_fact:
+    kubeconfig_data: "{{ original_kubeconfig.content | b64decode | from_yaml }}"
+  run_once: true
+
+# Extract certificate data from the original kubeconfig
+- name: Extract certificate data
+  ansible.builtin.set_fact:
+    cluster_ca_data: "{{ kubeconfig_data.clusters[0].cluster['certificate-authority-data'] }}"
+    client_cert_data: "{{ kubeconfig_data.users[0].user['client-certificate-data'] }}"
+    client_key_data: "{{ kubeconfig_data.users[0].user['client-key-data'] }}"
+  run_once: true
+
+# Generate clean kubeconfig with proper naming and VIP
+- name: Generate clean kubeconfig with proper naming
+  ansible.builtin.copy:
+    content: |
+      apiVersion: v1
+      clusters:
+      - cluster:
+          certificate-authority-data: {{ cluster_ca_data }}
+          server: https://{{ vip }}:6443
+        name: infraflux-rke2
+      contexts:
+      - context:
+          cluster: infraflux-rke2
+          user: infraflux-admin
+        name: infraflux-rke2
+      current-context: infraflux-rke2
+      kind: Config
+      preferences: {}
+      users:
+      - name: infraflux-admin
+        user:
+          client-certificate-data: {{ client_cert_data }}
+          client-key-data: {{ client_key_data }}
     dest: "{{ playbook_dir }}/../../kubeconfig"
-    flat: yes
-  run_once: true
-
-# Update cluster name in the kubeconfig
-- name: Update cluster name to infraflux-rke2
-  ansible.builtin.replace:
-    path: "{{ playbook_dir }}/../../kubeconfig"
-    regexp: 'name: default'
-    replace: 'name: infraflux-rke2'
+    mode: '0600'
   delegate_to: localhost
   run_once: true
 
-# Update context cluster reference
-- name: Update context cluster reference
-  ansible.builtin.replace:
+# Verify kubeconfig was created successfully
+- name: Verify kubeconfig file exists
+  ansible.builtin.stat:
     path: "{{ playbook_dir }}/../../kubeconfig"
-    regexp: 'cluster: default'
-    replace: 'cluster: infraflux-rke2'
+  register: kubeconfig_file
   delegate_to: localhost
   run_once: true
 
-# Update context name
-- name: Update context name
-  ansible.builtin.replace:
-    path: "{{ playbook_dir }}/../../kubeconfig"
-    regexp: 'name: default'
-    replace: 'name: infraflux-rke2'
-  delegate_to: localhost
-  run_once: true
-
-# Update current-context
-- name: Update current-context
-  ansible.builtin.replace:
-    path: "{{ playbook_dir }}/../../kubeconfig"
-    regexp: 'current-context: default'
-    replace: 'current-context: infraflux-rke2'
-  delegate_to: localhost
-  run_once: true
-
-# Update user name
-- name: Update user name to infraflux-admin
-  ansible.builtin.replace:
-    path: "{{ playbook_dir }}/../../kubeconfig"
-    regexp: 'user: default'
-    replace: 'user: infraflux-admin'
-  delegate_to: localhost
-  run_once: true
-
-# Update user name in users section
-- name: Update user name in users section
-  ansible.builtin.replace:
-    path: "{{ playbook_dir }}/../../kubeconfig"
-    regexp: '- name: default'
-    replace: '- name: infraflux-admin'
-  delegate_to: localhost
-  run_once: true
-
-# Replace localhost with VIP for external access
-- name: Replace localhost with VIP in kubeconfig
-  ansible.builtin.replace:
-    path: "{{ playbook_dir }}/../../kubeconfig"
-    regexp: '127\.0\.0\.1'
-    replace: "{{ vip }}"
-  delegate_to: localhost
-  run_once: true
-
-- name: Display kubeconfig location
+- name: Display kubeconfig generation results
   ansible.builtin.debug:
     msg:
-      - "Kubeconfig has been updated and saved to: {{ playbook_dir }}/../../kubeconfig"
-      - "Cluster name: infraflux-rke2"
-      - "User: infraflux-admin"
-      - "Server: https://{{ vip }}:6443"
-      - "To use: export KUBECONFIG=$(pwd)/kubeconfig"
+      - "✅ Kubeconfig successfully generated!"
+      - "📁 Location: {{ playbook_dir }}/../../kubeconfig"
+      - "🎯 Cluster: infraflux-rke2"
+      - "👤 User: infraflux-admin"
+      - "🌐 Server: https://{{ vip }}:6443"
+      - "🔧 Usage: export KUBECONFIG=$(pwd)/kubeconfig"
+      - "🧪 Test: kubectl get nodes"
+  when: kubeconfig_file.stat.exists
+  run_once: true
+
+- name: Fail if kubeconfig generation failed
+  ansible.builtin.fail:
+    msg: "❌ Failed to generate kubeconfig file"
+  when: not kubeconfig_file.stat.exists
+  run_once: true
+
+# Validate that the generated kubeconfig is functional
+- name: Test kubeconfig functionality
+  ansible.builtin.command:
+    cmd: kubectl --kubeconfig="{{ playbook_dir }}/../../kubeconfig" get nodes --no-headers
+  register: kubectl_test
+  delegate_to: localhost
+  run_once: true
+  failed_when: false
+  changed_when: false
+
+- name: Display kubeconfig validation results
+  ansible.builtin.debug:
+    msg:
+      - "🔍 Kubeconfig validation:"
+      - "{% if kubectl_test.rc == 0 %}✅ SUCCESS: kubectl command executed successfully{% else %}❌ FAILED: kubectl command failed with error: {{ kubectl_test.stderr }}{% endif %}"
+      - "{% if kubectl_test.rc == 0 %}📊 Cluster nodes detected: {{ kubectl_test.stdout_lines | length }}{% endif %}"
+  run_once: true
+
+- name: Fail if kubeconfig validation failed
+  ansible.builtin.fail:
+    msg: "❌ Generated kubeconfig failed validation test"
+  when: kubectl_test.rc != 0
   run_once: true

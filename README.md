@@ -402,6 +402,25 @@ Common customizations:
 2. **Network connectivity**: Verify IP ranges don't conflict
 3. **RKE2 installation fails**: Check internet connectivity and DNS resolution
 4. **Cluster join fails**: Verify firewall rules and token validity
+5. **Kubeconfig authentication issues**: Run `./test-kubeconfig.sh` to validate kubeconfig generation
+
+### Validation Tools
+
+The project includes several validation tools:
+
+```bash
+# Test kubeconfig generation and structure
+./test-kubeconfig.sh
+
+# Full cluster validation
+./deploy.sh validate
+
+# Basic cluster connectivity test
+./test-cluster.sh
+
+# Cluster validation via SSH
+./cluster-validate.sh
+```
 
 ### Useful Commands
 

@@ -144,7 +144,6 @@ validate_cluster() {
     fi
 }
 
-# Function to show cluster information
 show_cluster_info() {
     print_status "RKE2 cluster deployment completed!"
     echo ""
@@ -153,13 +152,14 @@ show_cluster_info() {
     echo "   ssh binghzal@$(terraform output -raw rke2_server_ips | jq -r '.[0]')"
     echo ""
     echo "2. Kubeconfig has been automatically configured:"
-    echo "   Local kubeconfig: ~/.kube/config (updated automatically)"
     echo "   Project kubeconfig: ./kubeconfig"
-    echo "   Test access: kubectl get nodes"
+    echo "   Test kubeconfig: ./test-kubeconfig.sh"
+    echo "   Test access: kubectl --kubeconfig=./kubeconfig get nodes"
     echo ""
-    echo "3. Test cluster access:"
-    echo "   kubectl get nodes"
-    echo "   kubectl get pods -A"
+    echo "3. Validation commands:"
+    echo "   ./test-kubeconfig.sh    # Test kubeconfig structure and connectivity"
+    echo "   ./test-cluster.sh       # Test cluster functionality"
+    echo "   ./deploy.sh validate    # Full cluster validation"
     echo ""
     echo "=== Cluster Information ==="
     echo "- API Server VIP: $(terraform output -raw rke2_cluster_endpoint)"

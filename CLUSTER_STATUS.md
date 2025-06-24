@@ -35,14 +35,18 @@
 ### 6. Kubeconfig Authentication Issues
 
 - **Problem**: 401 Unauthorized errors due to certificate authority mismatch and generic cluster naming
-- **Solution**: Updated kubeconfig with correct certificate data and meaningful cluster/user names
-- **Status**: ✅ Fixed
+- **Solution**: Completely rewritten kubeconfig-manager role with template-based generation ensuring consistent naming and proper VIP configuration
+- **Status**: ✅ Fixed (Enhanced)
 
 **Details**:
+
+- Replaced multiple string replacements with clean template-based generation
 - Fixed certificate authority data mismatch between local kubeconfig and server
 - Changed cluster name from "default" to "infraflux-rke2"
 - Changed user name from "default" to "infraflux-admin"
-- Updated kubeconfig-manager role to automatically apply proper naming
+- Updated kubeconfig-manager role to automatically apply proper naming every time
+- Added backup functionality for existing kubeconfig files
+- Added proper error handling and verification
 - VIP access now working correctly with proper certificates
 
 ## 🎯 Current Cluster Status
@@ -79,6 +83,14 @@ server3   Ready    control-plane,etcd,master   18m   v1.29.4+rke2r1
 2. **Kubectl**: Available on all server nodes
 3. **VIP Access**: `https://10.0.1.50:6443` (working)
 4. **Kubeconfig**: Pre-configured at `~/.kube/config` on server nodes
+5. **Local Access**: `export KUBECONFIG=$(pwd)/kubeconfig && kubectl get nodes`
+
+**Cluster Details**:
+
+- **Name**: infraflux-rke2
+- **User**: infraflux-admin
+- **Context**: infraflux-rke2
+- **API Server**: https://10.0.1.50:6443
 
 ## 📋 Files Modified
 
