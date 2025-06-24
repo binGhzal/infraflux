@@ -165,6 +165,7 @@ resource "local_file" "ansible_group_vars" {
   content = templatefile("${path.module}/ansible_group_vars.tpl", {
     os                = var.rke2_config.os
     arch              = var.rke2_config.arch
+    ansible_user      = var.vm_username
     vip               = var.rke2_config.vip
     vip_interface     = var.rke2_config.vip_interface
     metallb_version   = var.rke2_config.metallb_version

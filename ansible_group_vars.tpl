@@ -5,6 +5,9 @@
 os: "${os}"
 arch: "${arch}"
 
+# User Configuration
+ansible_user: "${ansible_user}"
+
 vip: ${vip}
 vip_interface: "${vip_interface}"
 

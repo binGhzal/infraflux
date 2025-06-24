@@ -11,16 +11,16 @@
     mode: '0755'
   when: inventory_hostname in groups['servers']
 
-# Debug variables
-- name: Debug RKE2 variables
-  ansible.builtin.debug:
-    msg:
-      - "VIP: {{ vip }}"
-      - "RKE2 Version: {{ rke2_version }}"
-      - "Kube-VIP Version: {{ kube_vip_version }}"
-      - "VIP Interface: {{ vip_interface }}"
-      - "Ansible User: {{ ansible_user }}"
-  run_once: true
+# Debug variables (temporarily commented out due to recursive template issue)
+# - name: Debug RKE2 variables
+#   ansible.builtin.debug:
+#     msg:
+#       - "VIP: {{ vip }}"
+#       - "RKE2 Version: {{ rke2_version }}"
+#       - "Kube-VIP Version: {{ kube_vip_version }}"
+#       - "VIP Interface: {{ vip_interface }}"
+#       - "Ansible User: {{ ansible_user }}"
+#   run_once: true
 
 # Create RKE2 systemd service files
 - name: Create RKE2 server systemd service
