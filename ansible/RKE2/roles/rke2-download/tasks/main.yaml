@@ -1,20 +1,20 @@
-# Create a directory to download RKE2 binary to
-- name: Create directory for RKE2 binary
-  ansible.builtin.file:
-    path: "{{ rke2_install_dir }}"
-    state: directory
-    mode: '0755'
-
-# Download the RKE2 binary
-- name: Download RKE2 binary
+# Download and run the RKE2 installer script
+- name: Download RKE2 installer script
   ansible.builtin.get_url:
-    url: "{{ rke2_binary_url }}"
-    dest: "{{ rke2_install_dir }}/rke2"
+    url: https://get.rke2.io
+    dest: /tmp/rke2-install.sh
     mode: '0755'
 
-# Set permissions on the RKE2 binary
-- name: Set executable permissions on the RKE2 binary
+# Install RKE2 using the official installer
+- name: Install RKE2
+  ansible.builtin.shell: |
+    INSTALL_RKE2_VERSION="{{ rke2_version }}" sh /tmp/rke2-install.sh
+  environment:
+    INSTALL_RKE2_TYPE: "{{ 'server' if inventory_hostname in groups['servers'] else 'agent' }}"
+  changed_when: true
+
+# Clean up installer script
+- name: Remove installer script
   ansible.builtin.file:
-    path: "{{ rke2_install_dir }}/rke2"
-    mode: '0755'
-    state: file
+    path: /tmp/rke2-install.sh
+    state: absent

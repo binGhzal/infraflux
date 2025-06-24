@@ -1,13 +1,25 @@
 # rke2-agent.service.j2
 [Unit]
 Description=RKE2 Agent
-After=network.target
+Documentation=https://rancher.com/docs/rke2/latest/en/
+Wants=network-online.target
+After=network-online.target
+Conflicts=rke2-server.service
 
 [Service]
-ExecStart=/usr/local/bin/rke2 agent
+Type=notify
+ExecStart={{ rke2_install_dir | default('/usr/local/bin') }}/rke2 agent
 KillMode=process
-Restart=on-failure
+Delegate=yes
+LimitNOFILE=1048576
+LimitNPROC=infinity
+LimitCORE=infinity
+TasksMax=infinity
+TimeoutStartSec=0
+Restart=always
 RestartSec=5s
+ExecStartPre=-/sbin/modprobe br_netfilter
+ExecStartPre=-/sbin/modprobe overlay
 
 [Install]
 WantedBy=multi-user.target

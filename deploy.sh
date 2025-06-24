@@ -1,0 +1,223 @@
+#!/bin/bash
+
+# RKE2 Cluster Deployment Script
+# This script automates the deployment of RKE2 cluster using Terraform and Ansible
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_status() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Function to check if required tools are installed
+check_prerequisites() {
+    print_status "Checking prerequisites..."
+
+    # Check if terraform is installed
+    if ! command -v terraform &>/dev/null; then
+        print_error "Terraform is not installed. Please install Terraform first."
+        exit 1
+    fi
+
+    # Check if ansible is installed
+    if ! command -v ansible &>/dev/null; then
+        print_error "Ansible is not installed. Please install Ansible first."
+        exit 1
+    fi
+
+    # Check if terraform.tfvars exists
+    if [ ! -f "terraform.tfvars" ]; then
+        print_error "terraform.tfvars not found. Please copy terraform.tfvars.example to terraform.tfvars and configure it."
+        exit 1
+    fi
+
+    print_success "Prerequisites check passed"
+}
+
+# Function to deploy infrastructure with Terraform
+deploy_infrastructure() {
+    print_status "Deploying infrastructure with Terraform..."
+
+    terraform init
+
+    print_status "Running terraform plan..."
+    terraform plan
+
+    read -p "Do you want to proceed with terraform apply? (y/N): " confirm
+    if [[ $confirm != [yY] && $confirm != [yY][eE][sS] ]]; then
+        print_warning "Terraform deployment cancelled"
+        exit 0
+    fi
+
+    terraform apply -auto-approve
+
+    print_success "Infrastructure deployed successfully"
+}
+
+# Function to install Ansible collections
+install_ansible_collections() {
+    print_status "Installing Ansible collections..."
+
+    cd ansible/RKE2
+
+    if [ -f "collections/requirements.yaml" ]; then
+        ansible-galaxy collection install -r collections/requirements.yaml
+        print_success "Ansible collections installed"
+    else
+        print_warning "No Ansible collections requirements found"
+    fi
+
+    cd ../..
+}
+
+# Function to deploy RKE2 cluster
+deploy_rke2() {
+    print_status "Deploying RKE2 cluster with Ansible..."
+
+    cd ansible/RKE2
+
+    # Check if inventory file exists
+    if [ ! -f "inventory/hosts.ini" ]; then
+        print_error "Ansible inventory file not found. Make sure Terraform has been applied successfully."
+        exit 1
+    fi
+
+    print_status "Running Ansible playbook..."
+    ansible-playbook -i inventory/hosts.ini site.yaml
+
+    print_success "RKE2 cluster deployed successfully"
+
+    cd ../..
+}
+
+# Function to validate cluster deployment
+validate_cluster() {
+    print_status "Validating cluster deployment..."
+
+    if [ -f "./validate.sh" ]; then
+        ./validate.sh
+    else
+        print_error "Validation script not found"
+        exit 1
+    fi
+}
+
+# Function to show cluster information
+show_cluster_info() {
+    print_status "Cluster deployment completed!"
+    echo ""
+    echo "Next steps:"
+    echo "1. SSH to the first server node to access the cluster:"
+    echo "   ssh ansible@$(terraform output -raw rke2_server_ips | jq -r '.[0]')"
+    echo ""
+    echo "2. Copy the kubeconfig file:"
+    echo "   sudo cp /etc/rancher/rke2/rke2.yaml ~/.kube/config"
+    echo "   sudo chown \$USER:\$USER ~/.kube/config"
+    echo ""
+    echo "3. Test cluster access:"
+    echo "   kubectl get nodes"
+    echo "   kubectl get pods -A"
+    echo ""
+    echo "Cluster endpoints:"
+    echo "- API Server VIP: $(terraform output -raw rke2_cluster_endpoint)"
+    echo "- MetalLB Range: $(terraform output -raw metallb_ip_range)"
+    echo ""
+    echo "Server IPs:"
+    terraform output -json rke2_server_ips | jq -r '.[]' | sed 's/^/  - /'
+    echo ""
+    echo "Agent IPs:"
+    terraform output -json rke2_agent_ips | jq -r '.[]' | sed 's/^/  - /'
+}
+
+# Function to destroy infrastructure
+destroy_infrastructure() {
+    print_warning "This will destroy all infrastructure created by Terraform!"
+    read -p "Are you sure you want to continue? (y/N): " confirm
+    if [[ $confirm != [yY] && $confirm != [yY][eE][sS] ]]; then
+        print_warning "Destruction cancelled"
+        exit 0
+    fi
+
+    print_status "Destroying infrastructure..."
+    terraform destroy -auto-approve
+    print_success "Infrastructure destroyed"
+}
+
+# Function to show help
+show_help() {
+    echo "RKE2 Cluster Deployment Script"
+    echo ""
+    echo "Usage: $0 [COMMAND]"
+    echo ""
+    echo "Commands:"
+    echo "  deploy     - Deploy complete RKE2 cluster (infrastructure + RKE2)"
+    echo "  infra      - Deploy only infrastructure (Terraform)"
+    echo "  rke2       - Deploy only RKE2 cluster (Ansible)"
+    echo "  validate   - Validate cluster deployment"
+    echo "  destroy    - Destroy infrastructure"
+    echo "  status     - Show cluster status"
+    echo "  help       - Show this help message"
+    echo ""
+    echo "Examples:"
+    echo "  $0 deploy    # Full deployment"
+    echo "  $0 validate  # Validate cluster"
+    echo "  $0 destroy   # Destroy everything"
+    echo "  $0 status    # Show cluster info"
+}
+
+# Main script logic
+case "${1:-}" in
+"deploy")
+    check_prerequisites
+    deploy_infrastructure
+    install_ansible_collections
+    deploy_rke2
+    show_cluster_info
+    ;;
+"infra")
+    check_prerequisites
+    deploy_infrastructure
+    ;;
+"rke2")
+    install_ansible_collections
+    deploy_rke2
+    ;;
+"validate")
+    validate_cluster
+    ;;
+"destroy")
+    destroy_infrastructure
+    ;;
+"status")
+    show_cluster_info
+    ;;
+"help" | "--help" | "-h")
+    show_help
+    ;;
+*)
+    print_error "Unknown command: ${1:-}"
+    echo ""
+    show_help
+    exit 1
+    ;;
+esac

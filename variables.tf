@@ -35,36 +35,98 @@ variable "ssh_public_key" {
   type        = string
 }
 
-variable "kubernetes_master" {
-  description = "Kubernetes master node configuration"
+variable "datastore_id" {
+  description = "Proxmox datastore ID"
+  type        = string
+  default     = "local-lvm"
+}
+
+variable "vm_username" {
+  description = "Default username for VMs"
+  type        = string
+  default     = "ansible"
+}
+
+variable "rke2_servers" {
+  description = "RKE2 server nodes configuration"
   type        = object({
-    ip      = number
+    count        = number
+    vm_id_start  = number
+    ip_start     = string
+    cpu_cores    = number
+    memory       = number
+    disk_size    = number
   })
-  default     = {
-    ip        = 100 #ip start for the master node
+  default = {
+    count        = 3
+    vm_id_start  = 500
+    ip_start     = "192.168.3.21"
+    cpu_cores    = 2
+    memory       = 4096
+    disk_size    = 50
   }
 }
 
-variable "kubernetes_workers" {
-  description = "Kubernetes worker nodes configuration"
+variable "rke2_agents" {
+  description = "RKE2 agent nodes configuration"
   type        = object({
-    ip_start  = number
+    count        = number
+    vm_id_start  = number
+    ip_start     = string
+    cpu_cores    = number
+    memory       = number
+    disk_size    = number
   })
-  default     = {
-    ip_start  = 150
+  default = {
+    count        = 2
+    vm_id_start  = 550
+    ip_start     = "192.168.3.24"
+    cpu_cores    = 2
+    memory       = 4096
+    disk_size    = 50
+  }
+}
+
+variable "rke2_config" {
+  description = "RKE2 cluster configuration"
+  type        = object({
+    os               = string
+    arch             = string
+    vip              = string
+    vip_interface    = string
+    metallb_version  = string
+    lb_range         = string
+    lb_pool_name     = string
+    rke2_version     = string
+    kube_vip_version = string
+  })
+  default = {
+    os               = "linux"
+    arch             = "amd64"
+    vip              = "192.168.3.50"
+    vip_interface    = "eth0"
+    metallb_version  = "v0.13.12"
+    lb_range         = "192.168.3.80-192.168.3.90"
+    lb_pool_name     = "first-pool"
+    rke2_version     = "v1.29.4+rke2r1"
+    kube_vip_version = "v0.8.0"
   }
 }
 
 variable "network_config" {
-  description = "Network configuration for Kubernetes cluster"
+  description = "Network configuration for RKE2 cluster"
   type        = object({
-    bridge = string
-    subnet = string
-    gateway = string
+    bridge      = string
+    subnet      = string
+    subnet_mask = number
+    gateway     = string
+    vlan_id     = number
   })
-  default     = {
-    bridge = "vmbr0"
-    subnet = "192.168.30.0/24"
-    gateway = "192.168.30.1"
+  default = {
+    bridge      = "vmbr0"
+    subnet      = "192.168.3.0/24"
+    subnet_mask = 24
+    gateway     = "192.168.3.1"
+    vlan_id     = null
   }
 }

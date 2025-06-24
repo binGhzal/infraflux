@@ -1,4 +1,17 @@
-# Copy agent config to all agents - we need to change agent2 & 3 later with the token
+# Wait for servers to be ready before adding agents
+- name: Wait for server nodes to be ready
+  ansible.builtin.uri:
+    url: "https://{{ vip }}:6443/healthz"
+    method: GET
+    validate_certs: false
+  register: api_health
+  until: api_health.status == 200
+  retries: 60
+  delay: 10
+  run_once: true
+  delegate_to: localhost
+
+# Copy agent config to all agents
 - name: Deploy RKE2 Agent Configuration
   ansible.builtin.template:
     src: templates/rke2-agent-config.j2
@@ -8,10 +21,11 @@
     mode: '0644'
   when: inventory_hostname in groups['agents']
 
-# Check agents have restarted to pick up config
-- name: Ensure RKE2 agents are enabled and running
+# Enable and start RKE2 agents
+- name: Enable and start RKE2 agents
   ansible.builtin.systemd:
     name: rke2-agent
     enabled: true
-    state: restarted
+    state: started
     daemon_reload: true
+  when: inventory_hostname in groups['agents']

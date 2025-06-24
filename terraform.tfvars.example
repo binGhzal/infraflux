@@ -8,25 +8,53 @@ proxmox_api_token_secret = "your-api-token-secret"
 template_name = "ubuntu-cloud-init-template"
 template_vm_id = 9000
 
+# Storage Configuration
+datastore_id = "local-lvm"
+
 # SSH Configuration
 ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2E... your-ssh-key"
 
+# VM User Configuration
+vm_username = "ansible"
+
+# RKE2 Server Nodes Configuration
+rke2_servers = {
+  count        = 3
+  vm_id_start  = 500
+  ip_start     = "192.168.3.21"
+  cpu_cores    = 2
+  memory       = 4096
+  disk_size    = 50
+}
+
+# RKE2 Agent Nodes Configuration
+rke2_agents = {
+  count        = 2
+  vm_id_start  = 550
+  ip_start     = "192.168.3.24"
+  cpu_cores    = 2
+  memory       = 4096
+  disk_size    = 50
+}
+
 # Network Configuration
-network_gateway = "192.168.30.1"
-
-# Kubernetes Master Node Configuration
-kubernetes_master = {
-  ip = "192.168.30.100/24"
-}
-
-# Kubernetes Worker Nodes Configuration
-kubernetes_workers = {
-  ip_start = 101
-}
-
-# Network Interface Configuration
 network_config = {
-  bridge = "vmbr0"
-  subnet = "192.168.30.0/24"
-  gateway = "192.168.30.1"
+  bridge      = "vmbr0"
+  subnet      = "192.168.3.0/24"
+  subnet_mask = 24
+  gateway     = "192.168.3.1"
+  vlan_id     = null  # Set to VLAN ID if needed, or null for no VLAN
+}
+
+# RKE2 Cluster Configuration
+rke2_config = {
+  os               = "linux"
+  arch             = "amd64"
+  vip              = "192.168.3.50"
+  vip_interface    = "eth0"
+  metallb_version  = "v0.13.12"
+  lb_range         = "192.168.3.80-192.168.3.90"
+  lb_pool_name     = "first-pool"
+  rke2_version     = "v1.29.4+rke2r1"
+  kube_vip_version = "v0.8.0"
 }

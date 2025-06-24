@@ -6,10 +6,7 @@
 # 4) Use kubernetes Ansible plugins more sensibly
 # 5) Optimise flow logic
 # 6) Clean up
-
-###############################################################
-# MAKE SURE YOU CHANGE group_vars/all.yaml VARIABLES!!!!!!!!!!!
-###############################################################
+############################################################
 
 # bootstraps first server and copies configs for others/agents
 - name: Prepare all nodes

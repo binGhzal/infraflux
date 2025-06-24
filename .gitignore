@@ -44,4 +44,22 @@ terraform.rc
 
 # Ignore any local OS files
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# Ansible generated files
+ansible/RKE2/inventory/hosts.ini
+ansible/RKE2/inventory/group_vars/all.yaml
+
+# SSH keys
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*~
