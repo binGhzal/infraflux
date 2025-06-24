@@ -1,15 +1,16 @@
 # Wait for servers to be ready before adding agents
 - name: Wait for server nodes to be ready
-  ansible.builtin.uri:
-    url: "https://{{ vip }}:6443/healthz"
-    method: GET
-    validate_certs: false
-  register: api_health
-  until: api_health.status == 200
+  ansible.builtin.command:
+    cmd: kubectl get nodes
+  environment:
+    KUBECONFIG: /etc/rancher/rke2/rke2.yaml
+  register: kubectl_result
+  until: kubectl_result.rc == 0
   retries: 60
   delay: 10
+  changed_when: false
   run_once: true
-  delegate_to: localhost
+  delegate_to: "{{ groups['servers'][0] }}"
 
 # Copy agent config to all agents
 - name: Deploy RKE2 Agent Configuration
