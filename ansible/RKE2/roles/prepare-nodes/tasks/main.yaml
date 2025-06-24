@@ -42,7 +42,6 @@
     value: "1"
     state: present
     reload: true
-  tags: sysctl
 
 # Enable IPv6 forwarding
 - name: Enable IPv6 forwarding
@@ -51,7 +50,6 @@
     value: "1"
     state: present
     reload: true
-  tags: sysctl
 
 # Disable swap
 - name: Disable swap
