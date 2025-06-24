@@ -124,29 +124,36 @@ validate_cluster() {
 
 # Function to show cluster information
 show_cluster_info() {
-    print_status "Cluster deployment completed!"
+    print_status "RKE2 cluster deployment completed!"
     echo ""
-    echo "Next steps:"
-    echo "1. SSH to the first server node to access the cluster:"
-    echo "   ssh ansible@$(terraform output -raw rke2_server_ips | jq -r '.[0]')"
+    echo "=== Access Information ==="
+    echo "1. SSH to the first server node:"
+    echo "   ssh binghzal@$(terraform output -raw rke2_server_ips | jq -r '.[0]')"
     echo ""
-    echo "2. Copy the kubeconfig file:"
-    echo "   sudo cp /etc/rancher/rke2/rke2.yaml ~/.kube/config"
-    echo "   sudo chown \$USER:\$USER ~/.kube/config"
+    echo "2. The kubeconfig is already set up for the user:"
+    echo "   Location: ~/.kube/config (on server nodes)"
+    echo "   Or copy to local machine: scp binghzal@$(terraform output -raw rke2_server_ips | jq -r '.[0]'):.kube/config ~/.kube/config"
     echo ""
     echo "3. Test cluster access:"
     echo "   kubectl get nodes"
     echo "   kubectl get pods -A"
     echo ""
-    echo "Cluster endpoints:"
+    echo "=== Cluster Information ==="
     echo "- API Server VIP: $(terraform output -raw rke2_cluster_endpoint)"
-    echo "- MetalLB Range: $(terraform output -raw metallb_ip_range)"
+    echo "- Cluster is ready for GitOps deployment"
     echo ""
     echo "Server IPs:"
     terraform output -json rke2_server_ips | jq -r '.[]' | sed 's/^/  - /'
     echo ""
     echo "Agent IPs:"
     terraform output -json rke2_agent_ips | jq -r '.[]' | sed 's/^/  - /'
+    echo ""
+    echo "=== Next Steps ==="
+    echo "1. Set up FluxCD for GitOps deployment"
+    echo "2. Deploy MetalLB via Kustomize/Flux from your GitOps repository"
+    echo "3. Deploy applications via GitOps"
+    echo ""
+    echo "Note: MetalLB is no longer deployed by Ansible - use GitOps instead!"
 }
 
 # Function to destroy infrastructure

@@ -8,12 +8,12 @@ arch: "${arch}"
 # User Configuration
 ansible_user: "${ansible_user}"
 
-vip: ${vip}
+vip: "${vip}"
 vip_interface: "${vip_interface}"
 
-metallb_version: ${metallb_version}
-lb_range: ${lb_range}
-lb_pool_name: ${lb_pool_name}
+metallb_version: "${metallb_version}"
+lb_range: "${lb_range}"
+lb_pool_name: "${lb_pool_name}"
 
 ansible_become: true
 ansible_become_method: sudo

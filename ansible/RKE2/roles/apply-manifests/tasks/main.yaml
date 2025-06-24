@@ -1,4 +1,4 @@
-# Wait for all nodes to be ready before deploying MetalLB
+# Wait for all nodes to be ready
 - name: Wait for all nodes to be ready
   ansible.builtin.command:
     cmd: "kubectl get nodes --no-headers"
@@ -8,6 +8,8 @@
   delay: 10
   changed_when: false
   become_user: "{{ ansible_user }}"
+  environment:
+    KUBECONFIG: /home/{{ ansible_user }}/.kube/config
   when: inventory_hostname == groups['servers'][0]
 
 - name: Wait for all nodes to be in Ready state
@@ -15,81 +17,18 @@
     cmd: "kubectl wait --for=condition=Ready nodes --all --timeout=600s"
   changed_when: false
   become_user: "{{ ansible_user }}"
-  when: inventory_hostname == groups['servers'][0]
-
-# Create namespace so that we can deploy metallb
-- name: Apply metallb namespace
-  ansible.builtin.command:
-    cmd: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{ metallb_version }}/config/manifests/metallb-namespace.yaml
-  become_user: "{{ ansible_user }}"
-  changed_when: true
-  when: inventory_hostname == groups['servers'][0]
-
-# Apply metallb manifest
-- name: Apply metallb manifest
-  ansible.builtin.command:
-    cmd: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/{{ metallb_version }}/config/manifests/metallb-native.yaml
-  become_user: "{{ ansible_user }}"
-  changed_when: true
-  when: inventory_hostname == groups['servers'][0]
-
-# Wait for metallb deployment pods to be alive before deploying metallb manifests
-- name: Wait for metallb controller to be ready
-  ansible.builtin.command:
-    cmd: "kubectl wait --namespace metallb-system --for=condition=ready pod --selector=component=controller --timeout=1800s"
-  changed_when: false
-  become_user: "{{ ansible_user }}"
-  when: inventory_hostname == groups['servers'][0]
-
-- name: Wait for metallb speaker to be ready
-  ansible.builtin.command:
-    cmd: "kubectl wait --namespace metallb-system --for=condition=ready pod --selector=component=speaker --timeout=1800s"
-  changed_when: false
-  become_user: "{{ ansible_user }}"
-  when: inventory_hostname == groups['servers'][0]
-
-# Deploy L2 Advertisement configuration
-- name: Copy metallb L2Advertisement to server 1
-  ansible.builtin.template:
-    src: templates/metallb-l2advertisement.j2
-    dest: /home/{{ ansible_user }}/l2advertisement.yaml
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    mode: '0755'
-  when: inventory_hostname == groups['servers'][0]
-
-# Apply L2 Advertisement for metallb
-- name: Apply metallb L2 Advertisement
-  ansible.builtin.command:
-    cmd: kubectl apply -f /home/{{ ansible_user }}/l2advertisement.yaml
-  become_user: "{{ ansible_user }}"
-  changed_when: true
-  when: inventory_hostname == groups['servers'][0]
-
-# Deploy metal IP Pool to Server 1
-- name: Copy metallb IPPool to server 1
-  ansible.builtin.template:
-    src: templates/metallb-ippool.j2
-    dest: /home/{{ ansible_user }}/ippool.yaml
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    mode: '0755'
-  when: inventory_hostname == groups['servers'][0]
-
-# don't think this will work as nodes are no execute, might need agents first
-- name: Apply metallb ipppool
-  ansible.builtin.command:
-    cmd: kubectl apply -f /home/{{ ansible_user }}/ippool.yaml
-  become_user: "{{ ansible_user }}"
-  changed_when: true
+  environment:
+    KUBECONFIG: /home/{{ ansible_user }}/.kube/config
   when: inventory_hostname == groups['servers'][0]
 
 # Validate cluster deployment
-- name: Wait for all nodes to be ready with proper roles
+- name: Get cluster status
   ansible.builtin.command:
     cmd: "kubectl get nodes -o wide"
   register: cluster_nodes
   become_user: "{{ ansible_user }}"
+  environment:
+    KUBECONFIG: /home/{{ ansible_user }}/.kube/config
   when: inventory_hostname == groups['servers'][0]
 
 - name: Display cluster status
@@ -97,95 +36,51 @@
     var: cluster_nodes.stdout_lines
   when: inventory_hostname == groups['servers'][0]
 
-- name: Validate metallb deployment
+- name: Get cluster info
   ansible.builtin.command:
-    cmd: "kubectl get pods -n metallb-system"
-  register: metallb_pods
+    cmd: "kubectl cluster-info"
+  register: cluster_info
   become_user: "{{ ansible_user }}"
+  environment:
+    KUBECONFIG: /home/{{ ansible_user }}/.kube/config
   when: inventory_hostname == groups['servers'][0]
 
-- name: Display metallb status
+- name: Display cluster info
   ansible.builtin.debug:
-    var: metallb_pods.stdout_lines
+    var: cluster_info.stdout_lines
   when: inventory_hostname == groups['servers'][0]
 
-# Final validation
-- name: Test cluster access via VIP
-  ansible.builtin.command:
-    cmd: "kubectl --server=https://{{ vip }}:6443 --insecure-skip-tls-verify get nodes"
-  register: vip_access_test
-  become_user: "{{ ansible_user }}"
+- name: Test cluster API access via VIP
+  ansible.builtin.uri:
+    url: "https://{{ vip }}:6443/readyz"
+    method: GET
+    validate_certs: false
+    client_cert: /var/lib/rancher/rke2/server/tls/client-admin.crt
+    client_key: /var/lib/rancher/rke2/server/tls/client-admin.key
+    ca_path: /var/lib/rancher/rke2/server/tls/server-ca.crt
+  register: vip_test
   when: inventory_hostname == groups['servers'][0]
+  ignore_errors: true
 
 - name: Display VIP access test results
   ansible.builtin.debug:
-    msg: "✓ Cluster is accessible via VIP {{ vip }}"
-  when:
-    - inventory_hostname == groups['servers'][0]
-    - vip_access_test.rc == 0
-
-- name: Create test LoadBalancer service for validation
-  ansible.builtin.copy:
-    content: |
-      apiVersion: v1
-      kind: Service
-      metadata:
-        name: nginx-lb-test
-        namespace: default
-      spec:
-        type: LoadBalancer
-        ports:
-        - port: 80
-          targetPort: 80
-        selector:
-          app: nginx-test
-      ---
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: nginx-test
-        namespace: default
-      spec:
-        replicas: 2
-        selector:
-          matchLabels:
-            app: nginx-test
-        template:
-          metadata:
-            labels:
-              app: nginx-test
-          spec:
-            containers:
-            - name: nginx
-              image: nginx:alpine
-              ports:
-              - containerPort: 80
-    dest: /home/{{ ansible_user }}/nginx-test.yaml
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-    mode: '0644'
+    msg:
+      - "VIP ({{ vip }}) Access Test: {{ 'SUCCESS' if vip_test.status == 200 else 'FAILED' }}"
+      - "Status Code: {{ vip_test.status | default('N/A') }}"
   when: inventory_hostname == groups['servers'][0]
 
-- name: Deploy test application
-  ansible.builtin.command:
-    cmd: kubectl apply -f /home/{{ ansible_user }}/nginx-test.yaml
-  become_user: "{{ ansible_user }}"
-  changed_when: true
-  when: inventory_hostname == groups['servers'][0]
-
-- name: Wait for LoadBalancer IP assignment
-  ansible.builtin.command:
-    cmd: "kubectl get service nginx-lb-test -o jsonpath='{.status.loadBalancer.ingress[0].ip}'"
-  register: lb_ip
-  until: lb_ip.stdout != ""
-  retries: 30
-  delay: 10
-  become_user: "{{ ansible_user }}"
-  when: inventory_hostname == groups['servers'][0]
-
-- name: Display LoadBalancer IP
+- name: Display cluster information
   ansible.builtin.debug:
-    msg: "✓ MetalLB assigned IP: {{ lb_ip.stdout }}"
-  when:
-    - inventory_hostname == groups['servers'][0]
-    - lb_ip.stdout != ""
+    msg:
+      - "=== RKE2 Cluster Deployment Complete ==="
+      - "Cluster API Server VIP: https://{{ vip }}:6443"
+      - "Nodes: {{ groups['servers'] | length }} servers, {{ groups['agents'] | length }} agents"
+      - "Kubeconfig location: /home/{{ ansible_user }}/.kube/config"
+      - ""
+      - "Next steps:"
+      - "1. SSH to server1: ssh {{ ansible_user }}@{{ hostvars[groups['servers'][0]]['ansible_host'] }}"
+      - "2. Test cluster: kubectl get nodes"
+      - "3. Deploy applications via GitOps (FluxCD can be installed later)"
+      - ""
+      - "Note: MetalLB and other applications should be deployed via GitOps"
+  when: inventory_hostname == groups['servers'][0]

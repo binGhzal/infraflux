@@ -28,6 +28,191 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Get server IPs from Terraform output
+get_server_ips() {
+    if command -v terraform &>/dev/null && [ -f "terraform.tfstate" ]; then
+        terraform output -json rke2_server_ips 2>/dev/null | jq -r '.[]' 2>/dev/null || echo ""
+    fi
+}
+
+# Get VIP from Terraform output
+get_vip() {
+    if command -v terraform &>/dev/null && [ -f "terraform.tfstate" ]; then
+        terraform output -raw rke2_cluster_endpoint 2>/dev/null || echo ""
+    fi
+}
+
+# Test SSH connectivity
+test_ssh_connectivity() {
+    print_status "Testing SSH connectivity to cluster nodes..."
+
+    local server_ips=$(get_server_ips)
+    if [ -z "$server_ips" ]; then
+        print_error "Could not get server IPs from Terraform output"
+        return 1
+    fi
+
+    local first_server=$(echo "$server_ips" | head -1)
+
+    if ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no binghzal@$first_server 'echo "Connected"' >/dev/null 2>&1; then
+        print_success "SSH connectivity to first server ($first_server) successful"
+        return 0
+    else
+        print_error "SSH connectivity to first server ($first_server) failed"
+        return 1
+    fi
+}
+
+# Test cluster nodes
+test_cluster_nodes() {
+    print_status "Testing cluster node status..."
+
+    local server_ips=$(get_server_ips)
+    local first_server=$(echo "$server_ips" | head -1)
+
+    if [ -z "$first_server" ]; then
+        print_error "Could not determine first server IP"
+        return 1
+    fi
+
+    local node_output
+    if node_output=$(ssh -o StrictHostKeyChecking=no binghzal@$first_server 'kubectl get nodes --no-headers' 2>/dev/null); then
+        local node_count=$(echo "$node_output" | wc -l)
+        local ready_count=$(echo "$node_output" | grep -c "Ready" || true)
+
+        print_success "Cluster has $node_count nodes, $ready_count are Ready"
+
+        if [ "$node_count" -eq "$ready_count" ]; then
+            print_success "All nodes are in Ready state"
+            return 0
+        else
+            print_warning "Some nodes are not Ready"
+            echo "$node_output"
+            return 1
+        fi
+    else
+        print_error "Could not get cluster node status"
+        return 1
+    fi
+}
+
+# Test VIP access
+test_vip_access() {
+    print_status "Testing VIP access..."
+
+    local vip=$(get_vip)
+    local server_ips=$(get_server_ips)
+    local first_server=$(echo "$server_ips" | head -1)
+
+    if [ -z "$vip" ] || [ -z "$first_server" ]; then
+        print_error "Could not determine VIP or first server IP"
+        return 1
+    fi
+
+    if ssh -o StrictHostKeyChecking=no binghzal@$first_server "kubectl --server=https://$vip:6443 --insecure-skip-tls-verify get nodes >/dev/null 2>&1"; then
+        print_success "VIP access ($vip) is working correctly"
+        return 0
+    else
+        print_error "VIP access ($vip) failed"
+        return 1
+    fi
+}
+
+# Test cluster services
+test_cluster_services() {
+    print_status "Testing cluster system services..."
+
+    local server_ips=$(get_server_ips)
+    local first_server=$(echo "$server_ips" | head -1)
+
+    if [ -z "$first_server" ]; then
+        print_error "Could not determine first server IP"
+        return 1
+    fi
+
+    # Test CoreDNS
+    if ssh -o StrictHostKeyChecking=no binghzal@$first_server 'kubectl get pods -n kube-system -l k8s-app=kube-dns --no-headers | grep -q Running' 2>/dev/null; then
+        print_success "CoreDNS is running"
+    else
+        print_warning "CoreDNS status unknown"
+    fi
+
+    # Test Canal CNI
+    if ssh -o StrictHostKeyChecking=no binghzal@$first_server 'kubectl get pods -n kube-system -l app=canal --no-headers | grep -q Running' 2>/dev/null; then
+        print_success "Canal CNI is running"
+    else
+        print_warning "Canal CNI status unknown"
+    fi
+
+    return 0
+}
+
+# Display cluster information
+display_cluster_info() {
+    print_status "Gathering cluster information..."
+
+    local server_ips=$(get_server_ips)
+    local agent_ips
+    local vip=$(get_vip)
+
+    if command -v terraform &>/dev/null && [ -f "terraform.tfstate" ]; then
+        agent_ips=$(terraform output -json rke2_agent_ips 2>/dev/null | jq -r '.[]' 2>/dev/null || echo "")
+    fi
+
+    echo ""
+    echo "=== RKE2 Cluster Information ==="
+    echo "VIP (API Server): https://$vip:6443"
+    echo ""
+    echo "Server Nodes:"
+    for ip in $server_ips; do
+        echo "  - $ip"
+    done
+    echo ""
+    echo "Agent Nodes:"
+    for ip in $agent_ips; do
+        echo "  - $ip"
+    done
+    echo ""
+    echo "Access Methods:"
+    echo "1. SSH to any server: ssh binghzal@<server-ip>"
+    echo "2. Use kubectl: kubectl get nodes"
+    echo "3. Copy kubeconfig: scp binghzal@$(echo "$server_ips" | head -1):.kube/config ~/.kube/config"
+    echo ""
+    echo "Next Steps:"
+    echo "1. Deploy MetalLB via FluxCD/GitOps"
+    echo "2. Deploy applications"
+    echo "3. Set up monitoring and logging"
+}
+
+# Main validation function
+main() {
+    echo ""
+    echo "=== RKE2 Cluster Validation ==="
+    echo ""
+
+    local failed=0
+
+    # Run tests
+    test_ssh_connectivity || failed=1
+    test_cluster_nodes || failed=1
+    test_vip_access || failed=1
+    test_cluster_services || failed=1
+
+    echo ""
+
+    if [ $failed -eq 0 ]; then
+        print_success "All validation tests passed!"
+        display_cluster_info
+        exit 0
+    else
+        print_error "Some validation tests failed!"
+        display_cluster_info
+        exit 1
+    fi
+}
+
+main "$@"
+
 # Function to check if terraform outputs are available
 check_terraform_outputs() {
     print_status "Checking Terraform outputs..."
