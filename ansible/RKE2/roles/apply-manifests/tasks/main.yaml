@@ -80,7 +80,8 @@
       - "Next steps:"
       - "1. SSH to server1: ssh {{ ansible_user }}@{{ hostvars[groups['servers'][0]]['ansible_host'] }}"
       - "2. Test cluster: kubectl get nodes"
-      - "3. Deploy applications via GitOps (FluxCD can be installed later)"
+      - "3. Deploy applications via GitOps (FluxCD recommended)"
       - ""
-      - "Note: MetalLB and other applications should be deployed via GitOps"
+      - "Note: Load balancer (MetalLB) and other applications"
+      - "should be deployed via GitOps for better management"
   when: inventory_hostname == groups['servers'][0]

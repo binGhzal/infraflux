@@ -51,6 +51,10 @@ Thumbs.db
 ansible/RKE2/inventory/hosts.ini
 ansible/RKE2/inventory/group_vars/all.yaml
 
+# Kubeconfig files
+kubeconfig*
+.kube/
+
 # SSH keys
 *.pem
 *.key

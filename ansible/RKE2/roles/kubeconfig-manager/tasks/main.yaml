@@ -13,6 +13,8 @@
   delegate_to: localhost
   when: inventory_hostname == groups['servers'][0]
   run_once: true
+  become: false
+  connection: local
 
 - name: Parse kubeconfig content
   ansible.builtin.set_fact:
@@ -59,6 +61,8 @@
   delegate_to: localhost
   when: inventory_hostname == groups['servers'][0]
   run_once: true
+  become: false
+  connection: local
 
 - name: Create timestamped kubeconfig backup
   ansible.builtin.copy:
@@ -67,6 +71,8 @@
   delegate_to: localhost
   when: inventory_hostname == groups['servers'][0]
   run_once: true
+  become: false
+  connection: local
 
 # Optionally merge with local kubeconfig
 - name: Check if local kubeconfig exists
@@ -76,6 +82,8 @@
   delegate_to: localhost
   when: inventory_hostname == groups['servers'][0]
   run_once: true
+  become: false
+  connection: local
 
 - name: Create local .kube directory if it doesn't exist
   ansible.builtin.file:
@@ -85,6 +93,8 @@
   delegate_to: localhost
   when: inventory_hostname == groups['servers'][0]
   run_once: true
+  become: false
+  connection: local
 
 - name: Backup existing local kubeconfig
   ansible.builtin.copy:
@@ -95,6 +105,8 @@
     - inventory_hostname == groups['servers'][0]
     - local_kubeconfig.stat.exists
   run_once: true
+  become: false
+  connection: local
 
 - name: Copy kubeconfig to local .kube directory
   ansible.builtin.copy:
@@ -104,6 +116,8 @@
   delegate_to: localhost
   when: inventory_hostname == groups['servers'][0]
   run_once: true
+  become: false
+  connection: local
 
 # Merge with existing kubeconfig if available
 - name: Check if kubectl is available
@@ -113,27 +127,47 @@
   ignore_errors: true
   when: inventory_hostname == groups['servers'][0]
   run_once: true
+  become: false
+  connection: local
 
-- name: Merge kubeconfig contexts if kubectl is available
+- name: Create separate context file
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../kubeconfig"
+    dest: "{{ lookup('env', 'HOME') }}/.kube/config-{{ cluster_name }}"
+    mode: '0600'
+  delegate_to: localhost
+  when: inventory_hostname == groups['servers'][0]
+  run_once: true
+  become: false
+  connection: local
+
+- name: Merge kubeconfig contexts if kubectl is available and backup exists
   ansible.builtin.shell: |
-    # Create a separate context file
-    cp "{{ playbook_dir }}/../../kubeconfig" "{{ lookup('env', 'HOME') }}/.kube/config-{{ cluster_name }}"
+    set -e
+    HOME_DIR={{ lookup('env', 'HOME') | quote }}
+    BACKUP_FILE=${HOME_DIR}/.kube/config.backup-{{ ansible_date_time.epoch }}
+    CLUSTER_FILE=${HOME_DIR}/.kube/config-{{ cluster_name }}
+    MAIN_CONFIG=${HOME_DIR}/.kube/config
 
-    # If there's an existing config and kubectl is available, merge contexts
-    if [ -f "{{ lookup('env', 'HOME') }}/.kube/config.backup-{{ ansible_date_time.epoch }}" ] && command -v kubectl > /dev/null; then
-      KUBECONFIG="{{ lookup('env', 'HOME') }}/.kube/config.backup-{{ ansible_date_time.epoch }}:{{ lookup('env', 'HOME') }}/.kube/config-{{ cluster_name }}" kubectl config view --flatten > /tmp/merged-kubeconfig
-      mv /tmp/merged-kubeconfig "{{ lookup('env', 'HOME') }}/.kube/config"
-      chmod 600 "{{ lookup('env', 'HOME') }}/.kube/config"
-      kubectl config use-context "{{ cluster_name }}"
+    if [ -f "${BACKUP_FILE}" ] && command -v kubectl > /dev/null 2>&1; then
+      echo "Merging kubeconfig contexts..."
+      KUBECONFIG="${BACKUP_FILE}:${CLUSTER_FILE}" kubectl config view --flatten > /tmp/merged-kubeconfig
+      mv /tmp/merged-kubeconfig "${MAIN_CONFIG}"
+      chmod 600 "${MAIN_CONFIG}"
+      kubectl config use-context {{ cluster_name | quote }}
+      echo "Kubeconfig merged and context switched to {{ cluster_name }}"
     else
-      # If no existing config or kubectl not available, just use the new one
-      cp "{{ lookup('env', 'HOME') }}/.kube/config-{{ cluster_name }}" "{{ lookup('env', 'HOME') }}/.kube/config"
+      echo "Using new kubeconfig as primary config..."
+      cp "${CLUSTER_FILE}" "${MAIN_CONFIG}"
+      chmod 600 "${MAIN_CONFIG}"
     fi
   delegate_to: localhost
   when:
     - inventory_hostname == groups['servers'][0]
     - local_kubeconfig.stat.exists
   run_once: true
+  become: false
+  connection: local
 
 - name: Display kubeconfig information
   ansible.builtin.debug:
