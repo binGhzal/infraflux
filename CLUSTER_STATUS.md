@@ -32,6 +32,19 @@
 - **Solution**: Temporarily disabled debug output, ensured proper variable scoping
 - **Status**: ✅ Fixed
 
+### 6. Kubeconfig Authentication Issues
+
+- **Problem**: 401 Unauthorized errors due to certificate authority mismatch and generic cluster naming
+- **Solution**: Updated kubeconfig with correct certificate data and meaningful cluster/user names
+- **Status**: ✅ Fixed
+
+**Details**:
+- Fixed certificate authority data mismatch between local kubeconfig and server
+- Changed cluster name from "default" to "infraflux-rke2"
+- Changed user name from "default" to "infraflux-admin"
+- Updated kubeconfig-manager role to automatically apply proper naming
+- VIP access now working correctly with proper certificates
+
 ## 🎯 Current Cluster Status
 
 ### Infrastructure

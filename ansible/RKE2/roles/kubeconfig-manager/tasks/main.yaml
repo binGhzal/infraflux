@@ -1,0 +1,81 @@
+---
+# Copy kubeconfig from server to local machine with proper naming
+- name: Copy kubeconfig from server to local machine
+  ansible.builtin.fetch:
+    src: /etc/rancher/rke2/rke2.yaml
+    dest: "{{ playbook_dir }}/../../kubeconfig"
+    flat: yes
+  run_once: true
+
+# Update cluster name in the kubeconfig
+- name: Update cluster name to infraflux-rke2
+  ansible.builtin.replace:
+    path: "{{ playbook_dir }}/../../kubeconfig"
+    regexp: 'name: default'
+    replace: 'name: infraflux-rke2'
+  delegate_to: localhost
+  run_once: true
+
+# Update context cluster reference
+- name: Update context cluster reference
+  ansible.builtin.replace:
+    path: "{{ playbook_dir }}/../../kubeconfig"
+    regexp: 'cluster: default'
+    replace: 'cluster: infraflux-rke2'
+  delegate_to: localhost
+  run_once: true
+
+# Update context name
+- name: Update context name
+  ansible.builtin.replace:
+    path: "{{ playbook_dir }}/../../kubeconfig"
+    regexp: 'name: default'
+    replace: 'name: infraflux-rke2'
+  delegate_to: localhost
+  run_once: true
+
+# Update current-context
+- name: Update current-context
+  ansible.builtin.replace:
+    path: "{{ playbook_dir }}/../../kubeconfig"
+    regexp: 'current-context: default'
+    replace: 'current-context: infraflux-rke2'
+  delegate_to: localhost
+  run_once: true
+
+# Update user name
+- name: Update user name to infraflux-admin
+  ansible.builtin.replace:
+    path: "{{ playbook_dir }}/../../kubeconfig"
+    regexp: 'user: default'
+    replace: 'user: infraflux-admin'
+  delegate_to: localhost
+  run_once: true
+
+# Update user name in users section
+- name: Update user name in users section
+  ansible.builtin.replace:
+    path: "{{ playbook_dir }}/../../kubeconfig"
+    regexp: '- name: default'
+    replace: '- name: infraflux-admin'
+  delegate_to: localhost
+  run_once: true
+
+# Replace localhost with VIP for external access
+- name: Replace localhost with VIP in kubeconfig
+  ansible.builtin.replace:
+    path: "{{ playbook_dir }}/../../kubeconfig"
+    regexp: '127\.0\.0\.1'
+    replace: "{{ vip }}"
+  delegate_to: localhost
+  run_once: true
+
+- name: Display kubeconfig location
+  ansible.builtin.debug:
+    msg:
+      - "Kubeconfig has been updated and saved to: {{ playbook_dir }}/../../kubeconfig"
+      - "Cluster name: infraflux-rke2"
+      - "User: infraflux-admin"
+      - "Server: https://{{ vip }}:6443"
+      - "To use: export KUBECONFIG=$(pwd)/kubeconfig"
+  run_once: true
