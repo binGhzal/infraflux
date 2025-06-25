@@ -1,5 +1,7 @@
 # Zero-trust networking policies
 # Default deny all traffic
+---
+---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:

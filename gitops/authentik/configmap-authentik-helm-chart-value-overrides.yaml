@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -12,10 +13,10 @@ data:
         repository: ghcr.io/goauthentik/server
         tag: "2025.6.2"
         pullPolicy: IfNotPresent
-      
+
       # Environment type
       env: production
-      
+
       # Volumes for persistent storage
       volumes:
         media:
@@ -28,12 +29,12 @@ data:
           storageClass: "longhorn"
           size: 2Gi
           accessMode: ReadWriteOnce
-    
+
     # Authentik server configuration
     server:
       # Scaling
       replicas: 2
-      
+
       # Resources
       resources:
         requests:
@@ -42,7 +43,7 @@ data:
         limits:
           cpu: 1000m
           memory: 1Gi
-      
+
       # Environment variables (use secrets for sensitive data)
       env:
         - name: AUTHENTIK_SECRET_KEY
@@ -58,7 +59,7 @@ data:
           value: "true"
         - name: AUTHENTIK_AVATARS
           value: "none"
-      
+
       # Ingress configuration
       ingress:
         enabled: true
@@ -77,12 +78,12 @@ data:
           traefik.ingress.kubernetes.io/router.entrypoints: websecure
           traefik.ingress.kubernetes.io/router.tls: "true"
           # cert-manager.io/cluster-issuer: "letsencrypt"
-    
+
     # Worker configuration
     worker:
       # Scaling
       replicas: 2
-      
+
       # Resources
       resources:
         requests:
@@ -91,7 +92,7 @@ data:
         limits:
           cpu: 600m
           memory: 1Gi
-    
+
     # Database configuration (PostgreSQL)
     postgresql:
       enabled: true
@@ -110,7 +111,7 @@ data:
           limits:
             cpu: 500m
             memory: 512Mi
-    
+
     # Redis configuration
     redis:
       enabled: true
@@ -129,13 +130,13 @@ data:
           limits:
             cpu: 200m
             memory: 256Mi
-    
+
     # Service account
     serviceAccount:
       create: true
       annotations: {}
       name: ""
-    
+
     # Security context
     securityContext:
       runAsNonRoot: true
@@ -147,13 +148,13 @@ data:
           - ALL
       readOnlyRootFilesystem: false
       allowPrivilegeEscalation: false
-    
+
     # Node selection
     nodeSelector: {}
-    
+
     # Tolerations
     tolerations: []
-    
+
     # Affinity rules
     affinity:
       podAntiAffinity:
@@ -164,7 +165,7 @@ data:
               matchLabels:
                 app.kubernetes.io/name: authentik
             topologyKey: kubernetes.io/hostname
-    
+
     # Extra manifests for secrets (use SealedSecrets in production)
     extraManifests:
       - |
@@ -177,7 +178,7 @@ data:
         data:
           # Generate with: openssl rand -base64 32
           secret-key: Y2hhbmdlLXRoaXMtc2VjcmV0LWtleS1pbi1wcm9kdWN0aW9u  # change-this-secret-key-in-production (base64)
-    
+
     # Bootstrap configuration
     bootstrap:
       enabled: true

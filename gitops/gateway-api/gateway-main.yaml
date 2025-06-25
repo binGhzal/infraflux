@@ -1,25 +1,40 @@
-apiVersion: gateway.networking.k8s.io/v1beta1
+---
+apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: main-gateway
   namespace: cilium-gateway
+  annotations:
+    gateway.networking.k8s.io/description: "Main production gateway for InfraFlux cluster"
 spec:
   gatewayClassName: cilium
+  infrastructure:
+    labels:
+      gateway.networking.k8s.io/managed-by: "cilium"
+      environment: "production"
   listeners:
     - name: http
       protocol: HTTP
       port: 80
       allowedRoutes:
         namespaces:
-          from: All
+          from: Selector
+          selector:
+            matchLabels:
+              gateway-access: "allowed"
     - name: https
       protocol: HTTPS
       port: 443
       allowedRoutes:
         namespaces:
-          from: All
+          from: Selector
+          selector:
+            matchLabels:
+              gateway-access: "allowed"
       tls:
         mode: Terminate
+        options:
+          gateway.networking.k8s.io/tls-min-version: "1.2"
         certificateRefs:
           - name: wildcard-tls
             kind: Secret
