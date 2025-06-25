@@ -57,7 +57,8 @@ fi
 # Test 5: Check server URL
 echo -n "5. Checking server URL... "
 SERVER_URL=$(kubectl --kubeconfig=./kubeconfig config view --minify -o jsonpath='{.clusters[0].cluster.server}')
-if [[ "$SERVER_URL" == "https://10.0.1.50:6443" ]]; then
+EXPECTED_VIP=$(terraform output -raw external_endpoint || echo "{{ external_endpoint }}")
+if [[ "$SERVER_URL" == "https://$EXPECTED_VIP:6443" ]]; then
     echo -e "${GREEN}✓ Correct VIP ($SERVER_URL)${NC}"
 else
     echo -e "${YELLOW}⚠ Different URL ($SERVER_URL)${NC}"
