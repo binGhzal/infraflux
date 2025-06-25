@@ -8,8 +8,12 @@ terraform {
 
   required_providers {
     proxmox = {
-      source  = "bpg/proxmox"
-      version = "~> 0.73.2"
+      source  = "telmate/proxmox"
+      version = "2.9.14"
+    }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
     }
     local = {
       source  = "hashicorp/local"

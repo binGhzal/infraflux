@@ -64,3 +64,21 @@ rke2_config = {
 # Set this to your public IP or FQDN for external access to the cluster
 # Leave empty to use only internal VIP (cluster will only be accessible from internal network)
 external_endpoint = ""  # Example: "203.0.113.10" or "k8s.example.com"
+
+# Cloudflare Configuration
+cloudflare_api_token = "your-cloudflare-api-token"  # Token with Zone:DNS:Edit permissions
+cloudflare_domain    = "example.com"                # Your domain managed by Cloudflare
+
+# Cluster Configuration
+cluster_name = "infraflux-rke2"
+
+# Cilium Networking Configuration (Optional - has defaults)
+# cilium_config = {
+#   pod_cidr           = "10.244.0.0/16"
+#   service_cidr       = "10.96.0.0/12"
+#   bgp_asn           = 65001
+#   bgp_peer_asn      = 65000
+#   lb_ip_range       = "192.168.3.80-192.168.3.90"
+#   enable_bgp        = true
+#   enable_encryption = true
+# }
