@@ -1,0 +1,41 @@
+# L7 Network Policies for application-layer security
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: api-access-control
+  namespace: default
+spec:
+  endpointSelector:
+    matchLabels:
+      app: api-server
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: frontend
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+          rules:
+            http:
+              - method: "GET"
+                path: "/api/v1/*"
+              - method: "POST"
+                path: "/api/v1/users"
+                headers:
+                  - "Content-Type: application/json"
+              - method: "PUT"
+                path: "/api/v1/users/*"
+    - fromEndpoints:
+        - matchLabels:
+            app: admin-console
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+          rules:
+            http:
+              - method: "GET"
+              - method: "POST"
+              - method: "PUT"
+              - method: "DELETE"
