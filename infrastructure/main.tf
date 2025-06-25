@@ -216,12 +216,22 @@ output "ansible_inventory_path" {
   value       = local_file.ansible_inventory.filename
 }
 
-output "metallb_ip_range" {
-  description = "MetalLB IP range for load balancer services"
-  value       = var.rke2_config.lb_range
+output "cilium_lb_ip_range" {
+  description = "Cilium BGP LoadBalancer IP range for services"
+  value       = var.cilium_config.lb_ip_range
 }
 
 output "ansible_config_path" {
   description = "Path to generated Ansible configuration file"
   value       = local_file.ansible_config.filename
+}
+
+output "cilium_bgp_asn" {
+  description = "Cilium BGP ASN for cluster"
+  value       = var.cilium_config.bgp_asn
+}
+
+output "external_endpoint" {
+  description = "External endpoint for cluster access"
+  value       = var.external_endpoint != "" ? var.external_endpoint : var.rke2_config.vip
 }
