@@ -1,6 +1,9 @@
 write-kubeconfig-mode: "0644"
 tls-san:
   - {{ vip }}
+{% if external_endpoint is defined and external_endpoint != "" %}
+  - {{ external_endpoint }}
+{% endif %}
 {% for host in groups['servers'] %}
   - {{ hostvars[host]['ansible_host'] }}
 {% endfor %}
