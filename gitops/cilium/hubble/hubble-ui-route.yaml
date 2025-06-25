@@ -5,14 +5,14 @@ metadata:
   name: hubble-ui
   namespace: kube-system
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: hubble.yourdomain.com
+    external-dns.alpha.kubernetes.io/hostname: hubble.{{ cloudflare_domain }}
     external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
 spec:
   parentRefs:
     - name: main-gateway
       namespace: cilium-gateway
   hostnames:
-    - hubble.yourdomain.com
+    - hubble.{{ cloudflare_domain }}
   rules:
     - matches:
         - path:
