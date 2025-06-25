@@ -4,11 +4,7 @@
 # - [ ] Consider breaking this file into modules (network, compute, templates)
 # - [ ] Consider adding validation for IP ranges and network configurations
 
-provider "proxmox" {
-  endpoint  = var.proxmox_api_url
-  api_token = "${var.proxmox_api_token_id}=${var.proxmox_api_token_secret}"
-  insecure  = true
-}
+# Provider configuration moved to providers.tf
 
 # Resource pool for our RKE2 cluster
 resource "proxmox_virtual_environment_pool" "rke2_pool" {
