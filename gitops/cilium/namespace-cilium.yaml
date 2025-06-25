@@ -1,9 +1,11 @@
+# Cilium runs in kube-system namespace
+# This file ensures the namespace has proper labels
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: traefik-system
+  name: kube-system
   labels:
-    name: traefik-system
+    name: kube-system
     pod-security.kubernetes.io/enforce: privileged
     pod-security.kubernetes.io/audit: privileged
     pod-security.kubernetes.io/warn: privileged
