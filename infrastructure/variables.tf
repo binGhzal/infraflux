@@ -60,47 +60,47 @@ variable "vm_username" {
 
 variable "rke2_servers" {
   description = "RKE2 server nodes configuration"
-  type        = object({
-    count        = number
-    vm_id_start  = number
-    ip_start     = string
-    cpu_cores    = number
-    memory       = number
-    disk_size    = number
+  type = object({
+    count       = number
+    vm_id_start = number
+    ip_start    = string
+    cpu_cores   = number
+    memory      = number
+    disk_size   = number
   })
   default = {
-    count        = 3
-    vm_id_start  = 500
-    ip_start     = "192.168.3.21"
-    cpu_cores    = 2
-    memory       = 4096
-    disk_size    = 50
+    count       = 3
+    vm_id_start = 500
+    ip_start    = "192.168.3.21"
+    cpu_cores   = 2
+    memory      = 4096
+    disk_size   = 50
   }
 }
 
 variable "rke2_agents" {
   description = "RKE2 agent nodes configuration"
-  type        = object({
-    count        = number
-    vm_id_start  = number
-    ip_start     = string
-    cpu_cores    = number
-    memory       = number
-    disk_size    = number
+  type = object({
+    count       = number
+    vm_id_start = number
+    ip_start    = string
+    cpu_cores   = number
+    memory      = number
+    disk_size   = number
   })
   default = {
-    count        = 2
-    vm_id_start  = 550
-    ip_start     = "192.168.3.24"
-    cpu_cores    = 2
-    memory       = 4096
-    disk_size    = 50
+    count       = 2
+    vm_id_start = 550
+    ip_start    = "192.168.3.24"
+    cpu_cores   = 2
+    memory      = 4096
+    disk_size   = 50
   }
 }
 
 variable "rke2_config" {
   description = "RKE2 cluster configuration"
-  type        = object({
+  type = object({
     os               = string
     arch             = string
     vip              = string
@@ -126,7 +126,7 @@ variable "rke2_config" {
 
 variable "network_config" {
   description = "Network configuration for RKE2 cluster"
-  type        = object({
+  type = object({
     bridge      = string
     subnet      = string
     subnet_mask = number
@@ -164,8 +164,8 @@ variable "cloudflare_domain" {
 variable "cilium_config" {
   description = "Cilium-specific networking configuration"
   type = object({
-    pod_cidr           = string
-    service_cidr       = string
+    pod_cidr          = string
+    service_cidr      = string
     bgp_asn           = number
     bgp_peer_asn      = number
     lb_ip_range       = string
@@ -173,8 +173,8 @@ variable "cilium_config" {
     enable_encryption = bool
   })
   default = {
-    pod_cidr           = "10.244.0.0/16"
-    service_cidr       = "10.96.0.0/12"
+    pod_cidr          = "10.244.0.0/16"
+    service_cidr      = "10.96.0.0/12"
     bgp_asn           = 65001
     bgp_peer_asn      = 65000
     lb_ip_range       = "192.168.3.80-192.168.3.90"

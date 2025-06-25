@@ -137,11 +137,11 @@ test_cluster_services() {
         print_warning "CoreDNS status unknown"
     fi
 
-    # Test Canal CNI
-    if ssh -o StrictHostKeyChecking=no binghzal@$first_server 'kubectl get pods -n kube-system -l app=canal --no-headers | grep -q Running' 2>/dev/null; then
-        print_success "Canal CNI is running"
+    # Test Cilium CNI
+    if ssh -o StrictHostKeyChecking=no binghzal@$first_server 'kubectl get pods -n kube-system -l k8s-app=cilium --no-headers | grep -q Running' 2>/dev/null; then
+        print_success "Cilium CNI is running"
     else
-        print_warning "Canal CNI status unknown"
+        print_warning "Cilium CNI status unknown"
     fi
 
     return 0
@@ -179,9 +179,9 @@ display_cluster_info() {
     echo "3. Copy kubeconfig: scp binghzal@$(echo "$server_ips" | head -1):.kube/config ~/.kube/config"
     echo ""
     echo "Next Steps:"
-    echo "1. Deploy MetalLB via FluxCD/GitOps"
-    echo "2. Deploy applications"
-    echo "3. Set up monitoring and logging"
+    echo "1. Deploy applications via FluxCD/GitOps"
+    echo "2. Configure Cilium BGP for LoadBalancer services"
+    echo "3. Set up monitoring and logging with Hubble"
 }
 
 # Main validation function
@@ -404,40 +404,40 @@ check_kube_vip() {
     fi
 }
 
-# Function to check MetalLB
-check_metallb() {
-    print_status "Checking MetalLB..."
+# Function to check Cilium
+check_cilium() {
+    print_status "Checking Cilium..."
 
     FIRST_SERVER=$(terraform output -json rke2_server_ips | jq -r '.[0]')
 
-    # Check MetalLB namespace exists
-    if ssh -o StrictHostKeyChecking=no ansible@$FIRST_SERVER "kubectl get namespace metallb-system" &>/dev/null; then
-        print_success "MetalLB namespace exists"
+    # Check Cilium pods
+    CILIUM_PODS=$(ssh -o StrictHostKeyChecking=no ansible@$FIRST_SERVER "kubectl get pods -n kube-system -l k8s-app=cilium --no-headers" 2>/dev/null)
 
-        # Check MetalLB pods
-        METALLB_PODS=$(ssh -o StrictHostKeyChecking=no ansible@$FIRST_SERVER "kubectl get pods -n metallb-system --no-headers" 2>/dev/null)
+    if [[ -n "$CILIUM_PODS" ]]; then
+        running_cilium_pods=$(echo "$CILIUM_PODS" | grep -c "Running" || true)
+        total_cilium_pods=$(echo "$CILIUM_PODS" | wc -l)
 
-        if [[ -n "$METALLB_PODS" ]]; then
-            running_metallb_pods=$(echo "$METALLB_PODS" | grep -c "Running" || true)
-            total_metallb_pods=$(echo "$METALLB_PODS" | wc -l)
-
-            if [[ $running_metallb_pods -eq $total_metallb_pods ]]; then
-                print_success "MetalLB pods are running ($running_metallb_pods/$total_metallb_pods)"
-            else
-                print_warning "Some MetalLB pods are not running ($running_metallb_pods/$total_metallb_pods)"
-            fi
+        if [[ $running_cilium_pods -eq $total_cilium_pods ]]; then
+            print_success "Cilium pods are running ($running_cilium_pods/$total_cilium_pods)"
         else
-            print_warning "No MetalLB pods found"
-        fi
-
-        # Check IP pool
-        if ssh -o StrictHostKeyChecking=no ansible@$FIRST_SERVER "kubectl get ipaddresspool -n metallb-system" &>/dev/null; then
-            print_success "MetalLB IP address pool is configured"
-        else
-            print_warning "MetalLB IP address pool is not configured"
+            print_warning "Some Cilium pods are not running ($running_cilium_pods/$total_cilium_pods)"
         fi
     else
-        print_warning "MetalLB namespace does not exist"
+        print_warning "No Cilium pods found"
+    fi
+
+    # Check Cilium status
+    if ssh -o StrictHostKeyChecking=no ansible@$FIRST_SERVER "kubectl exec -n kube-system ds/cilium -- cilium status --brief" &>/dev/null; then
+        print_success "Cilium status check passed"
+    else
+        print_warning "Cilium status check failed"
+    fi
+
+    # Check BGP peering if enabled
+    if ssh -o StrictHostKeyChecking=no ansible@$FIRST_SERVER "kubectl get ciliumloadbalancerippool" &>/dev/null; then
+        print_success "Cilium LoadBalancer IP pool is configured"
+    else
+        print_warning "Cilium LoadBalancer IP pool is not configured"
     fi
 }
 
@@ -447,13 +447,13 @@ show_summary() {
 
     FIRST_SERVER=$(terraform output -json rke2_server_ips | jq -r '.[0]')
     VIP=$(terraform output -raw rke2_cluster_endpoint)
-    METALLB_RANGE=$(terraform output -raw metallb_ip_range)
+    LB_RANGE=$(terraform output -raw metallb_ip_range 2>/dev/null || echo "Not configured")
 
     echo ""
     echo "Cluster Access:"
     echo "  API Server VIP: https://$VIP:6443"
     echo "  SSH to first server: ssh ansible@$FIRST_SERVER"
-    echo "  MetalLB IP Range: $METALLB_RANGE"
+    echo "  LoadBalancer IP Range: $LB_RANGE"
     echo ""
     echo "Next steps:"
     echo "  1. SSH to first server: ssh ansible@$FIRST_SERVER"
@@ -473,7 +473,7 @@ main() {
     check_cluster_nodes
     check_cluster_pods
     check_kube_vip
-    check_metallb
+    check_cilium
 
     echo ""
     print_success "Cluster validation completed successfully!"

@@ -22,7 +22,7 @@
 
 # Ensure required kernel modules are loaded
 - name: Load required kernel modules for Cilium eBPF
-  modprobe:
+  community.general.modprobe:
     name: "{{ item }}"
     state: present
   loop:
@@ -40,6 +40,7 @@
     path: /etc/modules-load.d/rke2.conf
     line: "{{ item }}"
     create: true
+    mode: '0644'
   loop:
     - br_netfilter
     - overlay
@@ -51,7 +52,7 @@
 
 # Configure sysctl for eBPF optimization and networking
 - name: Configure sysctl for eBPF optimization
-  sysctl:
+  ansible.posix.sysctl:
     name: "{{ item.key }}"
     value: "{{ item.value }}"
     reload: true
@@ -70,7 +71,7 @@
 - name: Disable swap
   ansible.builtin.command: swapoff -a
   changed_when: false
-  ignore_errors: true
+  failed_when: false
 
 - name: Remove swap from fstab
   ansible.builtin.lineinfile:

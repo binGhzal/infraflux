@@ -10,6 +10,7 @@
   retries: 30
   delay: 10
   changed_when: false
+  become: true
   become_user: "{{ ansible_user }}"
   when: inventory_hostname == groups['servers'][0]
 
@@ -17,6 +18,7 @@
   ansible.builtin.command:
     cmd: "kubectl wait --for=condition=Ready nodes --all --timeout=600s"
   changed_when: false
+  become: true
   become_user: "{{ ansible_user }}"
   when: inventory_hostname == groups['servers'][0]
 
@@ -25,6 +27,8 @@
   ansible.builtin.command:
     cmd: "kubectl get nodes -o wide"
   register: cluster_nodes
+  changed_when: false
+  become: true
   become_user: "{{ ansible_user }}"
   when: inventory_hostname == groups['servers'][0]
 
@@ -37,6 +41,8 @@
   ansible.builtin.command:
     cmd: "kubectl cluster-info"
   register: cluster_info
+  changed_when: false
+  become: true
   become_user: "{{ ansible_user }}"
   when: inventory_hostname == groups['servers'][0]
 
@@ -49,6 +55,8 @@
   ansible.builtin.command:
     cmd: "kubectl get pods -n kube-system"
   register: system_pods
+  changed_when: false
+  become: true
   become_user: "{{ ansible_user }}"
   when: inventory_hostname == groups['servers'][0]
 

@@ -7,7 +7,7 @@ InfraFlux provides a complete automation solution for deploying production-ready
 - **🏗️ Automated Infrastructure**: Terraform provisions VMs on Proxmox
 - **⚙️ Cluster Deployment**: Ansible installs and configures RKE2
 - **🔄 High Availability**: 3-node control plane with etcd clustering
-- **⚖️ Load Balancing**: Kube-VIP for API server, MetalLB for services
+- **⚖️ Load Balancing**: Kube-VIP for API server, Cilium BGP for services
 - **🎯 One-Command Deployment**: Simple script-based deployment
 - **✅ Validation Tools**: Built-in cluster validation and health checks
 - **🔐 Production Security**: FIPS 140-2 and CIS Kubernetes Benchmark compliance
@@ -19,7 +19,7 @@ InfraFlux provides a complete automation solution for deploying production-ready
 - **Control Plane (3 Servers)**: RKE2 server nodes for HA control plane (VM IDs: 500-502)
 - **Worker Nodes (2+ Agents)**: RKE2 agent nodes for workload execution (VM IDs: 550+)
 - **Virtual IP**: Kube-VIP provides floating IP for API server access
-- **Load Balancer**: MetalLB manages LoadBalancer service IPs
+- **Load Balancer**: Cilium BGP manages LoadBalancer service IPs
 - **Network**: Static IP configuration with VLAN support
 - **Storage**: Configurable disk allocation per node
 
@@ -27,7 +27,7 @@ InfraFlux provides a complete automation solution for deploying production-ready
 
 - **Infrastructure Layer**: Proxmox VMs managed by Terraform
 - **Kubernetes Layer**: RKE2 cluster managed by Ansible
-- **Network Layer**: Kube-VIP for control plane HA, MetalLB for LoadBalancer services
+- **Network Layer**: Kube-VIP for control plane HA, Cilium CNI with BGP for LoadBalancer services
 - **Management Layer**: Deployment and validation scripts
 
 ## 🏃‍♂️ Quick Start
@@ -330,8 +330,8 @@ systemctl status rke2-agent   # On agent nodes
 # Verify Kube-VIP
 kubectl get pods -n kube-system | grep kube-vip
 
-# Verify MetalLB
-kubectl get pods -n metallb-system
+# Verify Cilium BGP
+kubectl get pods -n kube-system | grep cilium
 ```
 
 ## ⚡ Scaling & Customization

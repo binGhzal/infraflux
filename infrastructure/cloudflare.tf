@@ -11,7 +11,7 @@ data "cloudflare_zone" "main" {
 # API Token for External-DNS
 resource "cloudflare_api_token" "external_dns" {
   name = "external-dns-${var.cluster_name}"
-  
+
   policy {
     permission_groups = [
       "c8fed203ed3043cba015a93ad1616f1f", # Zone:Zone:Read
@@ -25,8 +25,8 @@ resource "cloudflare_api_token" "external_dns" {
 
 # Output the API token for use in Kubernetes secret
 output "cloudflare_api_token" {
-  value     = cloudflare_api_token.external_dns.value
-  sensitive = true
+  value       = cloudflare_api_token.external_dns.value
+  sensitive   = true
   description = "Cloudflare API token for External-DNS"
 }
 

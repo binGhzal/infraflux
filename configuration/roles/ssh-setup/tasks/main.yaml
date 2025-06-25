@@ -8,7 +8,7 @@
   loop: "{{ groups['rke2'] | map('extract', hostvars, 'ansible_host') | list }}"
   delegate_to: localhost
   run_once: true
-  ignore_errors: true
+  failed_when: false
 
 - name: Display known_hosts update status
   ansible.builtin.debug:

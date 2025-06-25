@@ -71,7 +71,7 @@ data:
           - tcp
           - flow
           - icmp
-          - http
+          - httpV2
           - kafka
           - grpc
         serviceMonitor:

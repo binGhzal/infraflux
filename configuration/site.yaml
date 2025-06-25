@@ -32,6 +32,7 @@
   hosts: servers,agents
   gather_facts: false
   become: true
+  strategy: linear
   tasks:
     - name: Fetch the token from the first server node
       ansible.builtin.slurp:

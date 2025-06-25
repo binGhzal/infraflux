@@ -89,7 +89,7 @@
     state: restarted
   when:
     - inventory_hostname == groups['servers'][0]
-  ignore_errors: true
+  failed_when: false
 
 - name: Wait again for VIP after restart
   ansible.builtin.wait_for:

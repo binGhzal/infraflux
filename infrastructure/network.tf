@@ -7,12 +7,12 @@
 output "network_config" {
   description = "Network configuration details"
   value = {
-    bridge      = var.network_config.bridge
-    subnet      = var.network_config.subnet
-    gateway     = var.network_config.gateway
-    vlan_id     = var.network_config.vlan_id
-    vip         = var.rke2_config.vip
-    lb_range    = var.rke2_config.lb_range
+    bridge   = var.network_config.bridge
+    subnet   = var.network_config.subnet
+    gateway  = var.network_config.gateway
+    vlan_id  = var.network_config.vlan_id
+    vip      = var.rke2_config.vip
+    lb_range = var.rke2_config.lb_range
   }
 }
 
@@ -20,13 +20,13 @@ output "network_config" {
 output "cilium_ports" {
   description = "Required ports for Cilium operation"
   value = {
-    health_checks    = 4240
-    hubble_server    = 4244
-    hubble_relay     = 4245
-    bgp              = 179
-    wireguard        = 51871
-    vxlan            = 8472
-    geneve           = 6081
+    health_checks = 4240
+    hubble_server = 4244
+    hubble_relay  = 4245
+    bgp           = 179
+    wireguard     = 51871
+    vxlan         = 8472
+    geneve        = 6081
   }
 }
 

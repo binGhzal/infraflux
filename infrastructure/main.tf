@@ -14,21 +14,21 @@ resource "proxmox_virtual_environment_pool" "rke2_pool" {
 
 # RKE2 Server nodes (Control Plane)
 resource "proxmox_virtual_environment_vm" "rke2_server" {
-  count = var.rke2_servers.count
-  name = "server${count.index + 1}"
+  count     = var.rke2_servers.count
+  name      = "server${count.index + 1}"
   node_name = var.proxmox_node
-  pool_id = proxmox_virtual_environment_pool.rke2_pool.pool_id
-  vm_id = var.rke2_servers.vm_id_start + count.index
-  started = true
+  pool_id   = proxmox_virtual_environment_pool.rke2_pool.pool_id
+  vm_id     = var.rke2_servers.vm_id_start + count.index
+  started   = true
 
   clone {
     vm_id = var.template_vm_id
-    full = true
+    full  = true
   }
 
   cpu {
     cores = var.rke2_servers.cpu_cores
-    type = "host"
+    type  = "host"
   }
 
   memory {
@@ -36,16 +36,16 @@ resource "proxmox_virtual_environment_vm" "rke2_server" {
   }
 
   network_device {
-    bridge = var.network_config.bridge
-    model = "virtio"
+    bridge  = var.network_config.bridge
+    model   = "virtio"
     vlan_id = var.network_config.vlan_id
   }
 
   disk {
     datastore_id = var.datastore_id
-    size = var.rke2_servers.disk_size
-    interface = "scsi0"
-    file_format = "raw"
+    size         = var.rke2_servers.disk_size
+    interface    = "scsi0"
+    file_format  = "raw"
   }
 
   initialization {
@@ -64,7 +64,7 @@ resource "proxmox_virtual_environment_vm" "rke2_server" {
     }
 
     user_account {
-      keys = [var.ssh_public_key]
+      keys     = [var.ssh_public_key]
       username = var.vm_username
     }
   }
@@ -74,20 +74,20 @@ resource "proxmox_virtual_environment_vm" "rke2_server" {
 
 # RKE2 Agent nodes (Worker Nodes)
 resource "proxmox_virtual_environment_vm" "rke2_agent" {
-  count = var.rke2_agents.count
-  name = "agent${count.index + 1}"
+  count     = var.rke2_agents.count
+  name      = "agent${count.index + 1}"
   node_name = var.proxmox_node
-  pool_id = proxmox_virtual_environment_pool.rke2_pool.pool_id
-  vm_id = var.rke2_agents.vm_id_start + count.index
+  pool_id   = proxmox_virtual_environment_pool.rke2_pool.pool_id
+  vm_id     = var.rke2_agents.vm_id_start + count.index
 
   clone {
     vm_id = var.template_vm_id
-    full = true
+    full  = true
   }
 
   cpu {
     cores = var.rke2_agents.cpu_cores
-    type = "host"
+    type  = "host"
   }
 
   memory {
@@ -95,16 +95,16 @@ resource "proxmox_virtual_environment_vm" "rke2_agent" {
   }
 
   network_device {
-    bridge = var.network_config.bridge
-    model = "virtio"
+    bridge  = var.network_config.bridge
+    model   = "virtio"
     vlan_id = var.network_config.vlan_id
   }
 
   disk {
     datastore_id = var.datastore_id
-    size = var.rke2_agents.disk_size
-    interface = "scsi0"
-    file_format = "raw"
+    size         = var.rke2_agents.disk_size
+    interface    = "scsi0"
+    file_format  = "raw"
   }
 
   initialization {
@@ -123,7 +123,7 @@ resource "proxmox_virtual_environment_vm" "rke2_agent" {
     }
 
     user_account {
-      keys = [var.ssh_public_key]
+      keys     = [var.ssh_public_key]
       username = var.vm_username
     }
   }
@@ -143,7 +143,7 @@ resource "local_file" "ansible_inventory" {
       name = agent.name
       ip   = split("/", agent.initialization[0].ip_config[0].ipv4[0].address)[0]
     }]
-    ansible_user = var.vm_username
+    ansible_user         = var.vm_username
     ssh_private_key_file = var.ssh_private_key_file
   })
 
@@ -181,7 +181,7 @@ resource "local_file" "ansible_group_vars" {
 resource "local_file" "ansible_config" {
   filename = "${path.module}/../configuration/ansible.cfg"
   content = templatefile("${path.module}/templates/ansible_config.tpl", {
-    ansible_user = var.vm_username
+    ansible_user         = var.vm_username
     ssh_private_key_file = var.ssh_private_key_file
   })
 
@@ -208,20 +208,20 @@ output "rke2_agent_ips" {
 
 output "rke2_cluster_endpoint" {
   description = "RKE2 cluster endpoint (VIP)"
-  value = var.rke2_config.vip
+  value       = var.rke2_config.vip
 }
 
 output "ansible_inventory_path" {
   description = "Path to generated Ansible inventory file"
-  value = local_file.ansible_inventory.filename
+  value       = local_file.ansible_inventory.filename
 }
 
 output "metallb_ip_range" {
   description = "MetalLB IP range for load balancer services"
-  value = var.rke2_config.lb_range
+  value       = var.rke2_config.lb_range
 }
 
 output "ansible_config_path" {
   description = "Path to generated Ansible configuration file"
-  value = local_file.ansible_config.filename
+  value       = local_file.ansible_config.filename
 }
