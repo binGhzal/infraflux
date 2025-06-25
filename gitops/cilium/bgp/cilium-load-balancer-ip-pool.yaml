@@ -5,17 +5,6 @@ metadata:
   name: main-pool
 spec:
   cidrs:
-    - cidr: "192.168.3.80/28"  # 192.168.3.80-95
+    - cidr: "{{ cilium_config.lb_ip_range.split('-')[0] }}/28"
   serviceSelector:
-    matchLabels: {}  # All LoadBalancer services by default
----
-apiVersion: cilium.io/v2alpha1
-kind: CiliumLoadBalancerIPPool
-metadata:
-  name: critical-pool
-spec:
-  cidrs:
-    - cidr: "192.168.3.96/28"  # 192.168.3.96-111
-  serviceSelector:
-    matchLabels:
-      priority: "critical"  # Services with priority=critical label
+    matchLabels: {}  # All LoadBalancer services

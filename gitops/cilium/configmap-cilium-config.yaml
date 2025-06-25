@@ -8,7 +8,7 @@ data:
   values.yaml: |
     # Complete kube-proxy replacement
     kubeProxyReplacement: "strict"
-    k8sServiceHost: "192.168.3.50"  # TODO: Replace with actual VIP from infrastructure
+    k8sServiceHost: "{{ external_endpoint | default(vip) }}"
     k8sServicePort: 6443
 
     # BGP Control Plane (replaces MetalLB)

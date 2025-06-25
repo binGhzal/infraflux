@@ -8,21 +8,13 @@ spec:
     matchLabels:
       kubernetes.io/os: linux
   virtualRouters:
-    - localASN: 65001
+    - localASN: {{ cilium_config.bgp_asn }}
       exportPodCIDR: true
       serviceSelector:
         matchLabels: {}  # All LoadBalancer services
       neighbors:
-        - peerAddress: "192.168.3.1"  # Gateway IP
-          peerASN: 65000
-          connectRetryTimeSeconds: 120
-          holdTimeSeconds: 90
-          keepAliveTimeSeconds: 30
-          gracefulRestart:
-            enabled: true
-            restartTimeSeconds: 120
-        - peerAddress: "192.168.3.2"  # Secondary gateway (if available)
-          peerASN: 65000
+        - peerAddress: "{{ network_config.gateway }}"  # Gateway IP
+          peerASN: {{ cilium_config.bgp_peer_asn }}
           connectRetryTimeSeconds: 120
           holdTimeSeconds: 90
           keepAliveTimeSeconds: 30
