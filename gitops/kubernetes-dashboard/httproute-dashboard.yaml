@@ -5,14 +5,14 @@ metadata:
   name: kubernetes-dashboard
   namespace: kubernetes-dashboard
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: dashboard.yourdomain.com
+    external-dns.alpha.kubernetes.io/hostname: dashboard.{{ cloudflare_domain }}
     external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
 spec:
   parentRefs:
     - name: main-gateway
       namespace: cilium-gateway
   hostnames:
-    - dashboard.yourdomain.com
+    - dashboard.{{ cloudflare_domain }}
   rules:
     - matches:
         - path:

@@ -5,14 +5,14 @@ metadata:
   name: longhorn
   namespace: longhorn-system
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: storage.yourdomain.com
+    external-dns.alpha.kubernetes.io/hostname: storage.{{ cloudflare_domain }}
     external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
 spec:
   parentRefs:
     - name: main-gateway
       namespace: cilium-gateway
   hostnames:
-    - storage.yourdomain.com
+    - storage.{{ cloudflare_domain }}
   rules:
     - matches:
         - path:

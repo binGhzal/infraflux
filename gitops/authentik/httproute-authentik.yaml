@@ -5,14 +5,14 @@ metadata:
   name: authentik
   namespace: authentik
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: auth.yourdomain.com
+    external-dns.alpha.kubernetes.io/hostname: auth.{{ cloudflare_domain }}
     external-dns.alpha.kubernetes.io/cloudflare-proxied: "true"
 spec:
   parentRefs:
     - name: main-gateway
       namespace: cilium-gateway
   hostnames:
-    - auth.yourdomain.com
+    - auth.{{ cloudflare_domain }}
   rules:
     - matches:
         - path:
