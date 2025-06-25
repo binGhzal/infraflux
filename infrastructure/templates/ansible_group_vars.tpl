@@ -32,3 +32,15 @@ ansible_become_method: sudo
 kube_vip_version: "${kube_vip_version}"
 rke2_version: "${rke2_version}"
 rke2_install_dir: "/usr/local/bin"
+
+################################################################################
+# Cilium Configuration Options
+################################################################################
+cilium_config:
+  pod_cidr: "${cilium_config.pod_cidr}"
+  service_cidr: "${cilium_config.service_cidr}"
+  bgp_asn: ${cilium_config.bgp_asn}
+  bgp_peer_asn: ${cilium_config.bgp_peer_asn}
+  lb_ip_range: "${cilium_config.lb_ip_range}"
+  enable_bgp: ${cilium_config.enable_bgp}
+  enable_encryption: ${cilium_config.enable_encryption}

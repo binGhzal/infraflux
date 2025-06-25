@@ -172,6 +172,7 @@ resource "local_file" "ansible_group_vars" {
     lb_pool_name      = var.rke2_config.lb_pool_name
     rke2_version      = var.rke2_config.rke2_version
     kube_vip_version  = var.rke2_config.kube_vip_version
+    cilium_config     = var.cilium_config
   })
 
   depends_on = [
