@@ -147,3 +147,44 @@ variable "external_endpoint" {
   type        = string
   default     = ""
 }
+
+# Cloudflare Configuration
+variable "cloudflare_api_token" {
+  description = "Cloudflare API token with Zone:DNS:Edit permissions"
+  type        = string
+  sensitive   = true
+}
+
+variable "cloudflare_domain" {
+  description = "Primary domain for cluster services (e.g., k8s.example.com)"
+  type        = string
+}
+
+# Cilium-specific networking configuration
+variable "cilium_config" {
+  description = "Cilium-specific networking configuration"
+  type = object({
+    pod_cidr           = string
+    service_cidr       = string
+    bgp_asn           = number
+    bgp_peer_asn      = number
+    lb_ip_range       = string
+    enable_bgp        = bool
+    enable_encryption = bool
+  })
+  default = {
+    pod_cidr           = "10.244.0.0/16"
+    service_cidr       = "10.96.0.0/12"
+    bgp_asn           = 65001
+    bgp_peer_asn      = 65000
+    lb_ip_range       = "192.168.3.80-192.168.3.90"
+    enable_bgp        = true
+    enable_encryption = true
+  }
+}
+
+variable "cluster_name" {
+  description = "Name of the Kubernetes cluster"
+  type        = string
+  default     = "infraflux-rke2"
+}
