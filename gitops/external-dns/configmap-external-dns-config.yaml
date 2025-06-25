@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: external-dns-config
+  namespace: flux-system
+data:
+  values.yaml: |
+    provider: cloudflare
+    
+    sources:
+      - gateway-httproute  # Gateway API support
+      - gateway-grpcroute
+      - service
+      - ingress
+    
+    cloudflare:
+      proxied: true  # Enable CDN/DDoS protection by default
+    
+    domainFilters:
+      - "{{ cloudflare_domain }}"  # Will be replaced with actual domain
+    
+    policy: sync
+    registry: txt
+    txtOwnerId: "infraflux-k8s"
+    txtPrefix: "external-dns-"
+    
+    interval: 1m
+    
+    env:
+      - name: CF_API_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: cloudflare-api-token
+            key: api-token
+    
+    resources:
+      requests:
+        cpu: 50m
+        memory: 50Mi
+      limits:
+        cpu: 100m
+        memory: 100Mi
+    
+    rbac:
+      create: true
+    
+    serviceAccount:
+      create: true
+      name: external-dns
+    
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      runAsNonRoot: true
+      runAsUser: 65534
+      capabilities:
+        drop: ["ALL"]
+    
+    logLevel: info
+    logFormat: json
