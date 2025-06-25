@@ -8,24 +8,9 @@ data:
   values.yaml: |
     # App configuration
     app:
-      # Ingress configuration for external access
+      # Ingress configuration (disabled - using Gateway API HTTPRoute)
       ingress:
-        enabled: true
-        ingressClassName: "traefik"
-        hosts:
-          - host: dashboard.local.cluster
-            paths:
-              - path: /
-                pathType: Prefix
-        # TLS configuration (uncomment when cert-manager is ready)
-        # tls:
-        #   - secretName: dashboard-tls
-        #     hosts:
-        #       - dashboard.your-domain.com
-        annotations:
-          traefik.ingress.kubernetes.io/router.entrypoints: websecure
-          traefik.ingress.kubernetes.io/router.tls: "true"
-          # cert-manager.io/cluster-issuer: "letsencrypt"
+        enabled: false
 
       # Scaling configuration
       scaling:
