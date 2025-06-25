@@ -1,0 +1,24 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: dashboard-security
+  namespace: kubernetes-dashboard
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: kubernetes-dashboard
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.cilium.k8s.policy.cluster: default
+            io.cilium.k8s.policy.serviceaccount: cilium-gateway
+      toPorts:
+        - ports:
+            - port: "8443"
+              protocol: TCP
+          rules:
+            http:
+              - method: "GET"
+              - method: "POST"
+                headers:
+                  - "Content-Type: application/json"
