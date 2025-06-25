@@ -19,7 +19,7 @@ vip_interface: "${vip_interface}"
 # If empty, will use VIP for all kubeconfig generation
 external_endpoint: "${external_endpoint}"
 
-metallb_version: "${metallb_version}"
+# Legacy variables - kept for compatibility
 lb_range: "${lb_range}"
 lb_pool_name: "${lb_pool_name}"
 
