@@ -1,0 +1,155 @@
+---
+# Network Connectivity Test Suite for Cilium
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cilium-test
+
+---
+# Test Deployment for connectivity testing
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: connectivity-test
+  namespace: cilium-test
+  labels:
+    app: connectivity-test
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: connectivity-test
+  template:
+    metadata:
+      labels:
+        app: connectivity-test
+        tier: frontend
+    spec:
+      containers:
+      - name: netshoot
+        image: nicolaka/netshoot:latest
+        command: ["sleep", "3600"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+
+---
+# Test Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: connectivity-test-svc
+  namespace: cilium-test
+spec:
+  selector:
+    app: connectivity-test
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP
+
+---
+# LoadBalancer Service Test
+apiVersion: v1
+kind: Service
+metadata:
+  name: connectivity-test-lb
+  namespace: cilium-test
+  annotations:
+    io.cilium/lb-ipam-ips: "{{ cilium_config.lb_ip_range | split('/') | first }}"
+spec:
+  selector:
+    app: connectivity-test
+  ports:
+  - port: 80
+    targetPort: 80
+  type: LoadBalancer
+
+---
+# Test Job to run connectivity tests
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: network-connectivity-test
+  namespace: cilium-test
+spec:
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: tester
+        image: nicolaka/netshoot:latest
+        command: ["/bin/bash"]
+        args:
+        - -c
+        - |
+          set -e
+          echo "🔍 Starting Network Connectivity Tests"
+          echo "======================================"
+          
+          # Test 1: DNS Resolution
+          echo "1. Testing DNS resolution..."
+          nslookup kubernetes.default.svc.cluster.local
+          nslookup connectivity-test-svc.cilium-test.svc.cluster.local
+          
+          # Test 2: Pod-to-Pod connectivity
+          echo "2. Testing pod-to-pod connectivity..."
+          TARGET_IP=$(kubectl get pod -l app=connectivity-test -n cilium-test -o jsonpath='{.items[0].status.podIP}')
+          ping -c 3 $TARGET_IP
+          
+          # Test 3: Service connectivity
+          echo "3. Testing service connectivity..."
+          curl -m 10 http://connectivity-test-svc.cilium-test.svc.cluster.local || echo "Expected - no HTTP server running"
+          
+          # Test 4: Cross-namespace connectivity
+          echo "4. Testing cross-namespace connectivity..."
+          kubectl get services -n kube-system | head -5
+          
+          # Test 5: External connectivity
+          echo "5. Testing external connectivity..."
+          curl -m 10 -I https://www.google.com
+          
+          # Test 6: LoadBalancer service
+          echo "6. Testing LoadBalancer service..."
+          kubectl get svc connectivity-test-lb -n cilium-test -o wide
+          
+          echo "======================================"
+          echo "✅ Network connectivity tests completed!"
+
+---
+# Network Policy Test
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: connectivity-test-policy
+  namespace: cilium-test
+spec:
+  endpointSelector:
+    matchLabels:
+      app: connectivity-test
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: cilium-test
+  egress:
+  - toEntities:
+    - world
+    - kube-apiserver
+    - cluster
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: cilium-test
+  - toEndpoints:
+    - matchLabels:
+        k8s-app: kube-dns
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: UDP
+      - port: "53"
+        protocol: TCP

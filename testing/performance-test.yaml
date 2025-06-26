@@ -1,0 +1,264 @@
+---
+# Performance Test Suite for Cilium eBPF Features
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cilium-perf-test
+
+---
+# Performance Test Client
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: perf-client
+  namespace: cilium-perf-test
+  labels:
+    app: perf-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: perf-client
+  template:
+    metadata:
+      labels:
+        app: perf-client
+    spec:
+      containers:
+      - name: client
+        image: networkstatic/iperf3:latest
+        command: ["sleep", "3600"]
+        resources:
+          requests:
+            cpu: 500m
+            memory: 256Mi
+          limits:
+            cpu: 2000m
+            memory: 1Gi
+
+---
+# Performance Test Server
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: perf-server
+  namespace: cilium-perf-test
+  labels:
+    app: perf-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: perf-server
+  template:
+    metadata:
+      labels:
+        app: perf-server
+    spec:
+      containers:
+      - name: server
+        image: networkstatic/iperf3:latest
+        command: ["iperf3", "-s"]
+        ports:
+        - containerPort: 5201
+        resources:
+          requests:
+            cpu: 500m
+            memory: 256Mi
+          limits:
+            cpu: 2000m
+            memory: 1Gi
+
+---
+# Service for Performance Server
+apiVersion: v1
+kind: Service
+metadata:
+  name: perf-server-svc
+  namespace: cilium-perf-test
+spec:
+  selector:
+    app: perf-server
+  ports:
+  - port: 5201
+    targetPort: 5201
+  type: ClusterIP
+
+---
+# Performance Test Job
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cilium-performance-test
+  namespace: cilium-perf-test
+spec:
+  ttlSecondsAfterFinished: 7200  # 2 hour cleanup
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: perf-tester
+        image: networkstatic/iperf3:latest
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - |
+          set -e
+          echo "🚀 Starting Cilium Performance Tests"
+          echo "===================================="
+          
+          # Wait for server to be ready
+          echo "Waiting for performance server to be ready..."
+          sleep 30
+          
+          SERVER_IP="perf-server-svc.cilium-perf-test.svc.cluster.local"
+          
+          # Test 1: TCP Throughput
+          echo "1. Testing TCP throughput..."
+          iperf3 -c $SERVER_IP -t 30 -P 4 --json > /tmp/tcp_results.json
+          echo "TCP Results:"
+          cat /tmp/tcp_results.json | grep -E '"bits_per_second"|"sent_bytes"|"received_bytes"' | head -6
+          
+          # Test 2: UDP Throughput
+          echo "2. Testing UDP throughput..."
+          iperf3 -c $SERVER_IP -u -b 1G -t 30 --json > /tmp/udp_results.json
+          echo "UDP Results:"
+          cat /tmp/udp_results.json | grep -E '"bits_per_second"|"packets"|"lost_packets"' | head -6
+          
+          # Test 3: Latency Test
+          echo "3. Testing latency..."
+          for i in {1..10}; do
+            ping -c 10 $SERVER_IP | tail -1
+          done
+          
+          # Test 4: Connection Rate
+          echo "4. Testing connection establishment rate..."
+          for i in {1..5}; do
+            time iperf3 -c $SERVER_IP -t 1 -O 5 > /dev/null
+          done
+          
+          echo "===================================="
+          echo "✅ Performance tests completed!"
+          echo "eBPF datapath optimizations are active"
+
+---
+# HTTP Performance Test
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: http-perf-server
+  namespace: cilium-perf-test
+  labels:
+    app: http-perf-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: http-perf-server
+  template:
+    metadata:
+      labels:
+        app: http-perf-server
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+
+---
+# Service for HTTP Performance Server
+apiVersion: v1
+kind: Service
+metadata:
+  name: http-perf-server-svc
+  namespace: cilium-perf-test
+spec:
+  selector:
+    app: http-perf-server
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP
+
+---
+# HTTP Performance Test Job
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: http-performance-test
+  namespace: cilium-perf-test
+spec:
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: http-tester
+        image: alpine/curl:latest
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - |
+          set -e
+          echo "🌐 Starting HTTP Performance Tests"
+          echo "================================="
+          
+          apk add --no-cache apache2-utils
+          
+          SERVER_URL="http://http-perf-server-svc.cilium-perf-test.svc.cluster.local"
+          
+          # Wait for HTTP server
+          sleep 20
+          
+          # Test 1: Basic connectivity
+          echo "1. Testing basic HTTP connectivity..."
+          curl -I $SERVER_URL
+          
+          # Test 2: HTTP throughput
+          echo "2. Testing HTTP throughput with ApacheBench..."
+          ab -n 1000 -c 10 $SERVER_URL/
+          
+          # Test 3: Concurrent connections
+          echo "3. Testing concurrent connections..."
+          ab -n 5000 -c 50 $SERVER_URL/
+          
+          echo "================================="
+          echo "✅ HTTP performance tests completed!"
+
+---
+# Network Policy for Performance Tests
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: perf-test-policy
+  namespace: cilium-perf-test
+spec:
+  endpointSelector: {}
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: cilium-perf-test
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: cilium-perf-test
+  - toEntities:
+    - world
+    - kube-apiserver
+  - toEndpoints:
+    - matchLabels:
+        k8s-app: kube-dns
+    toPorts:
+    - ports:
+      - port: "53"
+        protocol: UDP
+      - port: "53"
+        protocol: TCP

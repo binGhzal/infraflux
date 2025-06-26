@@ -1,34 +1,51 @@
-# InfraFlux - RKE2 Kubernetes Cluster Automation
+# InfraFlux - Modern Kubernetes Ecosystem with Cilium
 
-InfraFlux provides a complete automation solution for deploying production-ready, highly available RKE2 Kubernetes clusters on Proxmox using Infrastructure as Code principles.
+InfraFlux provides a complete automation solution for deploying production-ready, highly available RKE2 Kubernetes clusters with a modern Cilium-based networking ecosystem on Proxmox using Infrastructure as Code principles.
 
 ## 🚀 Features
 
-- **🏗️ Automated Infrastructure**: Terraform provisions VMs on Proxmox
-- **⚙️ Cluster Deployment**: Ansible installs and configures RKE2
+- **🏗️ Automated Infrastructure**: Terraform provisions VMs on Proxmox with Cloudflare DNS integration
+- **⚙️ Cluster Deployment**: Ansible installs and configures RKE2 with Cilium CNI
 - **🔄 High Availability**: 3-node control plane with etcd clustering
-- **⚖️ Load Balancing**: Kube-VIP for API server, Cilium BGP for services
-- **🎯 One-Command Deployment**: Simple script-based deployment
-- **✅ Validation Tools**: Built-in cluster validation and health checks
-- **🔐 Production Security**: FIPS 140-2 and CIS Kubernetes Benchmark compliance
+- **🌐 Modern Networking**: Cilium eBPF CNI with Gateway API, BGP load balancing, and WireGuard encryption
+- **🔒 Zero-Trust Security**: Comprehensive network policies and L7 security enforcement
+- **📊 Advanced Observability**: Hubble for network monitoring and flow visualization
+- **☁️ Automatic DNS**: External-DNS with Cloudflare for automatic service DNS management
+- **🎯 One-Command Deployment**: GitOps-ready with FluxCD integration
+- **✅ Comprehensive Testing**: Built-in validation, connectivity, and performance test suites
+- **🔐 Production Security**: FIPS 140-2, CIS benchmarks, and network policy enforcement
 
 ## 🏛️ Architecture
+
+### Modern Cilium Ecosystem
+
+InfraFlux deploys a unified, high-performance networking stack powered by Cilium eBPF:
+
+- **🔗 Cilium CNI**: eBPF-based container networking with kube-proxy replacement
+- **🌉 Gateway API**: Modern ingress with Cilium-native load balancing (replaces Traefik)
+- **📡 BGP Load Balancing**: Cilium BGP for LoadBalancer services (replaces MetalLB) 
+- **🔐 WireGuard Encryption**: Node-to-node transparent encryption
+- **🛡️ Network Security**: L3/L4/L7 network policies with eBPF enforcement
+- **📊 Hubble Observability**: Network flow monitoring and service map visualization
+- **☁️ External-DNS**: Automatic Cloudflare DNS management for services
 
 ### Infrastructure Components
 
 - **Control Plane (3 Servers)**: RKE2 server nodes for HA control plane (VM IDs: 500-502)
 - **Worker Nodes (2+ Agents)**: RKE2 agent nodes for workload execution (VM IDs: 550+)
 - **Virtual IP**: Kube-VIP provides floating IP for API server access
-- **Load Balancer**: Cilium BGP manages LoadBalancer service IPs
+- **BGP Peering**: Cilium BGP peers with network gateway for service load balancing
 - **Network**: Static IP configuration with VLAN support
-- **Storage**: Configurable disk allocation per node
+- **Storage**: Longhorn distributed storage with Cilium network policies
 
 ### Solution Layers
 
-- **Infrastructure Layer**: Proxmox VMs managed by Terraform
-- **Kubernetes Layer**: RKE2 cluster managed by Ansible
-- **Network Layer**: Kube-VIP for control plane HA, Cilium CNI with BGP for LoadBalancer services
-- **Management Layer**: Deployment and validation scripts
+- **Infrastructure Layer**: Proxmox VMs managed by Terraform + Cloudflare DNS
+- **Kubernetes Layer**: RKE2 cluster with Cilium CNI managed by Ansible
+- **Network Layer**: Cilium eBPF CNI with Gateway API and BGP load balancing
+- **GitOps Layer**: FluxCD with Helm for application lifecycle management
+- **Security Layer**: Comprehensive network policies and zero-trust enforcement
+- **Observability Layer**: Hubble + Prometheus metrics for network monitoring
 
 ## 🏃‍♂️ Quick Start
 
@@ -138,9 +155,21 @@ network_config = {
 
 rke2_config = {
   vip              = "192.168.3.50"     # Cluster API VIP
-  lb_range         = "192.168.3.80-192.168.3.90"  # MetalLB range
   rke2_version     = "v1.29.4+rke2r1"
   kube_vip_version = "v0.8.0"
+}
+
+# Cilium Configuration
+cilium_config = {
+  lb_ip_range    = "192.168.3.80/28"      # Cilium BGP LoadBalancer IP range
+  bgp_asn        = 64512                  # Cilium BGP ASN
+  bgp_peer_asn   = 64512                  # Network gateway BGP ASN
+}
+
+# Cloudflare Configuration
+cloudflare_config = {
+  domain     = "example.com"              # Your domain for DNS management
+  zone_id    = "your-zone-id"            # Cloudflare zone ID
 }
 
 # External Access (for GitOps tools and remote kubectl)
@@ -204,7 +233,9 @@ flux bootstrap github --owner=yourusername --repository=fleet-infra
 3. **DNS Resolution**: Verify FQDN resolves to correct IP
 4. **Network Path**: Ensure external traffic can reach internal VIP
 
-## 🎯 Why RKE2?
+## 🎯 Why This Architecture?
+
+### RKE2 Kubernetes Distribution
 
 RKE2 (Rancher Kubernetes Engine 2) is ideal for production workloads:
 
@@ -214,6 +245,27 @@ RKE2 (Rancher Kubernetes Engine 2) is ideal for production workloads:
 - **📋 Compliance**: Better suited for regulated environments
 - **💪 Stability**: More stable and feature-complete than K3s
 - **🐳 Container Runtime**: Uses containerd by default
+
+### Cilium eBPF Networking
+
+Modern eBPF-based networking provides significant advantages:
+
+- **⚡ Performance**: eBPF datapath eliminates kernel overhead and iptables complexity
+- **🔐 Security**: L3/L4/L7 network policies with efficient eBPF enforcement
+- **📊 Observability**: Deep network visibility without performance impact
+- **🌐 Load Balancing**: Native BGP support eliminates need for external load balancers
+- **🔒 Encryption**: Transparent WireGuard encryption for zero-trust networking
+- **🎛️ Programmability**: eBPF allows custom network functions and policies
+
+### Gateway API Benefits
+
+Gateway API provides a modern, flexible ingress solution:
+
+- **🔮 Future-Proof**: Official Kubernetes API for ingress (replaces Ingress)
+- **🎯 Resource-Oriented**: Separate concerns for infrastructure and applications
+- **🔧 Extensible**: Support for advanced routing, traffic splitting, and policies
+- **🏢 Multi-Tenant**: Better isolation between teams and applications
+- **🛡️ Security**: Built-in support for TLS termination and security policies
 
 ## 📋 Prerequisites & Setup
 
@@ -265,13 +317,18 @@ ansible-galaxy collection install -r collections/requirements.yaml
 
 The Ansible playbook performs these tasks automatically:
 
-1. **Prepare all nodes**: System updates, kernel parameters, IP forwarding
-2. **Download RKE2**: Install RKE2 binaries on all nodes
+1. **Prepare all nodes**: System updates, kernel parameters, network optimizations for eBPF
+2. **Download RKE2**: Install RKE2 binaries with Cilium CNI configuration
 3. **Deploy Kube-VIP**: Configure virtual IP for HA API endpoint
 4. **Bootstrap first server**: Initialize the cluster and generate join token
 5. **Add additional servers**: Join remaining servers to form HA control plane
 6. **Add agents**: Join worker nodes to the cluster
-7. **Apply manifests**: Deploy MetalLB for LoadBalancer services
+7. **Deploy GitOps Stack**: 
+   - Gateway API CRDs and Cilium Gateway configuration
+   - Cilium with eBPF optimizations and BGP peering
+   - External-DNS with Cloudflare provider
+   - Application services (Dashboard, Longhorn, Authentik, Hubble UI)
+   - Comprehensive network security policies
 
 ### Manual Step-by-Step (Alternative)
 
@@ -311,7 +368,12 @@ kubectl get pods -A
 ### Cluster Endpoints
 
 - **API Server**: `https://<vip>:6443`
-- **LoadBalancer Services**: IPs from MetalLB range
+- **LoadBalancer Services**: IPs from Cilium BGP IP pool
+- **Application Services**: 
+  - Kubernetes Dashboard: `https://dashboard.<your-domain>`
+  - Longhorn Storage: `https://storage.<your-domain>`
+  - Authentik SSO: `https://auth.<your-domain>`
+  - Hubble UI: `https://hubble.<your-domain>`
 - **Kubeconfig**: Available at `/etc/rancher/rke2/rke2.yaml` or `~/.kube/config`
 
 ### Verify Cluster Components
@@ -330,9 +392,107 @@ systemctl status rke2-agent   # On agent nodes
 # Verify Kube-VIP
 kubectl get pods -n kube-system | grep kube-vip
 
-# Verify Cilium BGP
+# Verify Cilium CNI and BGP
 kubectl get pods -n kube-system | grep cilium
+kubectl exec -n kube-system ds/cilium -- cilium bgp peers
+
+# Verify Gateway API
+kubectl get gateways,httproutes --all-namespaces
+
+# Verify Hubble Observability
+kubectl get pods -n kube-system | grep hubble
+
+# Check Cilium LoadBalancer IP pools
+kubectl get ciliumloadbalancerippool
 ```
+
+## 🧪 Testing & Validation
+
+InfraFlux includes comprehensive testing suites to validate the Cilium ecosystem:
+
+### Quick Validation
+
+```bash
+# Run the deployment validation script
+./testing/validate-deployment.sh
+
+# Check overall cluster health
+./deploy.sh validate
+```
+
+### Comprehensive Testing
+
+```bash
+# Deploy and run the full validation suite
+kubectl apply -f testing/cilium-ecosystem-validation.yaml
+
+# Monitor validation job
+kubectl logs -f job/cilium-ecosystem-validation -n kube-system
+
+# Test network connectivity
+kubectl apply -f testing/network-connectivity-test.yaml
+kubectl logs -f job/network-connectivity-test -n cilium-test
+
+# Performance testing with eBPF optimizations
+kubectl apply -f testing/performance-test.yaml
+kubectl logs -f job/cilium-performance-test -n cilium-perf-test
+```
+
+### What Gets Tested
+
+- ✅ **Cilium Core**: CNI functionality, BGP peering, LoadBalancer pools
+- ✅ **Gateway API**: CRDs, GatewayClass, Gateway, HTTPRoutes
+- ✅ **External-DNS**: Cloudflare API connectivity and DNS record management
+- ✅ **Application Services**: Pod readiness and service accessibility
+- ✅ **Security Policies**: Network policy enforcement and compliance
+- ✅ **Observability**: Hubble functionality and flow monitoring
+- ✅ **Performance**: TCP/UDP throughput, HTTP performance, latency testing
+
+## 🚀 GitOps Workflow
+
+InfraFlux is designed for GitOps workflows with FluxCD:
+
+### FluxCD Bootstrap
+
+```bash
+# Install FluxCD CLI
+curl -s https://fluxcd.io/install.sh | sudo bash
+
+# Bootstrap FluxCD with your repository
+flux bootstrap github \
+  --owner=your-username \
+  --repository=your-repo \
+  --branch=main \
+  --path=gitops
+
+# Verify FluxCD installation
+kubectl get pods -n flux-system
+```
+
+### GitOps Structure
+
+```
+gitops/
+├── bootstrap/           # FluxCD bootstrap configurations
+│   ├── namespaces/     # Namespace definitions
+│   ├── helmrepositories/ # Helm repository sources
+│   └── kustomizations/ # Application kustomizations
+├── cilium/             # Cilium CNI configuration
+├── gateway-api/        # Gateway API resources
+├── external-dns/       # External-DNS with Cloudflare
+├── cert-manager/       # Certificate management
+├── applications/       # Application deployments
+└── security/          # Network policies and security
+```
+
+### Application Management
+
+All applications are managed through GitOps with Helm:
+
+- **Automatic DNS**: Services get DNS records automatically via External-DNS
+- **TLS Certificates**: Cert-manager with Let's Encrypt for HTTPS
+- **Network Security**: Comprehensive Cilium network policies
+- **Observability**: Hubble for network monitoring
 
 ## ⚡ Scaling & Customization
 
