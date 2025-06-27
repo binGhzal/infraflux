@@ -55,6 +55,12 @@
     mode: '0644'
   when: inventory_hostname in groups['servers']
 
+# Deploy kube-vip before starting RKE2
+- name: Deploy kube-vip static pod
+  ansible.builtin.include_role:
+    name: kube-vip
+  when: inventory_hostname == groups['servers'][0]
+
 # Enable and start the first server to generate tokens etc
 - name: Enable and start RKE2 server on first node
   ansible.builtin.systemd:
@@ -73,31 +79,35 @@
     timeout: 600
   when: inventory_hostname == groups['servers'][0]
 
-# Wait for kube-vip to initialize the VIP
+# Wait for kube-vip to establish the VIP (static pod should start quickly)
 - name: Wait for VIP to be ready
   ansible.builtin.wait_for:
     port: 6443
     host: "{{ vip }}"
-    delay: 60
-    timeout: 300
+    delay: 30
+    timeout: 120
   when: inventory_hostname == groups['servers'][0]
+  register: vip_wait_result
+  failed_when: false
 
-# Restart RKE2 service if VIP is not responding (kube-vip sometimes needs a restart)
+# If VIP is not ready, try restarting RKE2 once
 - name: Restart RKE2 server if VIP is not ready
   ansible.builtin.systemd:
     name: rke2-server
     state: restarted
   when:
     - inventory_hostname == groups['servers'][0]
-  failed_when: false
+    - vip_wait_result.failed | default(false)
 
 - name: Wait again for VIP after restart
   ansible.builtin.wait_for:
     port: 6443
     host: "{{ vip }}"
     delay: 30
-    timeout: 300
-  when: inventory_hostname == groups['servers'][0]
+    timeout: 180
+  when:
+    - inventory_hostname == groups['servers'][0]
+    - vip_wait_result.failed | default(false)
 
 # wait for node token to be availale so that we can copy it, we need this to join other nodes
 - name: Wait for node-token

@@ -55,7 +55,7 @@ configuration/inventory/group_vars/all.yaml
 configuration/ansible.cfg
 
 # Kubeconfig files
-kubeconfig*
+kubeconfig
 .kube/
 
 # SSH keys

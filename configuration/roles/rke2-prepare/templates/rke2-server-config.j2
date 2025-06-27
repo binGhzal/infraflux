@@ -10,6 +10,9 @@ tls-san:
 node-label:
   - server=true
 
+# Enable static pod path for kube-vip
+pod-manifest-path: /etc/kubernetes/manifests
+
 # Cilium Configuration - Disable defaults
 disable:
   - rke2-ingress-nginx

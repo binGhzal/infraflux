@@ -32,10 +32,20 @@
     - iptable_nat
     - xt_socket
     - xt_bpf
-    - sch_bpf
   become: true
 
-- name: Ensure kernel modules are loaded at boot
+# Load optional kernel modules (may not be available on all kernels)
+- name: Load optional kernel modules for Cilium eBPF
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - sch_bpf
+  become: true
+  failed_when: false
+  ignore_errors: true
+
+- name: Ensure essential kernel modules are loaded at boot
   ansible.builtin.lineinfile:
     path: /etc/modules-load.d/rke2.conf
     line: "{{ item }}"
@@ -48,7 +58,25 @@
     - iptable_nat
     - xt_socket
     - xt_bpf
+
+# Add optional modules if they exist
+- name: Check if optional kernel modules exist
+  ansible.builtin.command: modinfo {{ item }}
+  loop:
     - sch_bpf
+  register: optional_modules
+  failed_when: false
+  ignore_errors: true
+  changed_when: false
+
+- name: Add optional kernel modules to boot configuration
+  ansible.builtin.lineinfile:
+    path: /etc/modules-load.d/rke2.conf
+    line: "{{ item.item }}"
+    create: true
+    mode: '0644'
+  loop: "{{ optional_modules.results }}"
+  when: item.rc == 0
 
 # Configure sysctl for eBPF optimization and networking
 - name: Configure sysctl for eBPF optimization
