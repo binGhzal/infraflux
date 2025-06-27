@@ -37,6 +37,8 @@ terraform.rc
 .env
 .env.*
 ansible.cfg
+.ansible
+configuration/ansible/RKE2/collections
 
 # Ignore any local IDE files
 .vscode/
