@@ -9,7 +9,7 @@
 
 # Load common functions
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-source "${SCRIPT_DIR}/common.sh"
+source "${SCRIPT_DIR}/../lib/common.sh"
 
 # Change to project root
 cd "$(get_project_root)"
