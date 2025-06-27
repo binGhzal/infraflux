@@ -3,14 +3,14 @@
 
 [defaults]
 host_key_checking = False
-inventory = ansible/RKE2/inventory/hosts.ini
+inventory = inventory/hosts.ini
 remote_user = ${ansible_user}
 private_key_file = ${ssh_private_key_file}
 timeout = 30
 gathering = smart
 fact_caching = memory
-roles_path = ansible/RKE2/roles
-collections_path = ansible/RKE2/collections
+roles_path = roles
+collections_path = collections
 retry_files_enabled = False
 stdout_callback = yaml
 
