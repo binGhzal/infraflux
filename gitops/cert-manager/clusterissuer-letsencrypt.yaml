@@ -6,7 +6,7 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: admin@yourdomain.com  # TODO: Replace with actual email
+    email: admin@{{ cloudflare_domain }}
     privateKeySecretRef:
       name: letsencrypt-production
     solvers:
@@ -17,7 +17,7 @@ spec:
               key: api-token
         selector:
           dnsZones:
-            - "yourdomain.com"  # TODO: Replace with actual domain
+            - "{{ cloudflare_domain }}"
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -26,7 +26,7 @@ metadata:
 spec:
   acme:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
-    email: admin@yourdomain.com  # TODO: Replace with actual email
+    email: admin@{{ cloudflare_domain }}
     privateKeySecretRef:
       name: letsencrypt-staging
     solvers:
@@ -37,4 +37,4 @@ spec:
               key: api-token
         selector:
           dnsZones:
-            - "yourdomain.com"  # TODO: Replace with actual domain
+            - "{{ cloudflare_domain }}"

@@ -82,3 +82,8 @@
     path: /etc/fstab
     regexp: '.*swap.*'
     state: absent
+
+# Configure BGP and Cilium firewall rules
+- name: Configure BGP and Cilium network security
+  ansible.builtin.include_tasks: bgp-firewall.yaml
+  tags: [bgp, firewall, cilium]

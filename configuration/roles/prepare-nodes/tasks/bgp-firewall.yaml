@@ -1,0 +1,81 @@
+---
+# Configure firewall rules for Cilium BGP
+- name: Ensure iptables-persistent is installed
+  ansible.builtin.package:
+    name: iptables-persistent
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Allow BGP port 179 TCP for Cilium BGP peering
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "179"
+    jump: ACCEPT
+    comment: "Allow BGP for Cilium"
+    state: present
+  become: true
+
+- name: Allow BGP port 179 from specific gateway IPs
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    source: "{{ item }}"
+    destination_port: "179"
+    jump: ACCEPT
+    comment: "Allow BGP from gateway {{ item }}"
+    state: present
+  loop:
+    - "{{ network_config.gateway }}"
+    - "{{ network_config.gateway_secondary | default(omit) }}"
+  when: item is defined
+  become: true
+
+# Allow Cilium-specific ports
+- name: Allow Cilium health check port 4240
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "4240"
+    jump: ACCEPT
+    comment: "Cilium health checks"
+    state: present
+  become: true
+
+- name: Allow Hubble server port 4244
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "4244"
+    jump: ACCEPT
+    comment: "Hubble server"
+    state: present
+  become: true
+
+- name: Allow Hubble Relay port 4245
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "4245"
+    jump: ACCEPT
+    comment: "Hubble Relay"
+    state: present
+  become: true
+
+- name: Allow WireGuard encryption port 51871 UDP
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: udp
+    destination_port: "51871"
+    jump: ACCEPT
+    comment: "Cilium WireGuard encryption"
+    state: present
+  become: true
+
+# Ensure rules are saved
+- name: Save iptables rules
+  ansible.builtin.shell: |
+    iptables-save > /etc/iptables/rules.v4
+    ip6tables-save > /etc/iptables/rules.v6
+  become: true
+  when: ansible_os_family == "Debian"

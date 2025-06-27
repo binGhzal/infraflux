@@ -10,7 +10,7 @@ spec:
     name: letsencrypt-production
     kind: ClusterIssuer
   dnsNames:
-    - "*.yourdomain.com"  # TODO: Replace with actual domain
-    - "yourdomain.com"    # TODO: Replace with actual domain
+    - "*.{{ cloudflare_domain }}"
+    - "{{ cloudflare_domain }}"
   duration: 2160h  # 90 days
   renewBefore: 720h  # 30 days before expiry
