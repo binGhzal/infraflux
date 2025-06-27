@@ -113,7 +113,7 @@ cleanup_after_destruction() {
     
     # Remove generated files
     local files_to_remove=(
-        "ansible.cfg"
+        "configuration/ansible.cfg"
         "ansible/RKE2/inventory/hosts.ini"
         "ansible/RKE2/inventory/group_vars/all.yaml"
         "terraform.tfplan"

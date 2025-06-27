@@ -19,7 +19,7 @@ generate_kubeconfig() {
     print_status "Generating kubeconfig file..."
 
     # Verify prerequisites
-    if [ ! -f "ansible.cfg" ]; then
+    if [ ! -f "configuration/ansible.cfg" ]; then
         print_error "Ansible configuration file not found. Make sure Terraform has been applied successfully."
         return 1
     fi
