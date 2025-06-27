@@ -10,8 +10,9 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 source "${SCRIPT_DIR}/../lib/common.sh"
 
-# Change to project root
-PROJECT_ROOT="$(get_project_root)"
+# Change to project root - go up two levels from scripts/deployment
+SCRIPT_DIR_NEW="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR_NEW/../.." &> /dev/null && pwd )"
 cd "${PROJECT_ROOT}"
 
 # Function to install Ansible collections
@@ -31,14 +32,14 @@ install_ansible_collections() {
             print_success "Ansible collections installed successfully"
         else
             print_error "Failed to install Ansible collections"
-            cd ../..
+            cd ..
             return 1
         fi
     else
         print_warning "No Ansible collections requirements found"
     fi
 
-    cd ../..
+    cd ..
     return 0
 }
 

@@ -44,7 +44,16 @@ get_script_dir() {
 
 # Function to get the project root directory  
 get_project_root() {
-    echo "$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." &> /dev/null && pwd )"
+    # From scripts/lib/common.sh, go up two levels to get to project root
+    # But we need to account for how this function is called
+    local script_dir="$( cd "$( dirname "${BASH_SOURCE[1]}" )" &> /dev/null && pwd )"
+    if [[ "$script_dir" == */scripts/deployment ]]; then
+        # Called from deployment script, go up two levels
+        echo "$( cd "$script_dir/../.." &> /dev/null && pwd )"
+    else
+        # Called from other location, use original logic
+        echo "$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." &> /dev/null && pwd )"
+    fi
 }
 
 # Auto-load configuration when common.sh is sourced
