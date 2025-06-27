@@ -49,14 +49,14 @@ check_prerequisites() {
     fi
 
     # Check if terraform.tfvars exists
-    if [ ! -f "terraform.tfvars" ]; then
-        print_error "terraform.tfvars not found. Please copy terraform.tfvars.example to terraform.tfvars and configure it."
+    if [ ! -f "infrastructure/terraform.tfvars" ]; then
+        print_error "terraform.tfvars not found. Please copy infrastructure/terraform.tfvars.example to infrastructure/terraform.tfvars and configure it."
         has_errors=true
     fi
 
     # Check SSH key configuration
-    if [ -f "terraform.tfvars" ]; then
-        local ssh_key_file=$(grep ssh_private_key_file terraform.tfvars | cut -d'"' -f2 | sed 's/~/'"$HOME"'/g' 2>/dev/null)
+    if [ -f "infrastructure/terraform.tfvars" ]; then
+        local ssh_key_file=$(grep ssh_private_key_file infrastructure/terraform.tfvars | cut -d'"' -f2 | sed 's/~/'"$HOME"'/g' 2>/dev/null)
         if [ -n "$ssh_key_file" ] && [ ! -f "$ssh_key_file" ]; then
             print_error "SSH private key file not found: $ssh_key_file"
             has_errors=true
