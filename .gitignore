@@ -2,6 +2,7 @@
 .obsidian
 .obsidian/**
 .DS_Store
+.ansible
 
 **/.envrc
 **/.env
