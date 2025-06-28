@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: podinfo-helm-chart-value-overrides
-  namespace: LoadBalancer
+  namespace: podinfo
 data:
   values.yaml: |-
     # Default values for podinfo.
@@ -36,7 +36,7 @@ data:
     service:
       enabled: true
       annotations: {}
-      type: ClusterIP
+      type: LoadBalancer
       metricsPort: 9797
       httpPort: 9898
       externalPort: 9898
