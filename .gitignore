@@ -22,3 +22,4 @@ packer_cache/
 *.ova
 
 **/helm-credentials.yaml
+docker/dockege/data
