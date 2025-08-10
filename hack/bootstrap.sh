@@ -60,10 +60,13 @@ KUBECONFIG="${TMP_KUBECONFIG}" clusterctl init \
   --control-plane talos
 
 # 3) Provision management cluster (Talos) - placeholder; repo should contain the manifests under platform/capi/
-echo "[3/5] Applying management cluster manifests (placeholder)..."
-# kubectl apply -f platform/capi/mgmt-${PROVIDER}.yaml
-
-echo "NOTE: Add your mgmt cluster manifests under platform/capi/ and apply them here."
+echo "[3/5] Applying management cluster manifests..."
+if [[ "$PROVIDER" == "proxmox" ]]; then
+  # Apply Proxmox management cluster scaffolding (adjust before use)
+  KUBECONFIG="${TMP_KUBECONFIG}" kubectl apply -k platform/capi/proxmox/manifests
+else
+  echo "Provider '$PROVIDER' not yet wired; add manifests under platform/capi/ and apply them here."
+fi
 
 # 4) Move CAPI objects to the new mgmt cluster
 echo "[4/5] Moving CAPI objects to management cluster (placeholder)..."

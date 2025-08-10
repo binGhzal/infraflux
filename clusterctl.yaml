@@ -1,0 +1,10 @@
+providers:
+  - name: talos
+    url: https://github.com/siderolabs/cluster-api-bootstrap-provider-talos/releases/latest/bootstrap-components.yaml
+    type: BootstrapProvider
+  - name: talos
+    url: https://github.com/siderolabs/cluster-api-control-plane-provider-talos/releases/latest/control-plane-components.yaml
+    type: ControlPlaneProvider
+  - name: proxmox
+    url: https://github.com/k8s-proxmox/cluster-api-provider-proxmox/releases/latest/infrastructure-components.yaml
+    type: InfrastructureProvider

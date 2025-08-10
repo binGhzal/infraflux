@@ -1,0 +1,21 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+kind: ProxmoxCluster
+metadata:
+  name: proxmox-cluster
+  namespace: default
+spec:
+  # Allowed Proxmox node names where VMs can be scheduled
+  allowedNodes:
+    - proxmox-1
+  # Control plane endpoint must be routable and reserved
+  controlPlaneEndpoint:
+    host: 192.168.1.220
+    port: 6443
+  dnsServers:
+    - 1.1.1.1
+    - 8.8.8.8
+  ipv4Config:
+    addresses:
+      - 192.168.1.210-192.168.1.219
+    gateway: 192.168.1.1
+    prefix: 24
