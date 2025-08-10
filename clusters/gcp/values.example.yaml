@@ -1,6 +1,6 @@
 clusterName: infraflux-gcp
 namespace: default
-region: us-east-1
+region: us-central1
 k8sMinor: "1.30"
 talosVersion: "v1.7.5"
 controlPlane:

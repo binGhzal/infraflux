@@ -1,12 +1,12 @@
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-kind: AWSMachineTemplate
+kind: ProxmoxMachineTemplate
 metadata:
     name: example-lab-md-0
     namespace: default
 spec:
     template:
         spec:
-            providerID: t3.large
+            providerID: proxmox-worker
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
@@ -32,6 +32,6 @@ spec:
             clusterName: example-lab
             infrastructureRef:
                 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-                kind: AWSMachineTemplate
+                kind: ProxmoxMachineTemplate
                 name: example-lab-md-0
             version: v1.30.0

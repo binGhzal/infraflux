@@ -4,3 +4,4 @@ resources:
   - provider-aws.yaml
   - provider-azure.yaml
   - provider-gcp.yaml
+  - providerconfigs.yaml

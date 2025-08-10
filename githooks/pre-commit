@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "[pre-commit] formatting Go"
+make fmt >/dev/null || true
+
+echo "[pre-commit] running tests"
+make -s test
+
+echo "[pre-commit] verifying YAML syntax"
+make -s verify-yaml || { echo "Install yq to enable YAML verification"; }
+
+if command -v mkdocs >/dev/null; then
+  echo "[pre-commit] building docs"
+  mkdocs build --strict -q
+else
+  echo "[pre-commit] mkdocs not found, skipping docs build"
+fi
+
+echo "[pre-commit] OK"

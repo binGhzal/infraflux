@@ -6,6 +6,7 @@
 # build
 bin/
 dist/
+out/
 
 # flux and kube
 .kube/

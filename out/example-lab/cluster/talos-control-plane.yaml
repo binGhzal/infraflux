@@ -8,7 +8,7 @@ spec:
     version: v1.30.0
     infrastructureTemplate:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-        kind: AWSMachineTemplate # e.g., AWSMachineTemplate, ProxmoxMachineTemplate
+        kind: ProxmoxMachineTemplate # e.g., AWSMachineTemplate, ProxmoxMachineTemplate
         name: example-lab-cp
     talosConfig:
         apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
