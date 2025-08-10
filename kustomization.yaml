@@ -4,3 +4,7 @@ resources:
   - ./bootstrap/kustomizations/kustomization-bootstrap-namespaces.yaml
   - ./bootstrap/kustomizations/kustomization-bootstrap-helmrepositories.yaml
   - ./bootstrap/kustomizations/kustomization-podinfo.yaml
+  - ./bootstrap/kustomizations/kustomization-kyverno.yaml
+  - ./bootstrap/kustomizations/kustomization-cert-manager.yaml
+  - ./bootstrap/kustomizations/kustomization-external-dns.yaml
+  - ./bootstrap/kustomizations/kustomization-external-secrets.yaml
