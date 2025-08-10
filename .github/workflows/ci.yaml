@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install tools
+        run: |
+          pip install yamllint
+          npm install -g markdownlint-cli prettier
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+          curl -sSLo /usr/local/bin/shfmt https://github.com/mvdan/sh/releases/download/v3.10.0/shfmt_v3.10.0_linux_amd64
+          chmod +x /usr/local/bin/shfmt
+
+      - name: Validate YAML
+        run: |
+          yamllint -c .yamllint.yaml .
+
+      - name: Lint Markdown
+        run: |
+          markdownlint -c .markdownlint.yaml "**/*.md" || true
+
+      - name: Prettier check
+        run: |
+          prettier --config .prettierrc.json --check . || true
+
+      - name: ShellCheck
+        run: |
+          shellcheck -e SC1090,SC1091,SC2155,SC2034 $(git ls-files '*.sh' '*.bash' || true) || true
+
+      - name: shfmt check
+        run: |
+          files=$(git ls-files '*.sh' '*.bash' || true)
+          if [ -n "$files" ]; then
+            diff -u <(cat $files) <(shfmt -i 2 -ci -sr $files) || true
+          fi
