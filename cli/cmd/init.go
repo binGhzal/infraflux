@@ -18,15 +18,12 @@ var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Bootstrap the management cluster, Cluster API providers, and Flux",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// NOTE: This is a stub. In future:
-		// 1) Generate/print Talos mgmt cluster configs (or assume existing kubeconfig).
-		// 2) Run `clusterctl init` with selected providers.
-		// 3) Run `flux bootstrap` pointing to initOpts.GitRepo under management/flux/.
-		fmt.Println(">> [stub] infraflux init")
-		fmt.Printf("   Git repo: %s\n", initOpts.GitRepo)
-		fmt.Printf("   Providers: %v\n", initOpts.Providers)
-		fmt.Printf("   Namespace: %s\n", initOpts.Namespace)
-		fmt.Println("   Next: implement Talos mgmt cluster bring-up & Flux bootstrap here.")
+		// Provide a clear next-step using the bootstrap script.
+		fmt.Println(
+			"This command is a stub. To bootstrap the management cluster now, run:\n\n" +
+				"  IFX_GIT_REPO=<your-repo> management/bootstrap.sh\n\n" +
+				"Required tools: clusterctl, flux, kubectl.\n",
+		)
 		return nil
 	},
 }

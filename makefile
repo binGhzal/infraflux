@@ -1,5 +1,8 @@
 SHELL := /bin/bash
 
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+LDFLAGS := -X github.com/binghzal/infraflux/cli/cmd.version=$(VERSION)
+
 .PHONY: help
 help:
 	@echo "Targets:"
@@ -13,7 +16,7 @@ help:
 
 .PHONY: build-cli
 build-cli:
-	cd cli && go build -o ../bin/infraflux ./main.go
+	cd cli && go build -ldflags '$(LDFLAGS)' -o ../bin/infraflux ./main.go
 
 .PHONY: fmt
 fmt:

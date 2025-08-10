@@ -1,7 +1,8 @@
 # 🚀 InfraFlux
 
 **InfraFlux** is an **opinionated, fully-automated, multi-cloud Kubernetes platform** inspired by
-[ElfHosted](https://elfhosted.com) and the [Geek Cookbook Premix](https://geek-cookbook.funkypenguin.co.nz/).
+[ElfHosted](https://elfhosted.com) and the
+[Geek Cookbook Premix](https://geek-cookbook.funkypenguin.co.nz/).
 It fast-tracks the deployment of complete "recipes" (curated Kubernetes app bundles) on clusters
 running in **AWS, Azure, GCP, or Proxmox**—all driven by declarative manifests and GitOps.
 
@@ -19,7 +20,8 @@ running in **AWS, Azure, GCP, or Proxmox**—all driven by declarative manifests
 - **Immutable OS** with [Talos Linux](https://www.talos.dev/) for deterministic, API-driven node configuration.
 - **Unified networking** with [Cilium](https://cilium.io/) using kube-proxy replacement for low latency and minimal overhead.
 - **GitOps app delivery** via [FluxCD](https://fluxcd.io/) syncing curated "recipes."
-- **Optional cloud infra management** with [Crossplane](https://crossplane.io/)—provision cloud databases, DNS, and storage from Kubernetes CRDs.
+- **Optional cloud infra management** with [Crossplane](https://crossplane.io/)—provision cloud databases, DNS, and storage
+  from Kubernetes CRDs.
 - **Batteries included**: cert-manager, ExternalDNS, Gateway API + Envoy Gateway, CSI storage.
 
 ---
