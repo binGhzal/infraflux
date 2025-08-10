@@ -22,7 +22,7 @@ var initCmd = &cobra.Command{
 		fmt.Println(
 			"This command is a stub. To bootstrap the management cluster now, run:\n\n" +
 				"  IFX_GIT_REPO=<your-repo> management/bootstrap.sh\n\n" +
-				"Required tools: clusterctl, flux, kubectl.\n",
+				"Required tools: clusterctl, flux, kubectl.",
 		)
 		return nil
 	},
