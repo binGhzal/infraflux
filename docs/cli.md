@@ -1,15 +1,15 @@
 # CLI Reference (`infraflux`)
 
-The CLI renders plans/manifests and orchestrates composition. **It does not apply to live clusters.**
+The CLI renders plans/manifests and orchestrates composition. By default it does not apply to live clusters.
 
 ## Commands
 
 ### `infraflux init`
 
-Bootstrap artifacts for the **management cluster**:
+Bootstrap artifacts for the management cluster.
 
-- Renders/prints steps for `clusterctl init` with selected providers.
-- Renders Flux bootstrap pointing to this repo.
+- Use `management/bootstrap.sh` for a simple bootstrap flow.
+- This command prints next steps with required tools.
 
 #### `init` Flags
 
@@ -19,7 +19,7 @@ Bootstrap artifacts for the **management cluster**:
 
 ### `infraflux up`
 
-Render a **workload cluster** plan (CAPI + Talos) and the post-creation app setup.
+Render a workload cluster plan (CAPI + Talos) and the post-creation app setup.
 
 #### `up` Flags
 
@@ -28,13 +28,35 @@ Render a **workload cluster** plan (CAPI + Talos) and the post-creation app setu
 - `--region`: cloud region (if applicable)
 - `--workers`, `--cpu`, `--memory`, `--k8s`
 
+### `infraflux apply`
+
+Apply rendered manifests to the current kube context from `out/<name>/`.
+
+#### `apply` Flags
+
+- `--name` (required): cluster name
+- `--sections`: subset of `cluster,addons,recipes` (default: all)
+
+### `infraflux talos-gen`
+
+Generate sample Talos configs (or write guidance if `talosctl` is not installed).
+
+#### `talos-gen` Flags
+
+- `--name`: Talos cluster name (default: `infraflux-mgmt`)
+- `--endpoint`: Cluster endpoint URL (default: `https://127.0.0.1:6443`)
+
 ### `infraflux destroy`
 
 Render a deletion plan for a named cluster.
+
+### `infraflux version`
+
+Print CLI version.
 
 #### Common flags
 
 - `--dry-run`: render only, no side effects
 - `-c, --config`: optional config file for defaults
 
-> The agent will implement file outputs to `./out/<cluster>/` so CI can apply plans safely.
+> Outputs are written under `./out/<cluster>/` so that humans/CI can apply plans safely.
