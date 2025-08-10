@@ -7,9 +7,9 @@ import (
 )
 
 type InitOptions struct {
-	GitRepo    string
-	Providers  []string
-	Namespace  string
+	GitRepo   string
+	Providers []string
+	Namespace string
 }
 
 var initOpts InitOptions
@@ -34,7 +34,7 @@ var initCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(initCmd)
 	initCmd.Flags().StringVar(&initOpts.GitRepo, "git-repo", "", "Git repository URL for Flux bootstrap (required)")
-	initCmd.Flags().StringSliceVar(&initOpts.Providers, "providers", []string{"aws","azure","gcp","proxmox"}, "CAPI providers to install")
+	initCmd.Flags().StringSliceVar(&initOpts.Providers, "providers", []string{"aws", "azure", "gcp", "proxmox"}, "CAPI providers to install")
 	initCmd.Flags().StringVar(&initOpts.Namespace, "namespace", "infraflux-system", "Management namespace")
 	initCmd.MarkFlagRequired("git-repo")
 }
