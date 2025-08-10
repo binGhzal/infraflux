@@ -48,7 +48,7 @@ infraflux/
 ├─ recipes/ # App stacks delivered via Flux
 │ ├─ base/ # Core infra: cert-manager, ExternalDNS, storage
 │ ├─ observability/ # Monitoring/logging stack
-│ ├─ media/ # Media processing stack
+│ ├─ media/ # Media processing stack (placeholder)
 │ └─ devtools/ # Developer tools stack
 │
 ├─ crossplane/ # Crossplane providers, compositions, claims
@@ -88,14 +88,24 @@ infraflux/
 
 ## 🚧 Development Roadmap
 
-- [ ] CLI scaffolding (`infraflux`) with `init`, `up`, and `destroy` commands.
-- [ ] Management cluster Talos + CAPI bootstrapping manifests.
-- [ ] Provider overlays for AWS, Azure, GCP, Proxmox.
-- [ ] Cilium HelmRelease with kube-proxy replacement enabled.
-- [ ] Gateway API + Envoy Gateway setup.
-- [ ] Flux recipe catalog (base, observability, media, devtools).
-- [ ] Crossplane base installation & common compositions.
-- [ ] SOPS integration for secrets in Git.
+- [x] CLI scaffolding (`infraflux`) with `init`, `up`, and `destroy` commands.
+- [x] Management cluster Talos + CAPI bootstrapping manifests.
+- [x] Provider overlays for AWS, Azure, GCP, Proxmox.
+- [x] Cilium HelmRelease with kube-proxy replacement enabled.
+- [x] Gateway API + Envoy Gateway setup.
+- [x] Flux recipe catalog (base, observability, media, devtools).
+- [x] Crossplane base installation & common compositions.
+- [x] SOPS integration for secrets in Git.
+
+---
+
+## 🧰 Dev setup
+
+- Optional but recommended: enable local git hooks so tests and YAML checks run on commit.
+
+```bash
+git config core.hooksPath githooks
+```
 
 ---
 

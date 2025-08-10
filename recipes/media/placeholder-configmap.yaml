@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: media-bundle-info
+  namespace: media
+  labels:
+    app.kubernetes.io/part-of: media
+  annotations:
+    infraflux.io/note: "Placeholder for media bundle; add HelmReleases as needed."
+data:
+  README: |
+    This is a placeholder for the media recipe bundle. Add HelmReleases for media apps
+    (e.g., jellyfin, qbittorrent, sonarr, radarr) from your preferred Helm repositories.

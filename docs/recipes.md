@@ -11,6 +11,7 @@
 - `recipes/base`: cert-manager, ExternalDNS, storage (Longhorn by default)
 - `recipes/observability`: kube-prometheus-stack (Prometheus, Alertmanager, Grafana)
 - `recipes/devtools`: Argo CD (optional, primarily as an example)
+- `recipes/media`: placeholder bundle and namespace; add the media apps you want.
 
 ## Creating a new bundle
 
@@ -21,4 +22,5 @@
 ## Enabling bundles
 
 - Wire a `Kustomization` in `management/flux/gotk-sync-<bundle>.yaml` pointing to `./recipes/<bundle>`.
+- Or when rendering with the CLI, include it via `--recipes base,observability,devtools,media` to generate per-cluster Kustomizations.
 - Commit and let Flux reconcile.
