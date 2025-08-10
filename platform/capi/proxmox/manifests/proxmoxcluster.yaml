@@ -6,16 +6,16 @@ metadata:
 spec:
   # Allowed Proxmox node names where VMs can be scheduled
   allowedNodes:
-    - proxmox-1
+    - pve
   # Control plane endpoint must be routable and reserved
   controlPlaneEndpoint:
-    host: 192.168.1.220
+    host: 10.0.1.50
     port: 6443
   dnsServers:
     - 1.1.1.1
     - 8.8.8.8
   ipv4Config:
     addresses:
-      - 192.168.1.210-192.168.1.219
-    gateway: 192.168.1.1
-    prefix: 24
+      - 10.0.1.210-10.0.1.219
+    gateway: 10.0.0.1
+    prefix: 20
