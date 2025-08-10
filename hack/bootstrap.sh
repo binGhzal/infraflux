@@ -77,13 +77,23 @@ echo "NOTE: Wire clusterctl move once mgmt cluster is reachable."
 # 5) Flux bootstrap pointing to this repo
 if [[ -n "$GIT_URL" ]]; then
   echo "[5/5] Bootstrapping Flux from $GIT_URL ($BRANCH)..."
-  flux bootstrap git \
+  KUBECONFIG="${TMP_KUBECONFIG}" flux bootstrap git \
     --url="$GIT_URL" \
     --branch="$BRANCH" \
     --path="/" \
     --silent
 else
   echo "[5/5] Skipping Flux bootstrap (no --git-url provided)."
+fi
+
+# Optionally apply Proxmox credentials Secret if a non-example file exists
+if [[ "$PROVIDER" == "proxmox" ]]; then
+  if [[ -f platform/capi/proxmox/manifests/secret-capmox.yaml ]]; then
+    echo "Applying Proxmox credentials Secret to capi-system..."
+    KUBECONFIG="${TMP_KUBECONFIG}" kubectl apply -f platform/capi/proxmox/manifests/secret-capmox.yaml
+  else
+    echo "Note: platform/capi/proxmox/manifests/secret-capmox.yaml not found; ensure credentials are present in capi-system."
+  fi
 fi
 
 rm -f "${TMP_KUBECONFIG}"
