@@ -90,7 +90,9 @@ A task is complete when:
 
 ## Role
 
-You are **InfraFlux Coding Agent**. You contribute **code and manifests** to this repository. You **do not** deploy or execute anything against real infrastructure. Your job is to produce **PR-ready changes**: files, diffs, tests, and docs.
+You are **InfraFlux Coding Agent**. You contribute **code and manifests** to this repository.
+You **do not** deploy or execute anything against real infrastructure. Your job is to produce
+**PR-ready changes**: files, diffs, tests, and docs.
 
 ## Mission
 
@@ -102,7 +104,8 @@ Build a **push-button, multi-cloud Kubernetes recipes platform** using:
 - **GitOps:** Flux
 - **(Optional) Cloud infra:** Crossplane (providers & compositions)
 
-Your outputs are **render-only**: generate manifests/plans into `./out/<cluster>/` (or appropriate path) for humans/CI to apply later.
+Your outputs are **render-only**: generate manifests/plans into `./out/<cluster>/`
+(or appropriate path) for humans/CI to apply later.
 
 ---
 
@@ -172,7 +175,9 @@ Extend `infraflux up` to **render** a workload cluster plan (no apply):
   - `out/<name>/cluster/` — rendered CAPI + Talos manifests.
   - `out/<name>/addons/cilium/` — rendered `clusters/cilium/helmrelease.yaml`.
   - `out/<name>/addons/gateway/` — rendered `clusters/gateway/envoy-gateway-helmrelease.yaml`.
-  - `out/<name>/recipes/` — **per-cluster Kustomizations** that point to `recipes/<bundle>` (do not duplicate bundle files). Respect `--recipes base,observability,devtools` and add `dependsOn` where appropriate.
+  - `out/<name>/recipes/` — **per-cluster Kustomizations** that point to
+    `recipes/<bundle>` (do not duplicate bundle files). Respect
+    `--recipes base,observability,devtools` and add `dependsOn` where appropriate.
 - **Validation:** after rendering, parse YAML in Go to catch syntax errors (no external calls).
 
 ### 2) Provider overlay parity (AWS/Azure/GCP/Proxmox)
@@ -185,7 +190,9 @@ Extend `infraflux up` to **render** a workload cluster plan (no apply):
 
 ### 3) Flux catalogs & recipe sync
 
-- Confirm `management/flux/kustomization.yaml` lists all HelmRepository sources (cilium, jetstack, bitnami, prometheus-community, argo, longhorn, envoy-gateway, grafana, ingress-nginx, hashicorp) and Kustomizations for `base`, `observability`, `devtools`.
+- Confirm `management/flux/kustomization.yaml` lists all HelmRepository sources (cilium, jetstack, bitnami,
+  prometheus-community, argo, longhorn, envoy-gateway, grafana, ingress-nginx, hashicorp) and Kustomizations
+  for `base`, `observability`, `devtools`.
 - Add `recipes/README.md` explaining bundle structure and how per-cluster sync Kustomizations are generated.
 
 ### 4) Crossplane skeleton hardening (optional)
@@ -247,17 +254,6 @@ Implement **Backlog #1: CLI render pipeline**. Provide:
 - A **dry-run sample**: show the file listing of `out/example-lab/` in your PR body.
 
 ---
-
-## Helpful References (for coding; do not invoke CLIs)
-
-- Cluster API (core & providers): https://cluster-api.sigs.k8s.io/
-- Talos Linux docs: https://www.talos.dev/latest/
-- Cilium kube-proxy replacement: https://docs.cilium.io/en/stable/network/kubernetes/kubeproxy-free.html
-- Flux (GitOps Toolkit): https://fluxcd.io/flux/
-- Crossplane compositions/providers: https://docs.crossplane.io/latest/
-- Git hooks & `core.hooksPath`: https://git-scm.com/docs/githooks
-- yamllint: https://yamllint.readthedocs.io/
-- Conventional Commits: https://www.conventionalcommits.org/
 
 ## 📣 Final Note
 

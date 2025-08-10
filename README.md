@@ -1,7 +1,9 @@
 # 🚀 InfraFlux
 
-**InfraFlux** is an **opinionated, fully-automated, multi-cloud Kubernetes platform** inspired by [ElfHosted](https://elfhosted.com) and the [Geek Cookbook Premix](https://geek-cookbook.funkypenguin.co.nz/).
-It fast-tracks the deployment of complete "recipes" (curated Kubernetes app bundles) on clusters running in **AWS, Azure, GCP, or Proxmox**—all driven by declarative manifests and GitOps.
+**InfraFlux** is an **opinionated, fully-automated, multi-cloud Kubernetes platform** inspired by
+[ElfHosted](https://elfhosted.com) and the [Geek Cookbook Premix](https://geek-cookbook.funkypenguin.co.nz/).
+It fast-tracks the deployment of complete "recipes" (curated Kubernetes app bundles) on clusters
+running in **AWS, Azure, GCP, or Proxmox**—all driven by declarative manifests and GitOps.
 
 > **Goal:** One command from zero to a production-ready Kubernetes cluster with curated apps, anywhere.
 
