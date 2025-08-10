@@ -8,6 +8,10 @@ usage() {
   cat <<'USAGE'
 Usage: hack/bootstrap.sh --provider <aws|azure|gcp|proxmox|metal3> [--cluster-name <name>] [--git-url <git url>] [--branch <branch>]
 
+Notes:
+- --name is accepted as an alias for --cluster-name for convenience.
+- This script creates a temporary kind cluster named "bootstrap" and initializes CAPI + Talos providers.
+
 Requirements: docker, kind, clusterctl, talosctl, kubectl, flux
 USAGE
 }
@@ -21,6 +25,8 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --provider) PROVIDER="$2"; shift 2 ;;
     --cluster-name) CLUSTER_NAME="$2"; shift 2 ;;
+  # alias commonly used by users; keep backward compatible
+  --name) CLUSTER_NAME="$2"; shift 2 ;;
     --git-url) GIT_URL="$2"; shift 2 ;;
     --branch) BRANCH="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
@@ -70,11 +76,13 @@ fi
 # 3) Provision management cluster (Talos) - wait for providers then apply manifests
 echo "[3/5] Waiting for CAPI providers to be ready..."
 if [[ "$PROVIDER" == "proxmox" ]]; then
-  # Wait for controller-manager Deployments to be Available (capi, talos bootstrap/cp, proxmox)
-  KUBECONFIG="${TMP_KUBECONFIG}" kubectl -n capi-system wait deploy/capi-controller-manager --for=condition=Available --timeout=300s || true
-  KUBECONFIG="${TMP_KUBECONFIG}" kubectl -n cabpt-system wait deploy/cabpt-controller-manager --for=condition=Available --timeout=300s || true
-  KUBECONFIG="${TMP_KUBECONFIG}" kubectl -n cacppt-system wait deploy/cacppt-controller-manager --for=condition=Available --timeout=300s || true
-  KUBECONFIG="${TMP_KUBECONFIG}" kubectl -n capmox-system wait deploy/capmox-controller-manager --for=condition=Available --timeout=300s || true
+  # Wait for controller-manager Deployments to be Available; use broad waits to avoid name typos across versions
+  KUBECONFIG="${TMP_KUBECONFIG}" kubectl -n capi-system wait deploy --all --for=condition=Available --timeout=300s || true
+  # Talos providers (bootstrap/control-plane) use these namespaces upstream
+  KUBECONFIG="${TMP_KUBECONFIG}" kubectl -n capi-bootstrap-talos-system wait deploy --all --for=condition=Available --timeout=300s || true
+  KUBECONFIG="${TMP_KUBECONFIG}" kubectl -n capi-control-plane-talos-system wait deploy --all --for=condition=Available --timeout=300s || true
+  # Proxmox provider
+  KUBECONFIG="${TMP_KUBECONFIG}" kubectl -n capmox-system wait deploy --all --for=condition=Available --timeout=300s || true
   sleep 5
   echo "[3/5] Applying management cluster manifests (with retry)..."
   apply_ok=false
