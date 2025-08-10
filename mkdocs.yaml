@@ -13,6 +13,7 @@ theme:
     - search.highlight
 nav:
   - Overview: index.md
+  - Installation: installation.md
   - Quickstart: quickstart.md
   - Architecture: architecture.md
   - GitOps & Repos: gitops.md
