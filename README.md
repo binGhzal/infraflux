@@ -2,7 +2,7 @@
 
 <!-- markdownlint-disable MD013 -->
 
-> **Comprehensive Edition** — full architecture, design trade‑offs, defaults, ops runbooks, and a detailed roadmap.
+> full architecture, design trade‑offs, defaults, ops runbooks, and a detailed roadmap.
 > Cilium Gateway API + Cilium Ingress are the defaults. All Cilium capabilities are enabled by default and
 > controllable via ClusterClass variables.
 

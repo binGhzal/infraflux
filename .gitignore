@@ -1,3 +1,40 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+.venv/
+venv/
+*.pyc
+
+# Node/JS
+node_modules/
+dist/
+build/
+
+# Go
+bin/
+
+# Logs & temp
+*.log
+tmp/
+
+# Kubernetes/Flux/Talos
+*.kubeconfig
+secrets/*.yaml
+secrets/*.yml
+*.crt
+*.key
+
+# MkDocs site output (if generated)
+site/
 # editor
 .vscode/
 .idea/
