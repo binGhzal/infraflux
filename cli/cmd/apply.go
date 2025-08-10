@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	applyName      string
-	sectionsCSV    string
+	applyName       string
+	sectionsCSV     string
 	defaultSections = []string{"cluster", "addons", "recipes"}
 )
 
