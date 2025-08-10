@@ -4,6 +4,7 @@ site/
 # Node / tooling
 node_modules/
 dist/
+instructions/
 
 # macOS
 .DS_Store

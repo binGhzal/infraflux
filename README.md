@@ -1,321 +1,439 @@
-# InfraFlux — Turnkey Multi‑Cloud Kubernetes with GitOps & Cilium
+# infraflux
 
-<!-- markdownlint-disable MD013 -->
+**Turnkey, self-maintaining Kubernetes on Proxmox** — Day-0 with Terraform, then hands-off with
+Cluster API (CAPMOX) + Talos nodes + Cilium (kube-proxy-free, Gateway API, BGP, Hubble, egress,
+bandwidth/BBR, host firewall, L7 policy, DNS/FQDN policy, multicast, transparent encryption) and a
+clean **Flux “5-file” app pattern**.
 
-> full architecture, design trade‑offs, defaults, ops runbooks, and a detailed roadmap. Cilium
-> Gateway API + Cilium Ingress are the defaults. All Cilium capabilities are enabled by default and
-> controllable via ClusterClass variables.
-
----
-
-## 0) Principles
-
-- **Clone → Run → Everything:** no pre‑existing cluster; bootstrap is one command using upstream
-  tools only (`kind`, `clusterctl`, `flux`, `talosctl`, `kubectl`).
-- **Single declarative model:** Cluster lifecycle, add‑ons, and apps are all YAML in Git, reconciled
-  continuously.
-- **Talos everywhere:** immutable, API‑managed nodes (no SSH) for deterministic behavior and
-  upgrades.
-- **Cilium everywhere:** eBPF dataplane, L4 LB, Gateway/Ingress, policy/observability. Alternatives
-  exist but are disabled.
-- **Secure by default:** least‑privilege RBAC, NetworkPolicies, policy‑as‑code, secrets hygiene,
-  runtime security.
-- **Modular by design:** ClusterClass variables select modules/overlays; swaps don’t require
-  rewiring.
+> This README is the project’s user guide. You can copy/paste the snippets into your repo and run
+> with it.
 
 ---
 
-## Formatting & Linting
+## Why infraflux?
 
-This repo enforces consistent formatting:
-
-- EditorConfig for whitespace/indent
-- Prettier for Markdown/JSON/HTML/CSS/JS (see `.prettierrc.json`)
-- Markdownlint for content rules (see `.markdownlint.yaml`)
-- yamllint for YAML style (see `.yamllint.yaml`)
-- ShellCheck/shfmt for shell scripts
-
-Generated docs in `site/` are ignored by linters. Use pre-commit to run checks locally:
-
-1. Install pre-commit, then run once to install hooks
-
-2. Commit as usual; hooks will format and lint staged changes
-
-## 1) Project Goals
-
-- **Zero‑touch bootstrap:** one script provisions the management cluster, moves CAPI, installs Flux,
-  and creates workload clusters.
-- **One abstraction across environments:** CAPI providers for AWS/Azure/GCP/Proxmox/Metal3.
-- **Git‑native ops:** Git is the source of truth for clusters, add‑ons, and apps.
-- **Operational clarity:** explicit dependencies and health checks prevent chicken/egg problems.
-- **Security & compliance:** auditable change history, policy guardrails, runtime detection,
-  encrypted transport and secrets.
-
-**Advantages**: repeatability, cloud portability, strong defaults, minimal snowflakes.
-**Weaknesses**: requires Git hygiene/version pinning; initial learning curve for Talos and Cilium
-features.
+- **Day-0 once, controllers forever:** Terraform bootstraps a tiny Talos management cluster and
+  installs the **Cluster API Operator**. From there, CAPI + **CAPMOX** reconcile VM lifecycle on
+  Proxmox; no glue scripts. ([cluster-api-operator.sigs.k8s.io][1], [GitHub][2],
+  [cluster-api.sigs.k8s.io][3])
+- **Immutable nodes:** Talos is API-driven (no SSH) and has first-class guides for Proxmox + Cilium.
+  ([TALOS LINUX][4])
+- **Cilium, all the superpowers:** kube-proxy replacement, Gateway API, Ingress, BGP control plane,
+  Egress Gateway, Hubble (UI/Relay), Bandwidth Manager + BBR, L7 policy (HTTP/gRPC/Kafka), DNS/FQDN
+  egress control, Host Firewall, Multicast, Prometheus metrics, Transparent Encryption
+  (WireGuard/IPsec). See the **Cilium values** below. ([Cilium Documentation][5], [cilium.io][6])
 
 ---
 
-## 2) Architecture Overview
+## Architecture
 
-### 2.1 Bootstrap Flow (Zero‑to‑Clusters)
-
-1. **Ephemeral bootstrap cluster (local):**
-
-   - Create a short‑lived `kind` cluster.
-   - Run `clusterctl init` to install CAPI core + infra providers (AWS/Azure/GCP/Proxmox/Metal3)
-     **and** Talos bootstrap/control‑plane providers.
-
-2. **Provision real management cluster (Talos):**
-
-   - Apply Cluster API manifests for a Talos‑based management cluster on the target provider.
-   - Nodes boot from Talos images; control plane is managed via the Talos APIs.
-
-3. **Relocate management (`clusterctl move`):**
-
-   - Move all CAPI objects from the ephemeral cluster to the new Talos management cluster; delete
-     the `kind` cluster.
-
-4. **Install Flux (`flux bootstrap`):**
-
-   - Flux controllers are installed and pointed at this repo to reconcile everything from Git.
-
-5. **Create workload clusters:**
-
-   - Defined via **ClusterClass + ClusterTopology** under `clusters/`.
-   - Flux applies add‑ons and app recipes automatically using the GitOps workload‑bootstrap pattern.
-
-**Pros:** all steps are upstream‑documented; idempotent; everything recorded in Git. **Cons:**
-requires Docker and CLIs locally; air‑gapped setups need image/helm registries mirrored.
-
-Note on Gateway API prerequisites
-
-- Gateway API CRDs must be installed before enabling Cilium Gateway/Ingress. Pin and install v1.2
-  standard CRDs (GatewayClass, Gateway, HTTPRoute, GRPCRoute, ReferenceGrant; TLSRoute
-  optional/experimental). Ensure Cilium is started with kubeProxyReplacement=true (we default to
-  strict) and l7Proxy=true (default enabled), which are prerequisites for Gateway API in Cilium.
-- Prefer spec.addresses on Gateway over the io.cilium/lb-ipam-ips annotation (planned deprecation).
-
-### 2.2 Workload Cluster Baseline
-
-- **OS:** Talos Linux (immutable, API‑driven, SSH‑less).
-- **Networking:** Cilium with kube‑proxy replacement for performance and simplicity.
-- **Edge/Routing:** **Cilium Gateway API** and **Cilium Ingress** (defaults) for L4/L7 path.
-- **GitOps:** Flux manages controllers, add‑ons, and apps; dependencies are explicit with
-  `dependsOn` and health checks.
-
-**Trade‑offs:** Talos’s API model replaces SSH workflows; Cilium’s rich features increase
-responsibility for kernel/host prerequisites.
+- **Proxmox** (existing); Terraform **bpg/proxmox** provider uploads Talos image & creates VMs.
+  ([Terraform Registry][7])
+- **Talos** management cluster (2–3 VMs). Terraform **talos** provider generates machine configs,
+  bootstraps, fetches kubeconfig. ([Terraform Registry][8], [Sidero Labs][9])
+- **Cluster API Operator** (installed via Helm) manages providers declaratively:
+  **Infrastructure=Proxmox (CAPMOX)**, **Bootstrap=Talos**, **ControlPlane=Talos**.
+  ([cluster-api-operator.sigs.k8s.io][1], [GitHub][10])
+- **Workload clusters** defined as CAPI YAML (Cluster + TalosControlPlane + MachineDeployment +
+  ProxmoxMachineTemplates) + **MachineHealthCheck** for auto-remediation.
+  ([cluster-api.sigs.k8s.io][3])
+- **Cilium** installed via flux with the values here (kube-proxy-free, Gateway API, BGP CP, etc.).
+  ([Cilium Documentation][11])
+- **Flux** manages apps with the **5-file pattern** (Namespace, HelmRepository, Kustomization,
+  Values ConfigMap/Secret, HelmRelease). ([Flux][12])
 
 ---
 
-## 3) Repository Structure
+## Prerequisites
 
-```text
-.
-├── hack/
-│   ├── bootstrap.sh           # one‑shot: kind → CAPI → Talos mgmt → move → flux bootstrap
-│   └── destroy.sh             # optional teardown; removes clusters via CAPI then kills bootstrap
-├── clusters/
-│   ├── clusterclasses/        # ClusterClass (prod/dev/edge) + JSON6902 patches + vars
-│   └── <env>/                 # ClusterTopology per env/tenant (refs a ClusterClass)
-├── modules/
-│   ├── networking/cilium/     # HelmRelease + overlays for all Cilium capabilities
-│   ├── ingress/               # Alt modules (Envoy Gateway, Ingress‑NGINX, Traefik) — disabled by default
-│   └── storage/               # Cloud CSI classes; Rook‑Ceph for Proxmox/bare‑metal
-├── platform/
-│   ├── capi/                  # CAPI core + infra providers + Talos providers (versions pinned)
-│   ├── flux/                  # Flux bootstrap manifests (owned by `flux bootstrap`)
-│   ├── addons/                # cert‑manager, ExternalDNS, Sealed Secrets, ESO, Velero, observability
-│   └── security/              # RBAC, NetworkPolicies, Gatekeeper/Kyverno, Tetragon/Falco baselines
-├── apps/
-│   └── <app‑recipes>/         # 5‑file pattern: namespace, repo, kustomization, values, helmrelease
-├── infra/
-│   ├── compositions/          # Crossplane Compositions (optional) for DB/bucket/DNS
-│   └── claims/                # Crossplane Claims used by app recipes
-└── docs/
-    ├── roadmap.md             # exported from this README’s Roadmap section
-    └── security.md            # deeper dives and runbooks
-```
-
-### Pros
-
-clear boundaries, ownership, and CODEOWNERS; easy multi‑tenant layering.
-
-### Cons
-
-more files; requires discipline in `dependsOn` and naming.
+- Proxmox API access (token or user/pass) and a storage/network configured.
+- Terraform/OpenTofu with providers: `bpg/proxmox`, `siderolabs/talos`, `hashicorp/helm`,
+  `hashicorp/kubernetes`. ([Terraform Registry][13])
+- Talos image/ISO (use Talos docs for Proxmox specifics). ([TALOS LINUX][4])
 
 ---
 
-## 4) Cilium: All Features Enabled by Default (Configurable)
+## Day-0: one `terraform apply`
 
-Cilium is both the CNI and the L4/L7 edge by default. Every capability is enabled; you can turn any
-off via ClusterClass variables.
+> Keep Terraform strictly for Day-0; after that, controllers (CAPI/CAPMOX/Talos) own lifecycle.
 
-### 4.1 Cilium Features, Rationale, Strengths & Weaknesses
+1. **Provision mgmt cluster (Talos on Proxmox):**
 
-| Capability                            | Rationale                              | Advantages                                          | Weaknesses / Caveats                          |
-| ------------------------------------- | -------------------------------------- | --------------------------------------------------- | --------------------------------------------- |
-| **High‑Performance CNI**              | eBPF dataplane for Pod/Service routing | Lower latency/CPU; fewer hops; simplifies stack     | Needs modern kernels/capabilities (eBPF/XDP)  |
-| **Kube‑proxy Replacement**            | Remove iptables/ipvs                   | Maglev consistent hashing; less drift               | Some tooling expects kube‑proxy semantics     |
-| **Layer‑4 Load Balancer**             | Native L4 LB incl. DSR/XDP             | Great for bare‑metal; fewer components              | XDP driven features depend on NIC/driver      |
-| **Gateway API**                       | Modern routing model                   | Portable, policy‑aware; aligns with future K8s edge | Evolving spec; test advanced cases            |
-| **Ingress**                           | Simple app on‑ramp                     | No extra controller to operate                      | Prefer Gateway long‑term to avoid duplication |
-| **Cluster Mesh**                      | Multi‑cluster services/identity        | Global services; shared identity                    | Secret/CA exchange; more moving parts         |
-| **Bandwidth/Latency**                 | EDT/BBR queueing                       | Smoother latency under load                         | Host/NIC feature‑gated; lab validation        |
-| **BGP Control Plane**                 | Route advertisement                    | Works great with Proxmox/bare‑metal                 | Coordinate with network team to avoid leaks   |
-| **Egress Gateway**                    | Stable egress IPs                      | Policy routing per namespace/app                    | Egress nodes become critical path; size them  |
-| **Multicast**                         | Niche L2 broadcast                     | Supports specific workloads                         | Kernel/network maturity varies                |
-| **Host Firewall**                     | Node‑level identity policies           | Contain node surface; Talos synergy                 | Careful policy authoring; staged rollouts     |
-| **Service Map (Hubble UI)**           | Visual topology                        | Faster troubleshooting; dependency clarity          | Extra components; lock down RBAC/edge         |
-| **Metrics & Tracing Export**          | Prom/OTel                              | Strong SRE visibility                               | Storage/CPU cost; set retention budgets       |
-| **Identity‑aware L3/L4/DNS Logs**     | Auditable flows                        | DNS egress control; incident response               | Consider sampling; can be chatty              |
-| **Advanced Protocol Visibility (L7)** | Policy & observability                 | HTTP/gRPC/Kafka parsing                             | CPU overhead; scope to key namespaces         |
-| **Transparent Encryption**            | WG/IPsec on the wire                   | Defense‑in‑depth; compliance                        | Throughput hit; key management rotation       |
-| **Runtime Security (Tetragon)**       | eBPF runtime observability             | Detect/block suspicious syscalls                    | Policy learning curve; tune to avoid noise    |
-| **Advanced Network Policy**           | Go beyond K8s NetworkPolicy            | L7/DNS/FQDN/identity selectors                      | Complexity; add CI policy tests               |
+   - Upload Talos ISO/image (`proxmox_virtual_environment_file`) and create 2–3 VMs
+     (`proxmox_virtual_environment_vm`). ([Terraform Registry][14])
+   - Use the **Talos provider** to apply machine configs, bootstrap, and retrieve kubeconfig.
+     ([Terraform Registry][8])
 
-### 4.2 ClusterClass Variables (defaults)
+2. **Install Cluster API Operator (Helm):**
+
+   - The Operator Helm chart supports a quickstart for installing CAPI providers declaratively.
+     ([cluster-api-operator.sigs.k8s.io][1])
+
+3. **Enable providers:**
+
+   - Apply Operator CRs to enable **Infrastructure=Proxmox (CAPMOX)**, **Bootstrap=Talos**,
+     **ControlPlane=Talos**. ([GitHub][2])
+
+4. **Create a workload cluster:**
+
+   - Apply `Cluster`, `TalosControlPlane`, `MachineDeployment`, `ProxmoxMachineTemplate`, and a
+     **MachineHealthCheck**. ([cluster-api.sigs.k8s.io][3])
+
+5. **Install Cilium (Helm) on the workload cluster** using the values below (or via
+   ClusterResourceSet if you want CAPI to auto-install CNIs across fleets). ([Cilium
+   Documentation][11], [cluster-api.sigs.k8s.io][15])
+
+---
+
+## Cilium: “kitchen-sink” Helm values (enable the lot)
+
+> Start here, then prune features you don’t need. Some options require specific kernels/NICs;
+> validate in a lab first. Docs linked per feature.
 
 ```yaml
-spec:
-  variables:
-    - name: cilium
-      value:
-        kubeProxyReplacement: 'strict'
-        l4lb: true
-        gatewayAPI: true
-        ingress: true
-        clustermesh: true
-        bandwidthManager: true
-        bgp: true
-        egressGateway: true
-        multicast: true
-        hostFirewall: true
-        serviceMap: true
-        flowLogs: true
-        metricsTracing: true
-        l7Visibility:
-          enabled: true
-          protocols: ['http', 'grpc', 'kafka', 'dns']
-        wireguard: true
-        tetragon: true
-        advancedPolicy: true
+# values/cilium-full.yaml  (tested with Cilium 1.18.x+)
+# Core
+kubeProxyReplacement: true # kube-proxy free (socket LB) :contentReference[oaicite:17]{index=17}
+ipam:
+  mode: kubernetes
+l7Proxy: true # required for L7 policy/Gateway API (default true) :contentReference[oaicite:18]{index=18}
+
+# Gateway API + Ingress
+gatewayAPI:
+  enabled: true # Gateway API data-plane via Envoy :contentReference[oaicite:19]{index=19}
+  enableAlpn: true
+  enableAppProtocol: true
+ingressController:
+  enabled: true # Cilium Ingress controller (optional) :contentReference[oaicite:20]{index=20}
+
+# L4/L7 Load-Balancing
+service:
+  lb:
+    acceleration: 'best-effort' # allow XDP where possible (depends on NIC/driver)
+# (See docs for Envoy LB, L7 options, headers/XFF.) :contentReference[oaicite:21]{index=21}
+
+# BGP Control Plane (advertise LB IPs / Pod CIDRs)
+bgpControlPlane:
+  enabled: true # Pair with CiliumBGPClusterConfig/PeerConfig CRDs :contentReference[oaicite:22]{index=22}
+
+# Egress Gateway (stable egress IPs)
+egressGateway:
+  enabled: true # requires bpf.masquerade + kubeProxyReplacement :contentReference[oaicite:23]{index=23}
+bpf:
+  masquerade: true
+
+# Bandwidth & Latency
+bandwidthManager:
+  enabled: true # EDT queueing
+  bbr: true # enable BBR for Pods :contentReference[oaicite:24]{index=24}
+
+# Observability
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+  ui:
+    enabled: true # Service map (lock down with auth) :contentReference[oaicite:25]{index=25}
+prometheus:
+  enabled: true # expose agent/Envoy metrics
+operator:
+  prometheus:
+    enabled: true # operator metrics (default true) :contentReference[oaicite:26]{index=26}
+
+# Security & Policy
+hostFirewall:
+  enabled: true # node-level policies (beta/GA per release notes) :contentReference[oaicite:27]{index=27}
+authentication:
+  mutual:
+    spire:
+      enabled: false # example; see docs if using SPIRE mTLS :contentReference[oaicite:28]{index=28}
+# L7 policy is on by default when L7 rules exist; see CiliumNetworkPolicy docs. :contentReference[oaicite:29]{index=29}
+
+# DNS / FQDN egress control
+dnsProxy:
+  enableTransparentMode: true # required for toFQDNs policies visibility/control :contentReference[oaicite:30]{index=30}
+
+# Multicast (beta, validate in lab)
+multicast:
+  enabled: true # see multicast doc and CLI refs :contentReference[oaicite:31]{index=31}
+
+# Transparent Encryption (choose one)
+encryption:
+  enabled: true # turn on transparent encryption
+  type: wireguard # or "ipsec" per your org’s standards :contentReference[oaicite:32]{index=32}
+
+# Talos-specific bits (when installing on Talos)
+cgroup:
+  autoMount:
+    enabled: false
+  hostRoot: /sys/fs/cgroup
+k8sServiceHost: localhost # or your API host if KubePrism not used
+k8sServicePort: 7445 # Talos KubePrism default; see Talos doc :contentReference[oaicite:33]{index=33}
 ```
 
-**Scoping guidance:** enable L7 parsing and Hubble UI selectively in prod; keep cluster‑wide flow
-logs with sampling; encrypt inter‑node traffic where required by policy.
+Install with flux:
 
-Performance profile (optional, advanced)
+]gotcha—let’s make **Cilium itself** follow the exact Flux **5-file** pattern (Namespace,
+HelmRepository, Kustomization, Values ConfigMap, HelmRelease). I’ll assume we keep Cilium in
+`kube-system` (its default). If you prefer a dedicated `cilium-system` namespace, just swap the
+names below.
 
-- For latency/throughput sensitive clusters, consider Cilium’s performance tuning profile
-  (routingMode=native, netkit datapath, BIG TCP, BBR bandwidth manager, distributed LRU). These
-  require modern kernels (>= 6.8 for netkit/BIG TCP) and may need pod/node restarts. Treat as opt‑in
-  overlays and validate in labs first.
-
----
-
-## 5) Core Platform Capabilities (Add‑ons)
-
-All delivered as Flux‑managed Helm/Kustomize modules. Alternatives exist, but defaults are chosen
-for simplicity.
-
-### 5.1 Load Balancer
-
-- **Default:** Cilium L4 LB (Maglev, optional DSR/XDP).
-- **Alternative (bare‑metal):** MetalLB (ARP/BGP/FRR). Keep disabled unless you need its specific
-  model.
-- **Ops notes:** On Proxmox/bare‑metal, pair L4 LB with BGP to advertise LB IPs to your routers.
-
-### 5.2 Secrets Management
-
-- **Sealed Secrets:** encrypt bootstrap secrets in Git; only the in‑cluster controller can decrypt.
-- **External Secrets Operator (ESO):** sync runtime secrets from Vault / AWS Secrets Manager / Azure
-  Key Vault / GCP Secret Manager.
-- **When to use which:**
-
-  - Bootstrap credentials & first‑run tokens → **Sealed Secrets**
-  - Application/runtime secrets with rotation → **ESO**
-
-Notes
-
-- Flux has first‑class SOPS support if you prefer file‑level encryption, but both SOPS and Sealed
-  Secrets rely on human‑performed encryption and don’t scale as well as ESO + a KMS for runtime
-  rotation. Favor ESO for day‑2 and rotation; use Sealed Secrets or SOPS sparingly for bootstrap
-  only.
-
-### 5.3 ExternalDNS
-
-- Reconciles DNS records from `HTTPRoute`/`Gateway`/`Ingress` and `Service` resources to Route53 /
-  Cloud DNS / Azure DNS.
-- **Multi‑tenant:** label filters and separate credentials per zone.
-
-### 5.4 SSL Certificates
-
-- **cert‑manager** for ACME (Let’s Encrypt) or internal CA issuance.
-- Works with **Gateway API** and **Ingress**; supports `HTTP‑01` and `DNS‑01`.
-- **Best practice:** wildcard or per‑service certs depending on tenancy.
-
-### 5.5 Ingress / Gateway
-
-- **Default:** Cilium Gateway API + Cilium Ingress.
-- **Alternatives:** Envoy Gateway, Ingress‑NGINX, Traefik; keep disabled unless you require
-  controller‑specific features.
-
-### 5.6 Persistence (Storage)
-
-- **Cloud:** native CSI drivers (EBS, PD, Azure Disk/File) + `VolumeSnapshotClass`.
-- **Proxmox/Bare‑metal:** **Rook‑Ceph** for RBD/CephFS. Alternatives: Longhorn, TopoLVM, Local Path,
-  SMB CSI, NFS Subdir.
-- **Ops notes:** plan capacity/placement; define default and gold storage classes; enable snapshots
-  for Velero.
-
-### 5.7 OIDC Authentication
-
-- **Cluster API auth:** **Pinniped** (Supervisor + Concierge) integrates Azure AD, Google, Okta,
-  etc. Dex available as lightweight IdP.
-- **App SSO:** `oauth2‑proxy` in front of Gateway/Ingress for apps lacking native OIDC.
-
-### 5.8 Backup & DR
-
-- **Velero** to back up API objects and PVCs (CSI snapshots, or restic/kopia when CSI isn’t
-  available).
-- **Schedules & retention:** per‑env defaults; DR runbooks cover restore to new clusters/regions.
-
-### 5.9 Observability (recommended bundle)
-
-- **Metrics:** Prometheus Operator + kube‑state‑metrics; Cilium metrics scraped; custom dashboards.
-- **Logs:** Loki (or Elasticsearch) + promtail/Vector.
-- **Tracing:** OpenTelemetry Collector exporting to Jaeger/Tempo/Cloud traces; Cilium L7 tracing
-  wires into OTel.
-- **Alerting:** Alertmanager with route templates per team/tenant.
-
-### 5.10 Policy as Code & Runtime Security
-
-- **OPA Gatekeeper or Kyverno** baseline policies (no `:latest`, allowed registries, mandatory
-  labels/owners, deny privileged/hostPath, require TLS, mandatory NetworkPolicies).
-- **Runtime:** **Tetragon** enabled (default) for eBPF tracing/enforcement; **Falco** optional.
-- **Supply chain enforcement:** with Kyverno, add verifyImages rules to enforce Cosign signatures
-  (Sigstore) and mutate images to digests. Start in Audit mode and then Enforce once your CI signs
-  images.
+> API groups are current: `source.toolkit.fluxcd.io/v1`, `kustomize.toolkit.fluxcd.io/v1`,
+> `helm.toolkit.fluxcd.io/v2`. ([Flux][1])
 
 ---
 
-## 6) Flux App Delivery — 5‑File Pattern per App
+# Cilium — Flux 5-file set
 
-**Why:** multi‑namespace copies, explicit dependency ordering, and one object per file for clarity.
+## 1) Namespace (optional; `kube-system` already exists)
 
-### Files per app instance
+`flux/bootstrap/namespaces/namespace-cilium.yaml`
 
-- Namespace (`namespace-<app>.yaml`) under `bootstrap/namespaces/`
-- HelmRepository (`helmrepository-<name>.yaml`) under `bootstrap/helmrepositories/`
-- Kustomization (`kustomization-<app>.yaml`) under `bootstrap/kustomizations/`
-- Values ConfigMap (`configmap-<app>-values.yaml`) under `apps/<app>/`
-- HelmRelease (`helmrelease-<app>.yaml`) under `apps/<app>/`
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kube-system
+```
 
-### Kustomization example
+## 2) HelmRepository
+
+`flux/bootstrap/helmrepositories/helmrepository-cilium.yaml`
+
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: cilium
+  namespace: flux-system
+spec:
+  interval: 15m
+  url: https://helm.cilium.io
+```
+
+(Flux Source API v1 + HelmRepository spec.) ([Flux][1])
+
+## 3) Kustomization (wires the app folder)
+
+`flux/bootstrap/kustomizations/kustomization-cilium.yaml`
+
+```yaml
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cilium
+  namespace: flux-system
+spec:
+  interval: 15m
+  path: ./flux/apps/cilium
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: DaemonSet
+      name: cilium
+      namespace: kube-system
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: hubble-ui
+      namespace: kube-system
+```
+
+(Flux Kustomize v1 health checks keep rollouts safe.) ([Flux][2])
+
+## 4) Values ConfigMap (all the Cilium goodies enabled)
+
+`flux/apps/cilium/configmap-cilium-values.yaml`
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cilium-helm-values
+  namespace: kube-system
+data:
+  values.yaml: |
+    # Core / kube-proxy free
+    kubeProxyReplacement: true                      # socket-LB datapath :contentReference[oaicite:3]{index=3}
+    ipam:
+      mode: kubernetes
+    l7Proxy: true                                    # needed for L7/Gateway API :contentReference[oaicite:4]{index=4}
+
+    # Gateway API + Ingress
+    gatewayAPI:
+      enabled: true
+      enableAlpn: true
+      enableAppProtocol: true                        # Gateway API data-plane via Envoy :contentReference[oaicite:5]{index=5}
+    ingressController:
+      enabled: true                                  # optional Ingress controller :contentReference[oaicite:6]{index=6}
+
+    # L4/L7 load balancing (allow XDP accel when HW supports it)
+    service:
+      lb:
+        acceleration: "best-effort"                  # native/XDP when available
+
+    # BGP control plane (advertise LB IPs / Pod CIDRs)
+    bgpControlPlane:
+      enabled: true                                  # configure via CiliumBGP* CRDs :contentReference[oaicite:7]{index=7}
+
+    # Egress Gateway (fixed egress IPs)
+    egressGateway:
+      enabled: true                                  # route via selected gateway nodes :contentReference[oaicite:8]{index=8}
+    bpf:
+      masquerade: true
+
+    # Bandwidth & Latency optimization
+    bandwidthManager:
+      enabled: true                                  # EDT queueing
+      bbr: true                                      # BBR for Pods :contentReference[oaicite:9]{index=9}
+
+    # Observability (Hubble + metrics)
+    hubble:
+      enabled: true
+      relay:
+        enabled: true
+      ui:
+        enabled: true                                # service map UI :contentReference[oaicite:10]{index=10}
+    prometheus:
+      enabled: true                                  # agent/envoy metrics
+    operator:
+      prometheus:
+        enabled: true                                # operator metrics :contentReference[oaicite:11]{index=11}
+
+    # Security & policy
+    hostFirewall:
+      enabled: true                                  # node-level identity firewall :contentReference[oaicite:12]{index=12}
+    dnsProxy:
+      enableTransparentMode: true                    # DNS/FQDN egress policy visibility :contentReference[oaicite:13]{index=13}
+
+    # Multicast (validate in lab; beta)
+    multicast:
+      enabled: true                                  :contentReference[oaicite:14]{index=14}
+
+    # Transparent encryption (pick one)
+    encryption:
+      enabled: true
+      type: wireguard                                # or "ipsec" per policy :contentReference[oaicite:15]{index=15}
+
+    # Talos specifics (API access via KubePrism and cgroups)
+    cgroup:
+      autoMount:
+        enabled: false
+      hostRoot: /sys/fs/cgroup
+    k8sServiceHost: localhost
+    k8sServicePort: 7445                             # Talos KubePrism default :contentReference[oaicite:16]{index=16}
+```
+
+(Values keys are from the Cilium Helm chart; see the Helm reference.) ([Cilium Documentation][3])
+
+## 5) HelmRelease (pins chart & consumes values)
+
+`flux/apps/cilium/helmrelease-cilium.yaml`
+
+```yaml
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cilium
+  namespace: kube-system
+spec:
+  interval: 15m
+  timeout: 10m
+  chart:
+    spec:
+      chart: cilium
+      version: '1.18.x' # pin major/minor you’ve validated
+      sourceRef:
+        kind: HelmRepository
+        name: cilium
+        namespace: flux-system
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  valuesFrom:
+    - kind: ConfigMap
+      name: cilium-helm-values
+      valuesKey: values.yaml
+```
+
+(HelmRelease v2 is the current API.) ([Flux][4])
+
+---
+
+## Where the “extra” Cilium CRDs live (BGP/Egress policies)
+
+A few features are **on by Helm** but need **their own CRDs** to do anything:
+
+- **BGP Control Plane**: create `CiliumBGPClusterConfig` + `CiliumBGPPeerConfig` (and optionally
+  `CiliumBGPAdvertisement`) under `flux/apps/cilium/resources/` and reference that folder from the
+  same Kustomization (or a second Kustomization if you want stricter ordering). ([Cilium
+  Documentation][5])
+- **Egress Gateway**: define `CiliumEgressGatewayPolicy` objects in that same `resources/` folder.
+  ([Cilium Documentation][6])
+
+> This keeps the **5 core files** intact while letting you version the optional CRs alongside them.
+
+- **Feature docs & caveats:** kube-proxy-free depends on socket-LB; Gateway API requires L7 proxy;
+  Egress GW needs masquerade; BBR depends on the bandwidth manager; multicast is evolving; enable
+  Prometheus metrics/ServiceMonitors if you run Prometheus Operator. ([Cilium Documentation][5])
+
+> Tip (Talos): Talos’ Cilium guide shows the exact Helm flags and the **KubePrism** API port
+> (`7445`). If you don’t use KubePrism, set `k8sServiceHost/Port` to your cluster’s API. ([TALOS
+> LINUX][16], [GitHub][17])
+
+---
+
+## Flux: “5-file” app pattern
+
+**Why:** multi-namespace reuse, explicit ordering, and readability. API versions are current as of
+Flux v2.6 (2025-05). ([Flux][18])
+
+**Files per app instance:**
+
+1. `bootstrap/namespaces/namespace-<app>.yaml`
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: podinfo
+```
+
+2. `bootstrap/helmrepositories/helmrepository-podinfo.yaml`
+
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: podinfo
+  namespace: flux-system
+spec:
+  interval: 15m
+  url: https://stefanprodan.github.io/podinfo
+```
+
+([Flux][12])
+
+3. `apps/podinfo/configmap-podinfo-values.yaml`
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: podinfo-helm-chart-value-overrides
+  namespace: podinfo
+data:
+  values.yaml: |
+    ui:
+      message: "Hello from infraflux"
+```
+
+4. `bootstrap/kustomizations/kustomization-podinfo.yaml`
 
 ```yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -324,22 +442,22 @@ metadata:
   name: podinfo
   namespace: flux-system
 spec:
-  interval: 5m
+  interval: 15m
   path: ./apps/podinfo
   prune: true
-  wait: true
-  targetNamespace: podinfo
-  dependsOn:
-    - name: bootstrap-namespaces
-    - name: bootstrap-helmrepositories
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
   healthChecks:
-    - apiVersion: helm.toolkit.fluxcd.io/v2
-      kind: HelmRelease
+    - apiVersion: apps/v1
+      kind: Deployment
       name: podinfo
       namespace: podinfo
 ```
 
-### HelmRelease example
+([Flux][19])
+
+5. `apps/podinfo/helmrelease-podinfo.yaml`
 
 ```yaml
 apiVersion: helm.toolkit.fluxcd.io/v2
@@ -348,245 +466,225 @@ metadata:
   name: podinfo
   namespace: podinfo
 spec:
-  interval: 5m
   chart:
     spec:
       chart: podinfo
-      version: '6.*'
+      version: 6.x
       sourceRef:
         kind: HelmRepository
         name: podinfo
         namespace: flux-system
+  interval: 15m
+  releaseName: podinfo
   valuesFrom:
     - kind: ConfigMap
-      name: podinfo-values
+      name: podinfo-helm-chart-value-overrides
       valuesKey: values.yaml
-  install:
-    remediation:
-      retries: 3
-  upgrade:
-    remediation:
-      retries: 3
 ```
 
-### Tips
+([Flux][20])
 
-keep values in ConfigMaps/Secrets (referenced via `valuesFrom`), install CRD owners first, keep
-repositories in `flux-system` for shared caching.
-
----
-
-## 7) Security Stack
-
-- **Immutable OS:** Talos (no SSH, API‑managed upgrades).
-- **RBAC & multi‑tenancy:** Flux impersonation; per‑namespace SAs; namespace isolation with
-  NetworkPolicies.
-- **Policy as Code:** Gatekeeper/Kyverno baselines; CI checks enforce policies pre‑merge.
-- **Secrets:** Sealed Secrets for bootstrap; ESO with cloud KMS/Vault for runtime rotation.
-- **Transport:** Cilium WireGuard/IPsec for on‑wire encryption (enabled by default).
-- **Runtime:** Tetragon + optional Falco; tuned rules and alert routes.
-- **Auditability:** Git history + Hubble flow logs + Kubernetes audit logs.
-
-**Risks & mitigations:** policy lockouts (use break‑glass namespaces), noisy runtime alerts (iterate
-allowlists), secrets sprawl (centralize via ESO backends).
+> Flux also supports taking Helm values from Secrets/ConfigMaps with merge order semantics, and OCI
+> helm sources if you prefer. ([v2-0.docs.fluxcd.io][21], [Flux][22])
 
 ---
 
-## 8) Operations
+## Add-ons (sane defaults)
 
-### 8.1 Version Matrix & Pinning
+- **Secrets:**
 
-- Pin versions for CAPI, providers, Talos, Cilium, Flux, and add‑ons per release branch (e.g.,
-  `release/0.1.x`).
-- Maintain a **compatibility table** in `docs/` and CI to prevent unsupported combos.
+  - **Bootstrap** in Git with SOPS (Age/KMS) or Sealed Secrets. Flux SOPS integration is
+    first-class. ([Flux][23])
+  - **Runtime/rotation:** **External Secrets Operator** (Vault/Secrets Manager/etc.).
+    ([external-secrets.io][24], [GitHub][25])
 
-### 8.2 Upgrades
+- **DNS / Certificates:**
 
-- **Talos nodes:** rolling via Talos APIs; cordon/drain automated.
-- **Cilium:** follow official preflight and surge rollout; validate XDP/WG/IPsec after.
-- **CAPI providers & ClusterClass:** upgrade management cluster first; then use ClusterClass
-  template rotation (create new template → update ClusterClass refs → delete old) instead of
-  in‑place mutations. Avoid reusing templates across ClusterClasses. Use
-  `clusterctl alpha topology plan` to preview effects before rollout.
+  - **ExternalDNS** to reconcile DNS from Gateway/HTTPRoute. ([kubernetes-sigs.github.io][26])
+  - **cert-manager** with Gateway API enabled. ([cert-manager][27])
 
-### 8.3 Capacity & Performance
+- **Storage:**
 
-- Right‑size control planes; consider HPA/VPA for data plane components.
-- L7 visibility is CPU‑intensive; scope to critical namespaces.
-- Plan storage IOPS/throughput for Rook‑Ceph or cloud disks.
+  - **Rook-Ceph** on bare-metal, or **Proxmox CSI plugin** if you want to back PVCs by Proxmox
+    storage. ([Rook][28], [GitHub][29])
+  - **Backups/DR:** **Velero** with **CSI snapshots** (`EnableCSI` feature). ([Velero][30])
 
-### 8.4 Preflight Checklist
-
-- Provider credentials present; DNS zones delegated; ACME/DNS‑01 ready (if used).
-- Kernel features (eBPF/XDP/BBR/WireGuard) verified on images.
-- BGP peering approved by network team (if enabled).
-- Gateway API CRDs applied and pinned (v1.2); Cilium configured with kubeProxyReplacement=true and
-  l7Proxy=true.
-
-### 8.5 Troubleshooting (quick cues)
-
-- **Connectivity:** `cilium status`, `cilium sysdump`; check Hubble UI/CLI.
-- **GitOps:** `flux get kustomizations` / `flux logs` for drift/health.
-- **Talos:** `talosctl get machines`, `talosctl logs` for node lifecycle.
-- **CAPI:** `kubectl get clusters,md,ms,cp` and `clusterctl describe` for lifecycle issues.
+- **Self-healing:** **MachineHealthCheck** for every pool. ([cluster-api.sigs.k8s.io][31])
 
 ---
 
-## 9) Getting Started
+## Repo layout
+
+```
+infraflux/
+  terraform/
+    00-proxmox-foundation/     # storage/network, upload Talos ISO
+    10-mgmt-talos/             # Talos VMs + bootstrap + kubeconfig
+    20-capi-operator/          # Helm install Cluster API Operator
+    30-capmox/                 # ProxmoxCluster + credentials Secret
+    40-clusters/               # ClusterClass/templates + MHC
+    50-cilium/                 # Helm install (values/cilium-full.yaml)
+  flux/
+    bootstrap/                 # namespaces/, helmrepositories/, kustomizations/
+    apps/
+      podinfo/                 # values CM + HelmRelease (5-file pattern)
+```
+
+---
+
+## Notes & troubleshooting
+
+- **Talos + Cilium:** follow the Talos “Deploying Cilium” guide closely (KubePrism port, cgroup
+  flags). If not using KubePrism, point `k8sServiceHost/Port` at the Kubernetes API. ([TALOS
+  LINUX][16])
+- **Gateway API:** ensure CRDs are installed and `l7Proxy=true` is set (default). ([Cilium
+  Documentation][32])
+- **Egress Gateway:** requires `bpf.masquerade=true` and kube-proxy replacement. ([Cilium
+  Documentation][33])
+- **Metrics:** enable Prometheus metrics via Helm flags; add ServiceMonitors if you run Prometheus
+  Operator. ([Cilium Documentation][34])
+- **Multicast/BBR:** feature-gated and kernel/NIC dependent; validate before prod. ([Cilium
+  Documentation][35])
+- **CAPMOX scope:** one Proxmox cluster per workload cluster (multi-Proxmox per single K8s cluster
+  is tracked upstream). Plan IPAM/BGP accordingly. ([GitHub][36])
+
+---
+
+## Commands quickstart (indicative)
 
 ```bash
-git clone https://github.com/your-org/infraflux.git
-cd infraflux
-./hack/bootstrap.sh --provider aws   # or azure|gcp|proxmox|metal3
+# 1) Day-0 apply (mgmt cluster + CAPI Operator + CAPMOX)
+cd terraform && tofu init && tofu apply
+
+# 2) Create a workload cluster (CAPI YAML applied by Terraform or kubectl)
+#    ... wait for <cluster>-kubeconfig Secret, write to kubeconfig file
+
+# 3) Install Cilium with all features
+helm upgrade --install cilium cilium/cilium -n kube-system -f values/cilium-full.yaml
+
+# 4) Bootstrap Flux for apps (optional)
+flux bootstrap git --url=<your-git> --branch=main --path=./flux
 ```
 
-**Requirements**: Docker, kind, clusterctl, flux, talosctl, kubectl, provider credentials.
-
-Ordering tips (GitOps)
-
-- Ensure CRD‐owning controllers are reconciled before their custom resources by using Flux
-  Kustomization dependsOn and healthChecks.
-- Install Gateway API CRDs early (pin to v1.2) so Cilium Gateway/Ingress resources become Accepted
-  immediately.
+(Use Flux’s official “Get Started” to bootstrap into your repo/cluster of choice.) ([Flux][37])
 
 ---
 
-## 10) Detailed Roadmap
+## References
 
-> Each item includes deliverables, acceptance criteria (AC), and rollback/risks.
-
-### Phase 1 — Core Automation (Weeks 1–3)
-
-1. **Bootstrap Script**
-
-   - _Deliverables:_ `hack/bootstrap.sh`, docs, preflight checks, destroy script.
-   - _AC:_ One command brings up mgmt cluster, moves CAPI, installs Flux; idempotent reruns; works
-     on AWS & Proxmox.
-   - _Risks:_ Local Docker/kind conflicts; provider credentials. _Rollback:_ destroy script.
-
-2. **CAPI Providers + Talos**
-
-   - _Deliverables:_ `platform/capi/` with pinned versions for CAPA/CAPZ/CAPG/Proxmox/Metal3; Talos
-     bootstrap/control plane.
-   - _AC:_ Create/destroy a dev workload cluster from Git; nodes are Talos.
-
-3. **Flux Bootstrap & Repo Wiring**
-
-   - _Deliverables:_ `platform/flux/`, GitSources/Kustomizations pattern; promotion branches.
-   - _AC:_ Flux reconciles bootstrap `namespaces`/`helmrepositories` and a sample app.
-
-4. **Cilium Base (All Features On)**
-
-   - _Deliverables:_ `modules/networking/cilium/` HelmRelease + overlays; ClusterClass variables.
-   - _AC:_ `cilium status` healthy; Gateway/Ingress route a sample app; Hubble metrics flowing.
-
-5. **Core Add‑ons**
-
-   - _Deliverables:_ cert‑manager (HTTP‑01), ExternalDNS, Sealed Secrets, ESO, Velero (object
-     store), Observability base.
-   - _AC:_ Valid certs, DNS created automatically, secret sync works, nightly Velero backups
-     succeed, dashboards/alerts visible.
-
-### Phase 2 — Modular Components (Weeks 4–6)
-
-1. **Alt Ingress/Gateway Modules**
-
-   - _Deliverables:_ Envoy Gateway and Ingress‑NGINX modules (disabled by default).
-   - _AC:_ Switching ClusterClass var flips between defaults and alternates without manual edits.
-
-2. **Storage Modules**
-
-   - _Deliverables:_ Cloud CSI classes; Rook‑Ceph for Proxmox/bare‑metal with snapshotting.
-   - _AC:_ PVCs provision; snapshots/restore work; performance baselines documented.
-
-3. **Cilium Feature Packs Hardening**
-
-   - _Deliverables:_ Example BGP peering, EgressGateway policies, ClusterMesh tutorial, Tetragon
-     baseline policies.
-   - _AC:_ Peers established; egress IP pinning works; multi‑cluster service resolves; runtime
-     alerts generated on test violations.
-
-### Phase 3 — Security Hardening (Weeks 7–9)
-
-1. **Multi‑tenancy & RBAC**
-
-   - _Deliverables:_ Flux impersonation model; per‑namespace SAs; NetworkPolicies.
-   - _AC:_ Tenants isolated; Git permissions aligned with namespaces.
-
-2. **Policy Baselines**
-
-   - _Deliverables:_ Gatekeeper/Kyverno constraints; CI policy tests in GitHub Actions.
-   - _AC:_ Policy violations block PRs; exemptions audited.
-
-3. **OIDC Integration**
-
-   - _Deliverables:_ Pinniped/Dex setup; oauth2‑proxy example for edge SSO.
-   - _AC:_ Cluster login via external IdP; sample app protected by SSO.
-
-4. **Secrets Rotation & Key Management**
-
-   - _Deliverables:_ Sealed Secrets key rotation doc; ESO backend auth rotation runbook.
-   - _AC:_ Rotation drill passes; apps continue operating.
-
-### Phase 4 — Scale & Multi‑Cluster (Weeks 10–12)
-
-1. **Cluster Mesh Rollout**
-
-   - _Deliverables:_ Mesh between dev and prod; service export/import examples; trust bootstrap
-     automation.
-   - _AC:_ Cross‑cluster traffic works; policies enforce namespace isolation across clusters.
-
-2. **Fleet Sharding**
-
-   - _Deliverables:_ Sharded Flux Kustomizations per team/tenant; tuned intervals and `dependsOn`
-     graphs.
-   - _AC:_ Reconciliation latencies within SLOs under load.
-
-3. **DR Drills & Runbooks**
-
-   - _Deliverables:_ Scheduled Velero backups; documented restore to fresh region/provider; periodic
-     drills.
-   - _AC:_ RTO/RPO targets achieved; audit trail of drills.
-
-4. **Template Rotation Procedures**
-
-   - _Deliverables:_ Documented ClusterClass template rotation; CI guardrails; canary rollout steps.
-   - _AC:_ Safe propagation of changes to fleets without downtime.
-
-### Phase 5 — Nice‑to‑Haves (Ongoing)
-
-- **Crossplane** compositions for DB/bucket/DNS claims tied to app recipes.
-- **Cost & capacity dashboards** integrating cloud metrics.
-- **Golden‑path app templates** (with CI scaffolding) using the 5‑file Flux pattern.
+- **Cilium:** kube-proxy-free, Helm install, Gateway API, BGP CP, Egress GW, Hubble, Bandwidth/BBR,
+  metrics, multicast, encryption. ([Cilium Documentation][5])
+- **Talos:** Proxmox guide, Cilium on Talos (KubePrism 7445). ([TALOS LINUX][4])
+- **Cluster API:** Quick start, Operator Helm chart, ClusterResourceSet (auto-apply add-ons),
+  MachineHealthCheck. ([cluster-api.sigs.k8s.io][3], [cluster-api-operator.sigs.k8s.io][1])
+- **Flux:** API versions (Helm v2, Source v1, Kustomize v1), guides. ([Flux][20])
+- **Add-ons:** ESO, Flux SOPS, Rook-Ceph, Proxmox CSI, Velero CSI. ([external-secrets.io][24],
+  [Flux][23], [Rook][28], [GitHub][29], [Velero][30])
 
 ---
 
-## 11) FAQs & Trade‑offs
+### License
 
-- **Why all Cilium features on by default?** Simplicity and consistency. We accept some overhead to
-  avoid component sprawl. Tuning guidance is provided to scope heavy features in prod.
-- **Do we need another CLI?** No. We rely only on upstream tools (`kind`, `clusterctl`, `flux`,
-  `talosctl`, `kubectl`).
-- **Can we swap components?** Yes. ClusterClass variables and module overlays make swaps a pull
-  request, not a rebuild.
-- **How do we avoid lockouts with policies?** Staged policies, break‑glass namespaces, and CI policy
-  tests before merge.
+MIT (or your choice). Contributions welcome!
 
----
-
-## 12) Contributing
-
-- Use the provided folder structure and naming conventions.
-- Add `dependsOn` and `healthChecks` for every new Kustomization.
-- Pin versions; update the version matrix and changelog.
-- Include runbooks for new capabilities and clear rollback steps.
-
----
-
-## 13) Getting Help
-
-- Check `docs/security.md` and `docs/roadmap.md` for deep dives and current status.
-- Common commands: `flux get kustomizations`, `flux logs`, `cilium status`, `talosctl`,
-  `clusterctl describe`.
-
-<!-- markdownlint-enable MD013 -->
+[1]:
+  https://cluster-api-operator.sigs.k8s.io/02_installation/04_helm-chart-installation?utm_source=chatgpt.com
+  'Using Helm Charts - Cluster API Operator - Kubernetes'
+[2]:
+  https://github.com/ionos-cloud/cluster-api-provider-proxmox?utm_source=chatgpt.com
+  'Cluster API Provider for Proxmox VE (CAPMOX)'
+[3]:
+  https://cluster-api.sigs.k8s.io/user/quick-start?utm_source=chatgpt.com
+  'Quick Start - The Cluster API Book - Kubernetes'
+[4]:
+  https://www.talos.dev/v1.10/talos-guides/install/virtualized-platforms/proxmox/?utm_source=chatgpt.com
+  'Proxmox'
+[5]:
+  https://docs.cilium.io/en/stable/network/kubernetes/kubeproxy-free.html?utm_source=chatgpt.com
+  'Kubernetes Without kube-proxy — Cilium 1.18.0 documentation'
+[6]:
+  https://cilium.io/blog/2025/05/20/cilium-l7-policies/?_hsenc=p2ANqtz-_zZJ5z3ksNiTu3vXCTwb8om87J8KEZO4xs-yyKkGcWoE1Kn8vlTadkb_fDsRFsxKOY7qB1&utm_medium=email&utm_source=chatgpt.com
+  'Application-Aware Security Policies with Cilium Layer 7 ...'
+[7]:
+  https://registry.terraform.io/providers/bpg/proxmox/latest/docs/resources/virtual_environment_vm?utm_source=chatgpt.com
+  'proxmox_virtual_environment_vm | Resources | bpg/proxmox'
+[8]:
+  https://registry.terraform.io/providers/siderolabs/talos/0.4.0-alpha.0/docs?utm_source=chatgpt.com
+  'Docs overview | siderolabs/talos - Terraform Registry'
+[9]:
+  https://www.siderolabs.com/blog/verified-terraform-provider-for-talos-linux/?utm_source=chatgpt.com
+  'Verified Terraform provider for Talos Linux'
+[10]:
+  https://github.com/kubernetes-sigs/cluster-api-operator?utm_source=chatgpt.com
+  'kubernetes-sigs/cluster-api-operator'
+[11]:
+  https://docs.cilium.io/en/stable/installation/k8s-install-helm.html?utm_source=chatgpt.com
+  'Installation using Helm — Cilium 1.18.0 documentation'
+[12]:
+  https://fluxcd.io/flux/components/source/api/v1/?utm_source=chatgpt.com
+  'Source API reference v1'
+[13]:
+  https://registry.terraform.io/providers/bpg/proxmox/latest/docs?utm_source=chatgpt.com
+  'Proxmox Provider - bpg - Terraform Registry'
+[14]:
+  https://registry.terraform.io/providers/bpg/proxmox/0.58.0/docs/resources/virtual_environment_file?utm_source=chatgpt.com
+  'proxmox_virtual_environment_file | Resources | bpg/proxmox'
+[15]:
+  https://cluster-api.sigs.k8s.io/tasks/cluster-resource-set?utm_source=chatgpt.com
+  'ClusterResourceSet - The Cluster API Book'
+[16]:
+  https://www.talos.dev/latest/kubernetes-guides/network/deploying-cilium/?utm_source=chatgpt.com
+  'Deploying Cilium CNI'
+[17]:
+  https://github.com/siderolabs/talos/issues/9132?utm_source=chatgpt.com
+  'Documentation Bug: Cilium install instructions incorrectly ...'
+[18]: https://fluxcd.io/blog/2025/05/flux-v2.6.0/?utm_source=chatgpt.com 'Announcing Flux 2.6 GA'
+[19]:
+  https://fluxcd.io/flux/components/kustomize/kustomizations/?utm_source=chatgpt.com
+  'Kustomization'
+[20]: https://fluxcd.io/flux/components/helm/api/v2/?utm_source=chatgpt.com 'Helm API reference v2'
+[21]:
+  https://v2-0.docs.fluxcd.io/flux/guides/helmreleases/?utm_source=chatgpt.com
+  'Manage Helm Releases'
+[22]: https://fluxcd.io/flux/guides/helmreleases/?utm_source=chatgpt.com 'Manage Helm Releases'
+[23]:
+  https://fluxcd.io/flux/guides/mozilla-sops/?utm_source=chatgpt.com
+  'Manage Kubernetes secrets with SOPS'
+[24]: https://external-secrets.io/?utm_source=chatgpt.com 'External Secrets Operator: Introduction'
+[25]:
+  https://github.com/external-secrets/external-secrets?utm_source=chatgpt.com
+  'External Secrets Operator reads information ...'
+[26]:
+  https://kubernetes-sigs.github.io/external-dns/v0.13.1/tutorials/gateway-api/?utm_source=chatgpt.com
+  'Configuring ExternalDNS to use Gateway API Route Sources'
+[27]:
+  https://cert-manager.io/docs/usage/gateway/?utm_source=chatgpt.com
+  'Annotated Gateway resource'
+[28]:
+  https://rook.io/docs/rook/latest/Getting-Started/quickstart/?utm_source=chatgpt.com
+  'Quickstart - Rook Ceph Documentation'
+[29]:
+  https://github.com/sergelogvinov/proxmox-csi-plugin/blob/main/docs/install.md?utm_source=chatgpt.com
+  'proxmox-csi-plugin/docs/install.md at main'
+[30]:
+  https://velero.io/docs/main/csi/?utm_source=chatgpt.com
+  'Container Storage Interface Snapshot Support in Velero'
+[31]:
+  https://cluster-api.sigs.k8s.io/tasks/automated-machine-management/healthchecking?utm_source=chatgpt.com
+  'Configure a MachineHealthCheck - The Cluster API Book'
+[32]:
+  https://docs.cilium.io/en/latest/network/servicemesh/gateway-api/gateway-api.html?utm_source=chatgpt.com
+  'Gateway API Support — Cilium 1.19.0-dev documentation'
+[33]:
+  https://docs.cilium.io/en/stable/network/egress-gateway/egress-gateway.html?utm_source=chatgpt.com
+  'Egress Gateway — Cilium 1.18.0 documentation'
+[34]:
+  https://docs.cilium.io/en/stable/observability/metrics.html?utm_source=chatgpt.com
+  'Monitoring & Metrics — Cilium 1.18.0 documentation'
+[35]:
+  https://docs.cilium.io/en/stable/network/kubernetes/bandwidth-manager.html?utm_source=chatgpt.com
+  'Bandwidth Manager — Cilium 1.18.0 documentation'
+[36]:
+  https://github.com/ionos-cloud/cluster-api-provider-proxmox/issues/370?utm_source=chatgpt.com
+  '[Proposal] Support for multi Proxmox Clusters (Datacenters)'
+[37]: https://fluxcd.io/flux/get-started/?utm_source=chatgpt.com 'Get Started with Flux'
