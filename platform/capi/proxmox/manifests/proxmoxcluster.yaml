@@ -4,6 +4,9 @@ metadata:
   name: proxmox-cluster
   namespace: default
 spec:
+  credentialsRef:
+  name: proxmox-credentials
+  namespace: capi-system
   # Allowed Proxmox node names where VMs can be scheduled
   allowedNodes:
     - pve

@@ -59,11 +59,37 @@ KUBECONFIG="${TMP_KUBECONFIG}" clusterctl init \
   --bootstrap talos \
   --control-plane talos
 
-# 3) Provision management cluster (Talos) - placeholder; repo should contain the manifests under platform/capi/
-echo "[3/5] Applying management cluster manifests..."
+# Apply Proxmox credentials early if provided
 if [[ "$PROVIDER" == "proxmox" ]]; then
-  # Apply Proxmox management cluster scaffolding (adjust before use)
-  KUBECONFIG="${TMP_KUBECONFIG}" kubectl apply -k platform/capi/proxmox/manifests
+  if [[ -f platform/capi/proxmox/manifests/secret-capmox.yaml ]]; then
+    echo "Applying Proxmox credentials Secret to cluster (preflight)..."
+    KUBECONFIG="${TMP_KUBECONFIG}" kubectl apply -f platform/capi/proxmox/manifests/secret-capmox.yaml || true
+  fi
+fi
+
+# 3) Provision management cluster (Talos) - wait for providers then apply manifests
+echo "[3/5] Waiting for CAPI providers to be ready..."
+if [[ "$PROVIDER" == "proxmox" ]]; then
+  # Wait for controller-manager Deployments to be Available (capi, talos bootstrap/cp, proxmox)
+  KUBECONFIG="${TMP_KUBECONFIG}" kubectl -n capi-system wait deploy/capi-controller-manager --for=condition=Available --timeout=300s || true
+  KUBECONFIG="${TMP_KUBECONFIG}" kubectl -n cabpt-system wait deploy/cabpt-controller-manager --for=condition=Available --timeout=300s || true
+  KUBECONFIG="${TMP_KUBECONFIG}" kubectl -n cacppt-system wait deploy/cacppt-controller-manager --for=condition=Available --timeout=300s || true
+  KUBECONFIG="${TMP_KUBECONFIG}" kubectl -n capmox-system wait deploy/capmox-controller-manager --for=condition=Available --timeout=300s || true
+  sleep 5
+  echo "[3/5] Applying management cluster manifests (with retry)..."
+  apply_ok=false
+  for i in {1..5}; do
+    if KUBECONFIG="${TMP_KUBECONFIG}" kubectl apply -k platform/capi/proxmox/manifests; then
+      apply_ok=true; break
+    else
+      echo "Apply failed (attempt $i). Waiting for webhooks and retrying..."
+      sleep 10
+    fi
+  done
+  if [[ "$apply_ok" != true ]]; then
+    echo "Failed to apply Proxmox manifests after retries." >&2
+    exit 1
+  fi
 else
   echo "Provider '$PROVIDER' not yet wired; add manifests under platform/capi/ and apply them here."
 fi
@@ -84,16 +110,6 @@ if [[ -n "$GIT_URL" ]]; then
     --silent
 else
   echo "[5/5] Skipping Flux bootstrap (no --git-url provided)."
-fi
-
-# Optionally apply Proxmox credentials Secret if a non-example file exists
-if [[ "$PROVIDER" == "proxmox" ]]; then
-  if [[ -f platform/capi/proxmox/manifests/secret-capmox.yaml ]]; then
-    echo "Applying Proxmox credentials Secret to capi-system..."
-    KUBECONFIG="${TMP_KUBECONFIG}" kubectl apply -f platform/capi/proxmox/manifests/secret-capmox.yaml
-  else
-    echo "Note: platform/capi/proxmox/manifests/secret-capmox.yaml not found; ensure credentials are present in capi-system."
-  fi
 fi
 
 rm -f "${TMP_KUBECONFIG}"
