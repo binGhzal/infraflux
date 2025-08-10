@@ -20,3 +20,5 @@ sops/keys/
 # go
 cli/bin/
 cli/build/
+
+referenceExamples/
