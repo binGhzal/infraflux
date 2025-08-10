@@ -1,2 +1,0 @@
-# Exclude generated content and vendor/example trees from SonarLint
-site/** referenceExamples/** **/*.min.js **/*.min.css
