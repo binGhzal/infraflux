@@ -5,8 +5,8 @@ metadata:
   namespace: default
 spec:
   credentialsRef:
-  name: proxmox-credentials
-  namespace: capi-system
+    name: proxmox-credentials
+    namespace: capi-system
   # Allowed Proxmox node names where VMs can be scheduled
   allowedNodes:
     - pve
