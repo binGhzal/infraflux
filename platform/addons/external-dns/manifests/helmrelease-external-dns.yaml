@@ -8,6 +8,7 @@ spec:
   chart:
     spec:
       chart: external-dns
+      version: 1.14.4 # pinned; update as needed
       sourceRef:
         kind: HelmRepository
         name: external-dns
@@ -24,3 +25,19 @@ spec:
     sources:
       - service
       - ingress
+    env:
+      - name: AWS_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: external-dns-aws-creds
+            key: AWS_ACCESS_KEY_ID
+      - name: AWS_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: external-dns-aws-creds
+            key: AWS_SECRET_ACCESS_KEY
+      - name: AWS_REGION
+        valueFrom:
+          secretKeyRef:
+            name: external-dns-aws-creds
+            key: AWS_REGION

@@ -15,3 +15,8 @@ spec:
   dependsOn:
     - name: bootstrap-namespaces
     - name: bootstrap-helmrepositories
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: external-dns
+      namespace: external-dns
