@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -53,6 +54,8 @@ var upCmd = &cobra.Command{
 			pv.Workers.Replicas = upOpts.Workers
 		}
 		values := render.ValuesFromProvider(upOpts.Provider, pv)
+		values["VCPU"] = strconv.Itoa(upOpts.CPUs)
+		values["MEMORY_GI"] = strconv.Itoa(upOpts.MemoryGi)
 
 		tmplPaths, err := filepath.Glob(filepath.Join(root, "clusters", "templates", "*.yaml"))
 		if err != nil {
