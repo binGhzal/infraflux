@@ -51,7 +51,7 @@ jobs:
       - name: yamllint
         uses: ibiqlik/action-yamllint@v3
         with:
-          config_file: .yamllint.yml
+          config_file: .yamllint.yaml
 
   kubeconform:
     name: Validate Kubernetes manifests
