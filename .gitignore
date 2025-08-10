@@ -1,6 +1,7 @@
 # editor
 .vscode/
 .idea/
+.DS_Store
 
 # build
 bin/
