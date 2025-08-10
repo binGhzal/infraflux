@@ -1,0 +1,32 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-images-audit
+  annotations:
+    policies.kyverno.io/title: Verify images
+    policies.kyverno.io/category: Supply Chain Security
+    policies.kyverno.io/severity: medium
+spec:
+  validationFailureAction: Audit
+  webhookTimeoutSeconds: 15
+  background: true
+  rules:
+    - name: verify-signed-images
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      verifyImages:
+        - imageReferences:
+            - "ghcr.io/*/*"
+            - "registry.k8s.io/*"
+          attestors:
+            - entries:
+                - keys:
+                    publicKeys: |
+                      # replace with your cosign public key(s)
+                      LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0K...
+          repository: "https://rekor.sigstore.dev"
+          mutators:
+            - sigstore: {}

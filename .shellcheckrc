@@ -1,0 +1,6 @@
+# ShellCheck configuration
+# Disable warnings that conflict with portable bash in CI or are false positives for kubectl heredocs
+# SC1090/SC1091: non-constant source
+# SC2155: read without -r warning for readarray usage
+# SC2034: unused vars in sourced env files
+disable=SC1090,SC1091,SC2155,SC2034

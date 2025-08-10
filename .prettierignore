@@ -1,0 +1,4 @@
+# Generated content
+site/
+# Node/yarn/nix
+node_modules/

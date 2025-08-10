@@ -8,8 +8,10 @@ rules:
     allowed-values: [ "true", "false", "on", "off", "yes", "no" ]
   document-start: disable
   indentation:
+    spaces: 2
     indent-sequences: consistent
 ignore: |
   out/
   **/vendor/
   **/.cache/
+  site/

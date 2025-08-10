@@ -1,3 +1,16 @@
+# Generated docs/site
+site/
+
+# Node / tooling
+node_modules/
+dist/
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
 # OS
 .DS_Store
 Thumbs.db
