@@ -1,0 +1,18 @@
+# Placeholder for clusterctl configuration (providers & versions).
+# The agent should pin tested versions during implementation.
+providers:
+  - name: "cluster-api"
+    type: "CoreProvider"
+    url: "https://github.com/kubernetes-sigs/cluster-api/releases/latest/core-components.yaml"
+  - name: "aws"
+    type: "InfrastructureProvider"
+    url: "https://github.com/kubernetes-sigs/cluster-api-provider-aws/releases/latest/infrastructure-components.yaml"
+  - name: "azure"
+    type: "InfrastructureProvider"
+    url: "https://github.com/kubernetes-sigs/cluster-api-provider-azure/releases/latest/infrastructure-components.yaml"
+  - name: "gcp"
+    type: "InfrastructureProvider"
+    url: "https://github.com/kubernetes-sigs/cluster-api-provider-gcp/releases/latest/infrastructure-components.yaml"
+  - name: "proxmox"
+    type: "InfrastructureProvider"
+    url: "https://github.com/your-org/cluster-api-provider-proxmox/releases/latest/infrastructure-components.yaml"

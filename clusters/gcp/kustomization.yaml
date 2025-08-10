@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../templates/base-cluster.yaml
+  - ../templates/talos-control-plane.yaml
+  - ../templates/talos-machine-template-controlplane.yaml
+  - ../templates/talos-machine-template-worker.yaml
+configMapGenerator:
+  - name: gcp-values
+    literals:
+      - INFRA_CLUSTER_KIND=GCPCluster
+      - INFRA_MACHINE_TEMPLATE_KIND=GCPMachineTemplate
+      - PROVIDER_SPEC_CP="e2-medium"
+      - PROVIDER_SPEC_WORKER="e2-medium"
+      - REGION=us-east-1
+      - K8S_MINOR=1.30
+      - TALOS_VERSION=v1.7.5
+      - CP_COUNT=3
+      - WORKER_COUNT=2
+      - CLUSTER_NAME=infraflux-gcp
+      - NAMESPACE=default
+generatorOptions:
+  disableNameSuffixHash: true

@@ -1,0 +1,7 @@
+# Talos clusterconfig placeholder for the management cluster.
+# Generated via `talosctl gen config` in real flows. Do not commit real secrets.
+cluster:
+  name: infraflux-mgmt
+  network:
+    cni:
+      name: none

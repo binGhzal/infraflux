@@ -1,0 +1,11 @@
+clusterName: infraflux-aws
+namespace: default
+region: us-east-1
+k8sMinor: "1.30"
+talosVersion: "v1.7.5"
+controlPlane:
+  replicas: 3
+  instanceType: t3.medium
+workers:
+  replicas: 2
+  instanceType: t3.large

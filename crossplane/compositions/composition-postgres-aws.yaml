@@ -1,0 +1,9 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xpostgresdatabases.aws.platform.infraflux.io
+spec:
+  compositeTypeRef:
+    apiVersion: platform.infraflux.io/v1alpha1
+    kind: XPostgresDatabase
+  resources: []

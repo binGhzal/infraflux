@@ -1,0 +1,16 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack
+  namespace: observability
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: kube-prometheus-stack
+      version: 62.x.x
+      sourceRef:
+        kind: HelmRepository
+        name: prometheus-community
+        namespace: flux-system
+  values: {}

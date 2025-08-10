@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../templates/base-cluster.yaml
+  - ../templates/talos-control-plane.yaml
+  - ../templates/talos-machine-template-controlplane.yaml
+  - ../templates/talos-machine-template-worker.yaml
+configMapGenerator:
+  - name: proxmox-values
+    literals:
+      - INFRA_CLUSTER_KIND=ProxmoxCluster
+      - INFRA_MACHINE_TEMPLATE_KIND=ProxmoxMachineTemplate
+      - PROVIDER_SPEC_CP="proxmox-cp"
+      - PROVIDER_SPEC_WORKER="proxmox-worker"
+      - REGION=us-east-1
+      - K8S_MINOR=1.30
+      - TALOS_VERSION=v1.7.5
+      - CP_COUNT=3
+      - WORKER_COUNT=2
+      - CLUSTER_NAME=infraflux-proxmox
+      - NAMESPACE=default
+generatorOptions:
+  disableNameSuffixHash: true

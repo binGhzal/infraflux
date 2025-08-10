@@ -1,0 +1,10 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: ${INFRA_MACHINE_TEMPLATE_KIND}
+metadata:
+    name: ${CLUSTER_NAME}-cp
+    namespace: ${NAMESPACE}
+spec:
+    template:
+        spec:
+            # Provider-specific fields go into overlays (instanceType, image, network, disks, etc.)
+            providerID: ${PROVIDER_SPEC_CP}
