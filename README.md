@@ -1,5 +1,7 @@
 # InfraFlux — Turnkey Multi‑Cloud Kubernetes with GitOps & Cilium
 
+<!-- markdownlint-disable MD013 -->
+
 > **Comprehensive Edition** — full architecture, design trade‑offs, defaults, ops runbooks, and a detailed roadmap.
 > Cilium Gateway API + Cilium Ingress are the defaults. All Cilium capabilities are enabled by default and
 > controllable via ClusterClass variables.
@@ -73,7 +75,7 @@
 
 ## 3) Repository Structure
 
-```
+```text
 .
 ├── hack/
 │   ├── bootstrap.sh           # one‑shot: kind → CAPI → Talos mgmt → move → flux bootstrap
@@ -100,8 +102,13 @@
     └── security.md            # deeper dives and runbooks
 ```
 
-**Pros:** clear boundaries, ownership, and CODEOWNERS; easy multi‑tenant layering.
-**Cons:** more files; requires discipline in `dependsOn` and naming.
+### Pros
+
+clear boundaries, ownership, and CODEOWNERS; easy multi‑tenant layering.
+
+### Cons
+
+more files; requires discipline in `dependsOn` and naming.
 
 ---
 
@@ -233,7 +240,7 @@ All delivered as Flux‑managed Helm/Kustomize modules. Alternatives exist, but 
 
 **Why:** multi‑namespace copies, explicit dependency ordering, and one object per file for clarity.
 
-**Files per app instance**
+### Files per app instance
 
 - Namespace (`namespace-<app>.yaml`) under `bootstrap/namespaces/`
 - HelmRepository (`helmrepository-<name>.yaml`) under `bootstrap/helmrepositories/`
@@ -241,7 +248,7 @@ All delivered as Flux‑managed Helm/Kustomize modules. Alternatives exist, but 
 - Values ConfigMap (`configmap-<app>-values.yaml`) under `apps/<app>/`
 - HelmRelease (`helmrelease-<app>.yaml`) under `apps/<app>/`
 
-**Kustomization example**
+### Kustomization example
 
 ```yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -265,7 +272,7 @@ spec:
       namespace: podinfo
 ```
 
-**HelmRelease example**
+### HelmRelease example
 
 ```yaml
 apiVersion: helm.toolkit.fluxcd.io/v2
@@ -295,7 +302,9 @@ spec:
       retries: 3
 ```
 
-**Tips**: keep values in ConfigMaps/Secrets (referenced via `valuesFrom`), install CRD owners first, keep repositories in `flux-system` for shared caching.
+### Tips
+
+keep values in ConfigMaps/Secrets (referenced via `valuesFrom`), install CRD owners first, keep repositories in `flux-system` for shared caching.
 
 ---
 
@@ -482,3 +491,5 @@ cd infraflux
 
 - Check `docs/security.md` and `docs/roadmap.md` for deep dives and current status.
 - Common commands: `flux get kustomizations`, `flux logs`, `cilium status`, `talosctl`, `clusterctl describe`.
+
+<!-- markdownlint-enable MD013 -->
