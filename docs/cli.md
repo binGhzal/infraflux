@@ -11,7 +11,7 @@ Bootstrap artifacts for the **management cluster**:
 - Renders/prints steps for `clusterctl init` with selected providers.
 - Renders Flux bootstrap pointing to this repo.
 
-**Flags**
+#### `init` Flags
 
 - `--git-repo` (required): Git URL for Flux bootstrap.
 - `--providers`: comma-separated (default: aws,azure,gcp,proxmox).
@@ -21,7 +21,7 @@ Bootstrap artifacts for the **management cluster**:
 
 Render a **workload cluster** plan (CAPI + Talos) and the post-creation app setup.
 
-**Flags**
+#### `up` Flags
 
 - `--provider`: `aws|azure|gcp|proxmox`
 - `--name`: cluster name
@@ -32,7 +32,7 @@ Render a **workload cluster** plan (CAPI + Talos) and the post-creation app setu
 
 Render a deletion plan for a named cluster.
 
-**Common flags**
+#### Common flags
 
 - `--dry-run`: render only, no side effects
 - `-c, --config`: optional config file for defaults
