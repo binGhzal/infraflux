@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - ./bootstrap/kustomizations/kustomization-bootstrap-namespaces.yaml
   - ./bootstrap/kustomizations/kustomization-bootstrap-helmrepositories.yaml
+  - ./bootstrap/kustomizations/kustomization-cilium-networking.yaml
   - ./bootstrap/kustomizations/kustomization-podinfo.yaml
   - ./bootstrap/kustomizations/kustomization-kyverno.yaml
   - ./bootstrap/kustomizations/kustomization-cert-manager.yaml

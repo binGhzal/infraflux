@@ -14,17 +14,67 @@ spec:
         name: cilium
         namespace: flux-system
   values:
+    # Core networking
     kubeProxyReplacement: strict
     ipam:
       mode: kubernetes
-    hubble:
+
+    # Load Balancer - disabled for kind
+    l2announcements:
+      enabled: false
+    externalIPs:
+      enabled: false
+
+    # Gateway API and Ingress - simplified for kind
+    gatewayAPI:
       enabled: true
-      relay:
-        enabled: true
-      ui:
-        enabled: true
     ingressController:
       enabled: true
       default: true
-    gatewayAPI:
+      service:
+        type: NodePort # Use NodePort instead of LoadBalancer for kind
+
+    # Observability (Hubble)
+    hubble:
       enabled: true
+      metrics:
+        enabled:
+          - dns:query;ignoreAAAA
+          - drop
+          - tcp
+          - flow
+          - icmp
+          - http
+      relay:
+        enabled: true
+        rollOutPods: true
+      ui:
+        enabled: true
+        rollOutPods: true
+        service:
+          type: NodePort # Use NodePort for Hubble UI in kind
+
+    # Security
+    encryption:
+      enabled: false # Start with encryption disabled for initial deployment
+      type: wireguard
+
+    # BGP (disabled for kind)
+    bgpControlPlane:
+      enabled: false
+
+    # Bandwidth management
+    bandwidthManager:
+      enabled: true
+      bbr: true
+
+    # Operator configuration
+    operator:
+      rollOutPods: true
+      replicas: 1 # Only 1 replica for single-node kind cluster
+
+    # Enable IPv4/IPv6
+    ipv4:
+      enabled: true
+    ipv6:
+      enabled: false

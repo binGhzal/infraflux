@@ -21,23 +21,10 @@ spec:
     registry: txt
     txtOwnerId: infraflux
     logLevel: info
-    provider: aws # change per environment; without credentials the pod will error until configured
+    # For Proxmox deployment, use inmemory provider for demo purposes
+    dryRun: true
+    # Using inmemory provider for demo purposes in Proxmox environment
+    provider: inmemory
     sources:
       - service
       - ingress
-    env:
-      - name: AWS_ACCESS_KEY_ID
-        valueFrom:
-          secretKeyRef:
-            name: external-dns-aws-creds
-            key: AWS_ACCESS_KEY_ID
-      - name: AWS_SECRET_ACCESS_KEY
-        valueFrom:
-          secretKeyRef:
-            name: external-dns-aws-creds
-            key: AWS_SECRET_ACCESS_KEY
-      - name: AWS_REGION
-        valueFrom:
-          secretKeyRef:
-            name: external-dns-aws-creds
-            key: AWS_REGION

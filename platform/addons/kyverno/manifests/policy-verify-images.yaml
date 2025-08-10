@@ -21,12 +21,12 @@ spec:
         - imageReferences:
             - "ghcr.io/*/*"
             - "registry.k8s.io/*"
+          mutateDigest: false
           attestors:
             - entries:
                 - keys:
                     publicKeys: |
                       # replace with your cosign public key(s)
-                      LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0K...
+                      # For demo purposes, this is a placeholder
+                      LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0K
           repository: "https://rekor.sigstore.dev"
-          mutators:
-            - sigstore: {}
