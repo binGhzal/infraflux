@@ -173,7 +173,7 @@ k8sServicePort: 7445 # Talos KubePrism default; see Talos doc :contentReference[
 
 Install with flux:
 
-]gotcha—let’s make **Cilium itself** follow the exact Flux **5-file** pattern (Namespace,
+Gotcha — let’s make **Cilium itself** follow the exact Flux **5-file** pattern (Namespace,
 HelmRepository, Kustomization, Values ConfigMap, HelmRelease). I’ll assume we keep Cilium in
 `kube-system` (its default). If you prefer a dedicated `cilium-system` namespace, just swap the
 names below.
@@ -183,7 +183,7 @@ names below.
 
 ---
 
-# Cilium — Flux 5-file set
+## Cilium — Flux 5-file set
 
 ## 1) Namespace (optional; `kube-system` already exists)
 
@@ -404,7 +404,7 @@ metadata:
   name: podinfo
 ```
 
-2. `bootstrap/helmrepositories/helmrepository-podinfo.yaml`
+1. `bootstrap/helmrepositories/helmrepository-podinfo.yaml`
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1
@@ -419,7 +419,7 @@ spec:
 
 ([Flux][12])
 
-3. `apps/podinfo/configmap-podinfo-values.yaml`
+1. `apps/podinfo/configmap-podinfo-values.yaml`
 
 ```yaml
 apiVersion: v1
@@ -433,7 +433,7 @@ data:
       message: "Hello from infraflux"
 ```
 
-4. `bootstrap/kustomizations/kustomization-podinfo.yaml`
+1. `bootstrap/kustomizations/kustomization-podinfo.yaml`
 
 ```yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -457,7 +457,7 @@ spec:
 
 ([Flux][19])
 
-5. `apps/podinfo/helmrelease-podinfo.yaml`
+1. `apps/podinfo/helmrelease-podinfo.yaml`
 
 ```yaml
 apiVersion: helm.toolkit.fluxcd.io/v2
@@ -515,7 +515,7 @@ spec:
 
 ## Repo layout
 
-```
+```text
 infraflux/
   terraform/
     00-proxmox-foundation/     # storage/network, upload Talos ISO
