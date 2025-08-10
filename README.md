@@ -24,6 +24,7 @@ It fast-tracks the deployment of complete "recipes" (curated Kubernetes app bund
 
 ## 📂 Repository Structure
 
+```filesystem
 infraflux/
 ├─ cli/ # Minimal Go/Python CLI for init, up, destroy
 │ └─ cmd/
@@ -53,6 +54,7 @@ infraflux/
 │ └─ compositions/
 │
 └─ sops/ # SOPS/age key management for secrets
+```
 
 ---
 
