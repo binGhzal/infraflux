@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/binghzal/infraflux/cli/internal/render"
 	"github.com/spf13/cobra"
-	"github.com/your-org/infraflux/cli/internal/render"
 )
 
 type UpOptions struct {
@@ -37,6 +37,9 @@ var upCmd = &cobra.Command{
 		}
 
 		valuesFile := filepath.Join(root, "clusters", upOpts.Provider, "values.example.yaml")
+		if _, err := os.Stat(valuesFile); err != nil {
+			return fmt.Errorf("provider values file not found: %s (check --provider or repository layout)", valuesFile)
+		}
 		pv, err := render.LoadProviderValues(valuesFile)
 		if err != nil {
 			return err
@@ -75,7 +78,19 @@ var upCmd = &cobra.Command{
 		if !contains(recipes, "base") {
 			recipes = append([]string{"base"}, recipes...)
 		}
-		if err := render.RenderRecipes(recipes, filepath.Join(root, "out", pv.ClusterName, "recipes")); err != nil {
+		// Filter recipes to those present in repo to avoid Flux errors on missing paths.
+		var existing []string
+		for _, r := range recipes {
+			if _, err := os.Stat(filepath.Join(root, "recipes", r)); err == nil {
+				existing = append(existing, r)
+			} else {
+				fmt.Printf("warning: recipe path not found, skipping: %s\n", r)
+			}
+		}
+		if len(existing) == 0 {
+			return fmt.Errorf("no valid recipes found under %s", filepath.Join(root, "recipes"))
+		}
+		if err := render.RenderRecipes(existing, filepath.Join(root, "out", pv.ClusterName, "recipes")); err != nil {
 			return err
 		}
 		fmt.Printf("Rendered manifests under out/%s\n", pv.ClusterName)

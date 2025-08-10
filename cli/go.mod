@@ -1,4 +1,4 @@
-module github.com/your-org/infraflux/cli
+module github.com/binghzal/infraflux/cli
 
 go 1.22
 

@@ -1,5 +1,5 @@
 package main
 
-import "github.com/your-org/infraflux/cli/cmd"
+import "github.com/binghzal/infraflux/cli/cmd"
 
 func main() { cmd.Execute() }
