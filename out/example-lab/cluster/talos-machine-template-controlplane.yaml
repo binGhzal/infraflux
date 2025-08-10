@@ -1,0 +1,10 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: AWSMachineTemplate
+metadata:
+    name: example-lab-cp
+    namespace: default
+spec:
+    template:
+        spec:
+            # Provider-specific fields go into overlays (instanceType, image, network, disks, etc.)
+            providerID: t3.medium

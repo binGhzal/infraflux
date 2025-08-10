@@ -2,9 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/your-org/infraflux/cli/internal/render"
 )
 
 type UpOptions struct {
@@ -15,26 +18,64 @@ type UpOptions struct {
 	CPUs     int
 	MemoryGi int
 	K8sMinor string
+	Recipes  []string
 }
 
-var upOpts UpOptions
+var (
+	upOpts     UpOptions
+	recipesCSV string
+)
 
 var upCmd = &cobra.Command{
 	Use:   "up",
 	Short: "Create a workload cluster (CAPI + Talos) and install Cilium + Flux recipes",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// NOTE: Stub: Render manifests from clusters/templates + provider overlay,
-		// and print to stdout or write to ./out/<name>/ for application by a pipeline.
-		fmt.Println(">> [stub] infraflux up")
-		fmt.Printf("   Provider: %s, Name: %s, Region: %s\n", upOpts.Provider, upOpts.Name, upOpts.Region)
-		fmt.Printf("   Workers: %d, vCPUs: %d, RAM: %dGi, k8s: %s\n",
-			upOpts.Workers, upOpts.CPUs, upOpts.MemoryGi, upOpts.K8sMinor)
+		root := "."
+		if _, err := os.Stat(filepath.Join(root, "clusters")); os.IsNotExist(err) {
+			root = ".."
+		}
 
-		// Example of where you'd merge templates with provider values:
-		fmt.Println("   Rendering: clusters/templates/* + clusters/" + upOpts.Provider + " overlay")
-		fmt.Println("   Installing: Cilium (kube-proxy replacement), Gateway API + Envoy Gateway")
-		fmt.Println("   Enabling: Flux recipes from recipes/base and selected bundles")
-		fmt.Println("   NOTE: Implement renderer + file outputs. No live apply here (coding agent only).")
+		valuesFile := filepath.Join(root, "clusters", upOpts.Provider, "values.example.yaml")
+		pv, err := render.LoadProviderValues(valuesFile)
+		if err != nil {
+			return err
+		}
+		if upOpts.Name != "" {
+			pv.ClusterName = upOpts.Name
+		}
+		if upOpts.Region != "" {
+			pv.Region = upOpts.Region
+		}
+		if upOpts.K8sMinor != "" {
+			pv.K8sMinor = upOpts.K8sMinor
+		}
+		if upOpts.Workers > 0 {
+			pv.Workers.Replicas = upOpts.Workers
+		}
+		values := render.ValuesFromProvider(upOpts.Provider, pv)
+
+		tmplPaths, err := filepath.Glob(filepath.Join(root, "clusters", "templates", "*.yaml"))
+		if err != nil {
+			return err
+		}
+		clusterOut := filepath.Join(root, "out", pv.ClusterName, "cluster")
+		if err := render.RenderFiles(tmplPaths, values, clusterOut); err != nil {
+			return err
+		}
+		if err := render.RenderFiles([]string{filepath.Join(root, "clusters", "cilium", "helmrelease.yaml")}, values, filepath.Join(root, "out", pv.ClusterName, "addons", "cilium")); err != nil {
+			return err
+		}
+		if err := render.RenderFiles([]string{filepath.Join(root, "clusters", "gateway", "envoy-gateway-helmrelease.yaml")}, values, filepath.Join(root, "out", pv.ClusterName, "addons", "gateway")); err != nil {
+			return err
+		}
+		recipes := upOpts.Recipes
+		if !contains(recipes, "base") {
+			recipes = append([]string{"base"}, recipes...)
+		}
+		if err := render.RenderRecipes(recipes, filepath.Join(root, "out", pv.ClusterName, "recipes")); err != nil {
+			return err
+		}
+		fmt.Printf("Rendered manifests under out/%s\n", pv.ClusterName)
 		return nil
 	},
 }
@@ -48,15 +89,36 @@ func init() {
 	upCmd.Flags().IntVar(&upOpts.CPUs, "cpu", 4, "vCPUs per node")
 	upCmd.Flags().IntVar(&upOpts.MemoryGi, "memory", 8, "Memory per node in Gi")
 	upCmd.Flags().StringVar(&upOpts.K8sMinor, "k8s", "1.30", "Kubernetes minor version")
+	upCmd.Flags().StringVar(&recipesCSV, "recipes", "base", "Comma-separated recipe bundles")
 	upCmd.PreRunE = func(cmd *cobra.Command, args []string) error {
-		valid := []string{"aws","azure","gcp","proxmox"}
+		valid := []string{"aws", "azure", "gcp", "proxmox"}
 		ok := false
 		for _, v := range valid {
-			if upOpts.Provider == v { ok = true; break }
+			if upOpts.Provider == v {
+				ok = true
+				break
+			}
 		}
 		if !ok {
 			return fmt.Errorf("invalid --provider=%q (valid: %s)", upOpts.Provider, strings.Join(valid, ","))
 		}
+		var recs []string
+		for _, r := range strings.Split(recipesCSV, ",") {
+			r = strings.TrimSpace(r)
+			if r != "" {
+				recs = append(recs, r)
+			}
+		}
+		upOpts.Recipes = recs
 		return nil
 	}
+}
+
+func contains(slice []string, s string) bool {
+	for _, v := range slice {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }
