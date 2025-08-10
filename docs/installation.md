@@ -24,7 +24,7 @@ git config core.hooksPath githooks
 ## Get the sources and build the CLI (render-only)
 
 ```bash
-git clone https://github.com/your-org/infraflux
+git clone https://github.com/binghzal/infraflux
 cd infraflux
 make build-cli
 ./bin/infraflux --help
