@@ -1,0 +1,55 @@
+# Example CRDs for post-install Cilium features (commented out by default)
+# Remove the leading '#' to enable and customize for your environment.
+
+# ---
+# apiVersion: cilium.io/v2alpha1
+# kind: CiliumBGPClusterConfig
+# metadata:
+#   name: default
+# spec:
+#   nodeSelector:
+#     matchLabels: {}
+#   bgpInstances:
+#     - name: default
+#       localASN: 65001
+#       peers:
+#         - name: edge
+#           peerASN: 65000
+#           peerAddress: 192.0.2.1
+#           peerPort: 179
+#           families:
+#             - afi: ipv4
+#               safi: unicast
+#       advertisements:
+#         - matchSelectors:
+#             - matchLabels:
+#                 lb: "true"
+
+# ---
+# apiVersion: cilium.io/v2alpha1
+# kind: CiliumBGPPeerConfig
+# metadata:
+#   name: edge
+# spec:
+#   ebgpMultiHop: 2
+#   timers:
+#     holdTimeSeconds: 9
+#     keepAliveTimeSeconds: 3
+
+# ---
+# apiVersion: cilium.io/v2alpha1
+# kind: CiliumEgressGatewayPolicy
+# metadata:
+#   name: default
+# spec:
+#   selectors:
+#     - podSelector:
+#         matchLabels:
+#           egress: fixed
+#   destinationCIDRs:
+#     - 0.0.0.0/0
+#   egressGateway:
+#     nodeSelector:
+#       matchLabels:
+#         node-role.kubernetes.io/egress: "true"
+#     externalIP: 198.51.100.10

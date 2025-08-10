@@ -5,6 +5,7 @@ metadata:
   namespace: kube-system
 data:
   values.yaml: |
+    # NOTE: Sourced from values/cilium-full.yaml
     kubeProxyReplacement: true
     ipam:
       mode: kubernetes
