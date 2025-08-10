@@ -62,6 +62,11 @@
 **Pros:** all steps are upstream‑documented; idempotent; everything recorded in Git.
 **Cons:** requires Docker and CLIs locally; air‑gapped setups need image/helm registries mirrored.
 
+Note on Gateway API prerequisites
+
+- Gateway API CRDs must be installed before enabling Cilium Gateway/Ingress. Pin and install v1.2 standard CRDs (GatewayClass, Gateway, HTTPRoute, GRPCRoute, ReferenceGrant; TLSRoute optional/experimental). Ensure Cilium is started with kubeProxyReplacement=true (we default to strict) and l7Proxy=true (default enabled), which are prerequisites for Gateway API in Cilium.
+- Prefer spec.addresses on Gateway over the io.cilium/lb-ipam-ips annotation (planned deprecation).
+
 ### 2.2 Workload Cluster Baseline
 
 - **OS:** Talos Linux (immutable, API‑driven, SSH‑less).
@@ -169,6 +174,10 @@ spec:
 
 **Scoping guidance:** enable L7 parsing and Hubble UI selectively in prod; keep cluster‑wide flow logs with sampling; encrypt inter‑node traffic where required by policy.
 
+Performance profile (optional, advanced)
+
+- For latency/throughput sensitive clusters, consider Cilium’s performance tuning profile (routingMode=native, netkit datapath, BIG TCP, BBR bandwidth manager, distributed LRU). These require modern kernels (>= 6.8 for netkit/BIG TCP) and may need pod/node restarts. Treat as opt‑in overlays and validate in labs first.
+
 ---
 
 ## 5) Core Platform Capabilities (Add‑ons)
@@ -189,6 +198,10 @@ All delivered as Flux‑managed Helm/Kustomize modules. Alternatives exist, but 
 
   - Bootstrap credentials & first‑run tokens → **Sealed Secrets**
   - Application/runtime secrets with rotation → **ESO**
+
+Notes
+
+- Flux has first‑class SOPS support if you prefer file‑level encryption, but both SOPS and Sealed Secrets rely on human‑performed encryption and don’t scale as well as ESO + a KMS for runtime rotation. Favor ESO for day‑2 and rotation; use Sealed Secrets or SOPS sparingly for bootstrap only.
 
 ### 5.3 ExternalDNS
 
@@ -233,6 +246,7 @@ All delivered as Flux‑managed Helm/Kustomize modules. Alternatives exist, but 
 
 - **OPA Gatekeeper or Kyverno** baseline policies (no `:latest`, allowed registries, mandatory labels/owners, deny privileged/hostPath, require TLS, mandatory NetworkPolicies).
 - **Runtime:** **Tetragon** enabled (default) for eBPF tracing/enforcement; **Falco** optional.
+- **Supply chain enforcement:** with Kyverno, add verifyImages rules to enforce Cosign signatures (Sigstore) and mutate images to digests. Start in Audit mode and then Enforce once your CI signs images.
 
 ---
 
@@ -333,7 +347,7 @@ keep values in ConfigMaps/Secrets (referenced via `valuesFrom`), install CRD own
 
 - **Talos nodes:** rolling via Talos APIs; cordon/drain automated.
 - **Cilium:** follow official preflight and surge rollout; validate XDP/WG/IPsec after.
-- **CAPI providers:** upgrade management cluster first; then rotate ClusterClass templates (template rotation) to propagate safely to fleets.
+- **CAPI providers & ClusterClass:** upgrade management cluster first; then use ClusterClass template rotation (create new template → update ClusterClass refs → delete old) instead of in‑place mutations. Avoid reusing templates across ClusterClasses. Use `clusterctl alpha topology plan` to preview effects before rollout.
 
 ### 8.3 Capacity & Performance
 
@@ -346,6 +360,7 @@ keep values in ConfigMaps/Secrets (referenced via `valuesFrom`), install CRD own
 - Provider credentials present; DNS zones delegated; ACME/DNS‑01 ready (if used).
 - Kernel features (eBPF/XDP/BBR/WireGuard) verified on images.
 - BGP peering approved by network team (if enabled).
+- Gateway API CRDs applied and pinned (v1.2); Cilium configured with kubeProxyReplacement=true and l7Proxy=true.
 
 ### 8.5 Troubleshooting (quick cues)
 
@@ -365,6 +380,11 @@ cd infraflux
 ```
 
 **Requirements**: Docker, kind, clusterctl, flux, talosctl, kubectl, provider credentials.
+
+Ordering tips (GitOps)
+
+- Ensure CRD‐owning controllers are reconciled before their custom resources by using Flux Kustomization dependsOn and healthChecks.
+- Install Gateway API CRDs early (pin to v1.2) so Cilium Gateway/Ingress resources become Accepted immediately.
 
 ---
 
