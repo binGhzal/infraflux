@@ -11,10 +11,18 @@ Install locally (or in CI): go, kubectl, clusterctl, talosctl, flux, sops + age,
 ## 2) Build the CLI (render-only)
 
 ```bash
-git clone https://github.com/your-org/infraflux
+git clone https://github.com/binghzal/infraflux
 cd infraflux
+
+# share the versioned git hooks
+git config core.hooksPath githooks
+chmod +x githooks/*    # enable hooks locally
+# (uses Git’s supported hooksPath mechanism)  # :contentReference[oaicite:5]{index=5}
+
+# build the CLI
 make build-cli
 ./bin/infraflux --help
+
 ```
 
 ## 3) Bootstrap Flux in your management cluster
