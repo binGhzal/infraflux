@@ -21,4 +21,19 @@ sops/keys/
 cli/bin/
 cli/build/
 
+# mkdocs generated site
+site/
+
+# node
+node_modules/
+
+# python venvs
+.venv/
+.env
+
+# os/editor
+*.log
+*.tmp
+*.swp
+
 referenceExamples/

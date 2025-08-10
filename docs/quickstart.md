@@ -48,7 +48,7 @@ kubectl apply -k management/flux
   --recipes base,observability,devtools,media
 ```
 
-Outputs are written to `out/<cluster>/`.
+Outputs are written to `out/{cluster}/`.
 
 ## 6) Next steps
 
