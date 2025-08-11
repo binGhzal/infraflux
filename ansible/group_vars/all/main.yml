@@ -36,5 +36,5 @@ service_cidr: 10.96.0.0/12
 control_plane_endpoint: "{{ hostvars[groups['k8s_masters'][0]].ansible_host }}:6443"
 
 # SSH admin
-admin_ssh_user: "{{ lookup('vars', 'ansible_user', default='ubuntu') }}"
+admin_ssh_user: "{{ ansible_user | default('ubuntu') }}"
 admin_ssh_key: ""

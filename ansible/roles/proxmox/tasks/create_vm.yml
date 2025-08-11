@@ -8,10 +8,9 @@
 
 - name: Build cloud-init and network strings
   ansible.builtin.set_fact:
-  vm_net0: "virtio{{ (((vm_mac | default('') | string | length) | int) > 0) | ternary(',macaddr=' + vm_mac, '') }},bridge={{ proxmox_vm_network_bridge }}{{ ((((proxmox_vm_vlan_tag | default('') | string | length) | int) > 0)) | ternary(',tag=' + (proxmox_vm_vlan_tag | string), '') }}"
-  vm_ipconfig0: "ip={{ vm_ip }}/24{{ ((((proxmox_vlan_gateway | default('') | string | length) | int) > 0)) | ternary(',gw=' + (proxmox_vlan_gateway | string), '') }}"
-    vm_sshkeys: "{{ (ci_ssh_authorized_keys | reject('equalto', '')) | list | join('\n') }}"
-    vm_cipassword: "{{ (ci_password | default('') | string | length) | int > 0 | ternary(ci_password, omit) }}"
+  vm_net0: "virtio{{ (vm_mac | default('') | string | length) > 0 | ternary(',macaddr=' ~ vm_mac, '') }},bridge={{ proxmox_vm_network_bridge }}{{ (proxmox_vm_vlan_tag | default('') | string | length) > 0 | ternary(',tag=' ~ (proxmox_vm_vlan_tag | string), '') }}"
+  vm_ipconfig0: "ip={{ vm_ip }}/24{{ (proxmox_vlan_gateway | default('') | string | length) > 0 | ternary(',gw=' ~ (proxmox_vlan_gateway | string), '') }}"
+    vm_sshkeys: "{{ (ci_ssh_authorized_keys | reject('equalto', '') | list) | join('\n') }}"
 
 - name: Create or update VM
   vars:
@@ -25,8 +24,8 @@
       clone: "{{ template_name }}"
       full: true
       sockets: 1
-      cores: "{{ proxmox_vm_cores }}"
-      memory: "{{ proxmox_vm_ram }}"
+    cores: "{{ proxmox_vm_cores }}"
+    memory: "{{ proxmox_vm_ram }}"
       scsihw: virtio-scsi-pci
       scsi0: "{{ proxmox_storage }}:{{ proxmox_vm_disk_size_gb }}"
       net0: "{{ vm_net0 }}"
@@ -34,12 +33,12 @@
       bootdisk: scsi0
       sshkeys: "{{ vm_sshkeys }}"
       ciuser: "{{ ci_user }}"
-      cipassword: "{{ vm_cipassword }}"
+  cipassword: "{{ ci_password | default(omit) }}"
       ipconfig0: "{{ vm_ipconfig0 }}"
       update: true
       force: false
       onboot: true
-  community.general.proxmox_kvm: "{{ proxmox_vm_params }}"
+  community.general.proxmox_kvm: {{ proxmox_vm_params }}
   register: vm_result
   delegate_to: localhost
 
@@ -51,3 +50,4 @@
     node: "{{ vm_node }}"
     name: "{{ vm_name }}"
     state: started
+  delegate_to: localhost
