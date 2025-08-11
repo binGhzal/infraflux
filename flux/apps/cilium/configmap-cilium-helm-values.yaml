@@ -94,3 +94,8 @@ data:
       enabled: true
     ipv6:
       enabled: false
+
+    # Avoid mount-bpf-fs init failing on environments where /sys/fs/bpf is not a shared mount (e.g., Docker Desktop)
+    bpf:
+      autoMount:
+        enabled: false
