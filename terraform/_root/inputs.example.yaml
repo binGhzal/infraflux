@@ -75,6 +75,16 @@ cluster:
     cpu: 4
     memoryMiB: 8192
     diskGiB: 50
+
+# Staged apply flags and kubeconfig path for phase-2
+flags:
+  enable_capi: true
+  enable_capmox: true
+  enable_clusters: true
+  enable_addons: true
+
+kubernetes:
+  kubeconfig: ./artifacts/mgmt-kubeconfig # set after mgmt bootstrap
   workers:
     replicas: 3
     cpu: 4

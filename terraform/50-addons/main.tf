@@ -18,6 +18,7 @@ provider "helm" {}
 
 locals {
 	inputs = var.inputs
+	enabled = try(local.inputs.flags.enable_addons, false)
 	cilium_install_method = try(local.inputs.addons.cilium_install_method, "helm")
 	# path.root points to the root module (terraform/_root); values/ lives two levels up
 	cilium_values_yaml    = file("${path.root}/../../values/cilium-full.yaml")
@@ -36,14 +37,14 @@ locals {
 }
 
 resource "kubernetes_manifest" "cilium_crs" {
-	count    = local.cilium_install_method == "crs" ? 1 : 0
-	for_each = local.cilium_install_method == "crs" ? { for i, d in local.crs_docs : i => yamldecode(d) } : {}
+	count    = local.enabled && local.cilium_install_method == "crs" ? 1 : 0
+	for_each = local.enabled && local.cilium_install_method == "crs" ? { for i, d in local.crs_docs : i => yamldecode(d) } : {}
 	manifest = each.value
 }
 
 # Option B: Helm install Cilium directly
 resource "helm_release" "cilium" {
-	count      = local.cilium_install_method == "helm" ? 1 : 0
+	count      = local.enabled && local.cilium_install_method == "helm" ? 1 : 0
 	name       = "cilium"
 	repository = "https://helm.cilium.io"
 	chart      = "cilium"

@@ -16,6 +16,7 @@ provider "kubernetes" {}
 
 locals {
   inputs = var.inputs
+  enable_capi = try(local.inputs.flags.enable_capi, false)
 
   providers_cr_yaml = templatefile(
     "${path.module}/templates/providers-cr.yaml.tmpl",
@@ -29,7 +30,7 @@ locals {
 
 # Optional: install Cluster API Operator via Helm (chart details provided via inputs)
 resource "helm_release" "capi_operator" {
-  count      = try(local.inputs.capi_operator.helm.enabled, false) ? 1 : 0
+  count      = local.enable_capi && try(local.inputs.capi_operator.helm.enabled, false) ? 1 : 0
   name       = try(local.inputs.capi_operator.helm.name, "cluster-api-operator")
   repository = try(local.inputs.capi_operator.helm.repository, null)
   chart      = try(local.inputs.capi_operator.helm.chart, null)
@@ -41,7 +42,7 @@ resource "helm_release" "capi_operator" {
 
 # Apply Provider CRs to enable infrastructure/bootstrap/control-plane providers
 resource "kubernetes_manifest" "providers" {
-  for_each = { for i, d in local.providers_cr_docs : i => yamldecode(d) }
+  for_each = local.enable_capi ? { for i, d in local.providers_cr_docs : i => yamldecode(d) } : {}
   manifest = each.value
   field_manager { force_conflicts = true }
   depends_on = [helm_release.capi_operator]

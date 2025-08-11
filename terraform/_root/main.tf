@@ -19,8 +19,14 @@ provider "proxmox" {
 }
 
 provider "talos" {}
-provider "helm" {}
-provider "kubernetes" {}
+provider "kubernetes" {
+  config_path = try(local.inputs.kubernetes.kubeconfig, null)
+}
+provider "helm" {
+  kubernetes {
+    config_path = try(local.inputs.kubernetes.kubeconfig, null)
+  }
+}
 
 module "proxmox_foundation" {
   source = "../00-proxmox-foundation"

@@ -11,6 +11,7 @@ provider "kubernetes" {}
 
 locals {
 	inputs = var.inputs
+	enabled = try(local.inputs.flags.enable_capmox, false)
 
 	secret_yaml = templatefile(
 		"${path.module}/templates/proxmox-credentials-secret.yaml.tmpl",
@@ -30,7 +31,7 @@ locals {
 }
 
 resource "kubernetes_manifest" "capmox" {
-	for_each = { for i, d in local.manifests : i => yamldecode(d) }
+	for_each = local.enabled ? { for i, d in local.manifests : i => yamldecode(d) } : {}
 	manifest = each.value
 	field_manager { force_conflicts = true }
 }

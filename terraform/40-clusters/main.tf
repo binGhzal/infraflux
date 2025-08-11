@@ -11,6 +11,7 @@ provider "kubernetes" {}
 
 locals {
 	inputs = var.inputs
+	enabled = try(local.inputs.flags.enable_clusters, false)
 	cluster_yaml = templatefile(
 		"${path.module}/templates/cluster.yaml.tmpl",
 		{
@@ -22,7 +23,7 @@ locals {
 }
 
 resource "kubernetes_manifest" "cluster" {
-	for_each = { for i, d in local.docs : i => yamldecode(d) }
+	for_each = local.enabled ? { for i, d in local.docs : i => yamldecode(d) } : {}
 	manifest = each.value
 	field_manager { force_conflicts = true }
 }
