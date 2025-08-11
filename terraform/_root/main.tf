@@ -24,39 +24,35 @@ provider "kubernetes" {}
 module "proxmox_foundation" {
   source = "../00-proxmox-foundation"
 
-  proxmox_endpoint  = local.inputs.proxmox.endpoint
-  proxmox_api_token = local.inputs.proxmox.api_token
-  proxmox_datastore = local.inputs.proxmox.datastore
-  proxmox_node      = local.inputs.proxmox.node
+  inputs = local.inputs
 }
 
 module "mgmt_talos" {
   source = "../10-mgmt-talos"
 
-  cluster_name            = local.inputs.mgmt.cluster_name
-  control_plane_endpoints = local.inputs.mgmt.control_plane_endpoints
+  inputs = local.inputs
 }
 
 module "capi_operator" {
   source = "../20-capi-operator"
 
-  namespace = local.inputs.capi_operator.namespace
+  inputs = local.inputs
 }
 
 module "capmox" {
   source = "../30-capmox"
 
-  proxmox_credentials_secret = "capmox-credentials" # can be created from inputs if needed
+  inputs = local.inputs
 }
 
 module "clusters" {
   source = "../40-clusters"
 
-  cluster_name = local.inputs.mgmt.cluster_name
+  inputs = local.inputs
 }
 
 module "addons" {
   source = "../50-addons"
 
-  install_method = local.inputs.addons.cilium_install_method
+  inputs = local.inputs
 }

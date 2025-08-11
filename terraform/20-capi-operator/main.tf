@@ -14,15 +14,35 @@ terraform {
 provider "helm" {}
 provider "kubernetes" {}
 
-# Install Cluster API Operator via Helm chart with wait
-# resource "helm_release" "capi_operator" { ... }
+locals {
+  inputs = var.inputs
 
-# Optionally render Provider CRs from templates, using a single inputs map at root
-# data "template_file" "providers" {
-#   template = file("${path.module}/templates/providers.yaml.tftpl")
-#   vars = {
-#     infra = "proxmox"
-#     bootstrap = "talos"
-#     controlplane = "talos"
-#   }
-# }
+  providers_cr_yaml = templatefile(
+    "${path.module}/templates/providers-cr.yaml.tmpl",
+    {
+      providers = try(local.inputs.capi_operator.providers, {})
+    }
+  )
+
+  providers_cr_docs = [for d in split("\n---\n", local.providers_cr_yaml) : d if trimspace(d) != ""]
+}
+
+# Optional: install Cluster API Operator via Helm (chart details provided via inputs)
+resource "helm_release" "capi_operator" {
+  count      = try(local.inputs.capi_operator.helm.enabled, false) ? 1 : 0
+  name       = try(local.inputs.capi_operator.helm.name, "cluster-api-operator")
+  repository = try(local.inputs.capi_operator.helm.repository, null)
+  chart      = try(local.inputs.capi_operator.helm.chart, null)
+  version    = try(local.inputs.capi_operator.helm.version, null)
+  namespace  = try(local.inputs.capi_operator.helm.namespace, "capi-operator-system")
+  create_namespace = true
+  wait       = true
+}
+
+# Apply Provider CRs to enable infrastructure/bootstrap/control-plane providers
+resource "kubernetes_manifest" "providers" {
+  for_each = { for i, d in local.providers_cr_docs : i => yamldecode(d) }
+  manifest = each.value
+  field_manager { force_conflicts = true }
+  depends_on = [helm_release.capi_operator]
+}

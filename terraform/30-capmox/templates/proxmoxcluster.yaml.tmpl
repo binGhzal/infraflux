@@ -1,0 +1,10 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+kind: ProxmoxCluster
+metadata:
+  name: ${cluster.name}
+spec:
+  controlPlaneEndpoint:
+    host: ${cluster.control_plane_endpoint.host}
+    port: ${cluster.control_plane_endpoint.port}
+  datacenter: ${proxmox.datacenter}
+  # Add more CAPMOX-specific fields as needed

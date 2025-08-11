@@ -1,10 +1,28 @@
-# Define Cluster, TalosControlPlane, MachineDeployment, ProxmoxMachineTemplate and MachineHealthCheck using kubernetes_manifest.
+terraform {
+	required_providers {
+		kubernetes = {
+			source  = "hashicorp/kubernetes"
+			version = ">= 2.28.0"
+		}
+	}
+}
 
-# Example: cluster manifests rendered from templates using templatefile()+yamldecode()
-# locals {
-#   cluster_yaml = templatefile("${path.module}/templates/cluster.yaml.tftpl", {
-#     name         = var.cluster_name
-#     cp_replicas  = var.cp_replicas
-#     md_replicas  = var.md_replicas
-#   })
-# }
+provider "kubernetes" {}
+
+locals {
+	inputs = var.inputs
+	cluster_yaml = templatefile(
+		"${path.module}/templates/cluster.yaml.tmpl",
+		{
+			cluster = try(local.inputs.cluster, {})
+			proxmox = try(local.inputs.proxmox, {})
+		}
+	)
+	docs = [for d in split("\n---\n", local.cluster_yaml) : d if trimspace(d) != ""]
+}
+
+resource "kubernetes_manifest" "cluster" {
+	for_each = { for i, d in local.docs : i => yamldecode(d) }
+	manifest = each.value
+	field_manager { force_conflicts = true }
+}

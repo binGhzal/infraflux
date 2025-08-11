@@ -1,0 +1,121 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: ${cluster.name}
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: [${cluster.pod_cidrs}]
+    services:
+      cidrBlocks: [${cluster.service_cidrs}]
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: TalosControlPlane
+    name: ${cluster.name}-cp
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+    kind: ProxmoxCluster
+    name: ${cluster.name}
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: TalosControlPlane
+metadata:
+  name: ${cluster.name}-cp
+spec:
+  version: ${cluster.kubernetes_version}
+  replicas: ${cluster.control_plane.replicas}
+  infrastructureTemplate:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+    kind: ProxmoxMachineTemplate
+    name: ${cluster.name}-cp
+  machineTemplate:
+    metadata:
+      labels:
+        node-role.kubernetes.io/control-plane: ""
+    spec:
+      talosVersion: ${cluster.talos_version}
+      controlPlane: {}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+kind: ProxmoxMachineTemplate
+metadata:
+  name: ${cluster.name}-cp
+spec:
+  template:
+    spec:
+      vmTemplate: ${proxmox.vm_template}
+      cpuCores: ${cluster.control_plane.cpu}
+      memoryMiB: ${cluster.control_plane.memoryMiB}
+      disks:
+        - sizeGiB: ${cluster.control_plane.diskGiB}
+      network:
+        - bridge: ${proxmox.bridge}
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: ${cluster.name}-md-0
+spec:
+  replicas: ${cluster.workers.replicas}
+  clusterName: ${cluster.name}
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/deployment-name: ${cluster.name}-md-0
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/deployment-name: ${cluster.name}-md-0
+    spec:
+      version: ${cluster.kubernetes_version}
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: TalosConfigTemplate
+          name: ${cluster.name}-md-0
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+        kind: ProxmoxMachineTemplate
+        name: ${cluster.name}-md-0
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: TalosConfigTemplate
+metadata:
+  name: ${cluster.name}-md-0
+spec:
+  template:
+    spec:
+      talosVersion: ${cluster.talos_version}
+      machineType: worker
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha1
+kind: ProxmoxMachineTemplate
+metadata:
+  name: ${cluster.name}-md-0
+spec:
+  template:
+    spec:
+      vmTemplate: ${proxmox.vm_template}
+      cpuCores: ${cluster.workers.cpu}
+      memoryMiB: ${cluster.workers.memoryMiB}
+      disks:
+        - sizeGiB: ${cluster.workers.diskGiB}
+      network:
+        - bridge: ${proxmox.bridge}
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineHealthCheck
+metadata:
+  name: ${cluster.name}-md-0
+spec:
+  clusterName: ${cluster.name}
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/deployment-name: ${cluster.name}-md-0
+  nodeStartupTimeout: 20m
+  unhealthyConditions:
+    - type: Ready
+      status: Unknown
+      timeout: 300s
+    - type: Ready
+      status: False
+      timeout: 300s

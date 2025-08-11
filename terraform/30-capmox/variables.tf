@@ -1,1 +1,1 @@
-variable "proxmox_credentials_secret" { type = string }
+variable "inputs" { type = any }

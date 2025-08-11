@@ -1,0 +1,11 @@
+# Talos machineconfig for worker nodes
+version: v1alpha1
+machine:
+  type: worker
+  token: ${talos.token}
+  install:
+    image: ${talos.image}
+cluster:
+  name: ${cluster.name}
+  network:
+    cni: none

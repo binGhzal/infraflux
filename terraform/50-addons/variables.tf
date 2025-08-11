@@ -1,1 +1,1 @@
-variable "install_method" { type = string, default = "helm" }
+variable "inputs" { type = any }

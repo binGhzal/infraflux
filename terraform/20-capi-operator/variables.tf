@@ -1,1 +1,1 @@
-variable "namespace" { type = string, default = "capi-system" }
+variable "inputs" { type = any }

@@ -1,0 +1,20 @@
+# Talos machineconfig for control plane nodes
+# Rendered by Terraform templatefile from single inputs map
+version: v1alpha1
+machine:
+  type: controlplane
+  token: ${talos.token}
+  install:
+    image: ${talos.image}
+cluster:
+  name: ${cluster.name}
+  network:
+    cni: none
+  apiServer:
+    admissionControl: []
+    extraArgs:
+      - --feature-gates=AllAlpha=false
+  inlinePatch:
+    - op: add
+      path: /cluster/inlineManifests
+      value: []
