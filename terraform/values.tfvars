@@ -1,10 +1,10 @@
 # location of talos iso file
-talos_iso_file = "backups:iso/talos-nocloud-amd64.iso"
+talos_iso_file = "local:iso/nocloud-amd64.iso"
 
 # talos control nodes configuration
 talos_control_configuration = [
   {
-    pm_node   = "pve1"
+    pm_node   = "pve"
     vmid      = 1110
     vm_name   = "talos-control-1"
     cpu_cores = 2
@@ -14,12 +14,12 @@ talos_control_configuration = [
       {
         id      = 0
         macaddr = "BC:24:13:5F:39:D1"
-        tag     = 70
+        tag     = 0
       }
     ]
   },
   {
-    pm_node   = "pve2"
+    pm_node   = "pve"
     vmid      = 2110
     vm_name   = "talos-control-2"
     cpu_cores = 2
@@ -29,12 +29,12 @@ talos_control_configuration = [
       {
         id      = 0
         macaddr = "BC:24:13:5F:39:D2"
-        tag     = 70
+        tag     = 0
       }
     ]
   },
   {
-    pm_node   = "pve3"
+    pm_node   = "pve"
     vmid      = 3110
     vm_name   = "talos-control-3"
     cpu_cores = 2
@@ -44,7 +44,7 @@ talos_control_configuration = [
       {
         id      = 0
         macaddr = "BC:24:13:5F:39:D3"
-        tag     = 70
+        tag     = 0
       }
     ]
   }
@@ -54,7 +54,7 @@ talos_control_configuration = [
 # talos worker nodes configuration
 talos_worker_configuration = [
   {
-    pm_node   = "pve1"
+    pm_node   = "pve"
     vmid      = 1111
     vm_name   = "talos-worker-1"
     cpu_cores = 6
@@ -64,12 +64,12 @@ talos_worker_configuration = [
       {
         id      = 0
         macaddr = "BC:24:13:5F:39:D4"
-        tag     = 70
+        tag     = 0
       }
     ]
   },
   {
-    pm_node   = "pve2"
+    pm_node   = "pve"
     vmid      = 2111
     vm_name   = "talos-worker-2"
     cpu_cores = 6
@@ -79,12 +79,12 @@ talos_worker_configuration = [
       {
         id      = 0
         macaddr = "BC:24:13:5F:39:D5"
-        tag     = 70
+        tag     = 0
       }
     ]
   },
   {
-    pm_node   = "pve3"
+    pm_node   = "pve"
     vmid      = 3111
     vm_name   = "talos-worker-3"
     cpu_cores = 12
@@ -94,7 +94,7 @@ talos_worker_configuration = [
       {
         id      = 0
         macaddr = "BC:24:13:5F:39:D6"
-        tag     = 70
+        tag     = 0
       }
     ]
   }

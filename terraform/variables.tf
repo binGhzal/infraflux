@@ -23,6 +23,12 @@ variable "pm_api_token_secret" {
   sensitive   = true
 }
 
+variable "pm_tls_insecure" {
+  type        = bool
+  description = "Skip TLS verification"
+  default     = false
+}
+
 
 variable "talos_iso_file" {
   description = "Iso file location for talos os"
