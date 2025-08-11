@@ -16,3 +16,13 @@ provider "kubernetes" {}
 
 # Install Cluster API Operator via Helm chart with wait
 # resource "helm_release" "capi_operator" { ... }
+
+# Optionally render Provider CRs from templates, using a single inputs map at root
+# data "template_file" "providers" {
+#   template = file("${path.module}/templates/providers.yaml.tftpl")
+#   vars = {
+#     infra = "proxmox"
+#     bootstrap = "talos"
+#     controlplane = "talos"
+#   }
+# }

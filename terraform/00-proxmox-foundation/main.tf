@@ -16,3 +16,10 @@ provider "proxmox" {
 # Upload Talos ISO/image and create base VM template(s)
 # resource "proxmox_virtual_environment_file" "talos_iso" { ... }
 # resource "proxmox_virtual_environment_vm"   "mgmt_template" { ... }
+
+locals {
+  # Example: read a templated VM cloud-init or metadata YAML if needed
+  # vm_metadata = yamldecode(templatefile("${path.module}/templates/vm-metadata.yaml.tftpl", {
+  #   cluster_name = var.cluster_name
+  # }))
+}

@@ -1,0 +1,18 @@
+# Single source of truth for all Day-0 inputs (copy to inputs.yaml and edit)
+proxmox:
+  endpoint: https://proxmox.example:8006/api2/json
+  api_token: "pmx-token-id=pmx-token"
+  datastore: local-lvm
+  node: pve
+
+mgmt:
+  cluster_name: mgmt
+  control_plane_endpoints:
+    - 10.0.0.10
+    - 10.0.0.11
+
+capi_operator:
+  namespace: capi-system
+
+addons:
+  cilium_install_method: helm
