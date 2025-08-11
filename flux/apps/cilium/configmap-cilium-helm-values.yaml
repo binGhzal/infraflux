@@ -11,7 +11,7 @@ data:
     k8sServicePort: ""
 
     cni:
-      customConf: false
+      customConf: true
       exclusive: true
       # Set to true if you want Cilium to write the CNI config
       install: true
@@ -23,7 +23,7 @@ data:
     autoDirectNodeRoutes: true
 
     encryption:
-      enabled: false
+      enabled: true
 
     containerRuntime:
       integration: none
@@ -64,7 +64,7 @@ data:
     bgpControlPlane:
       enabled: true
     bgp:
-      enabled: false
+      enabled: true
 
     # Disable kube-proxy and run in replacement mode
     k8sClientRateLimit:
@@ -72,7 +72,7 @@ data:
       burst: 100
 
     nodeinit:
-      enabled: false
+      enabled: true
 
     operator:
       replicas: 1
