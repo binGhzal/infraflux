@@ -73,3 +73,6 @@ cli/build/
 *.log
 *.tmp
 *.swp
+
+talos/
+kubeconfig
