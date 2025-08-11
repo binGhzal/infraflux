@@ -37,11 +37,11 @@ resource "talos_machine_secrets" "this" {}
 
 # Apply machine configuration to control plane nodes
 resource "talos_machine_configuration_apply" "controlplane" {
-  count           = length(local.controlplane_endpoints)
-  client_configuration = talos_machine_secrets.this.client_configuration
-  endpoint        = local.controlplane_endpoints[count.index]
-  node            = local.controlplane_endpoints[count.index]
-  config          = local.controlplane_cfg
+  count                  = length(local.controlplane_endpoints)
+  client_configuration   = talos_machine_secrets.this.client_configuration
+  endpoint               = local.controlplane_endpoints[count.index]
+  node                   = local.controlplane_endpoints[count.index]
+  machine_configuration_input = local.controlplane_cfg
 }
 
 # Bootstrap the first control plane node
@@ -54,19 +54,18 @@ resource "talos_machine_bootstrap" "cp" {
 
 # Apply worker configuration
 resource "talos_machine_configuration_apply" "worker" {
-  count           = length(local.worker_endpoints)
-  depends_on      = [talos_machine_bootstrap.cp]
-  client_configuration = talos_machine_secrets.this.client_configuration
-  endpoint        = local.worker_endpoints[count.index]
-  node            = local.worker_endpoints[count.index]
-  config          = local.worker_cfg
+  count                  = length(local.worker_endpoints)
+  depends_on             = [talos_machine_bootstrap.cp]
+  client_configuration   = talos_machine_secrets.this.client_configuration
+  endpoint               = local.worker_endpoints[count.index]
+  node                   = local.worker_endpoints[count.index]
+  machine_configuration_input = local.worker_cfg
 }
 
-# Retrieve kubeconfig for the management cluster
-data "talos_cluster_kubeconfig" "mgmt" {
+# Retrieve kubeconfig for the management cluster (data source; resource is available but not required)
+resource "talos_cluster_kubeconfig" "mgmt" {
   depends_on = [talos_machine_bootstrap.cp]
   client_configuration = talos_machine_secrets.this.client_configuration
-  # Use the first control plane endpoint for kubeconfig retrieval
   endpoint = try(local.controlplane_endpoints[0], null)
   node     = try(local.controlplane_endpoints[0], null)
 }
@@ -74,6 +73,6 @@ data "talos_cluster_kubeconfig" "mgmt" {
 # Persist kubeconfig to the path provided in inputs (optional but convenient)
 resource "local_file" "mgmt_kubeconfig" {
   count    = try(local.inputs.kubernetes.kubeconfig, null) != null ? 1 : 0
-  content  = data.talos_cluster_kubeconfig.mgmt.kubeconfig
+  content  = talos_cluster_kubeconfig.mgmt.kubeconfig_raw
   filename = local.inputs.kubernetes.kubeconfig
 }

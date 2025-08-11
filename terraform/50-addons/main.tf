@@ -37,7 +37,6 @@ locals {
 }
 
 resource "kubernetes_manifest" "cilium_crs" {
-	count    = local.enabled && local.cilium_install_method == "crs" ? 1 : 0
 	for_each = local.enabled && local.cilium_install_method == "crs" ? { for i, d in local.crs_docs : i => yamldecode(d) } : {}
 	manifest = each.value
 }

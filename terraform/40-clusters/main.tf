@@ -23,7 +23,7 @@ locals {
 }
 
 resource "kubernetes_manifest" "cluster" {
-	for_each = local.enabled ? { for i, d in local.docs : i => yamldecode(d) } : {}
+	for_each = local.enabled ? { for i, d in local.docs : i => yamldecode(d) } : tomap({})
 	manifest = each.value
 	field_manager { force_conflicts = true }
 }

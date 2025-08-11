@@ -5,9 +5,9 @@ metadata:
 spec:
   clusterNetwork:
     pods:
-  cidrBlocks: ["${cluster.pod_cidrs}"]
+      cidrBlocks: ["${cluster.pod_cidrs}"]
     services:
-  cidrBlocks: ["${cluster.service_cidrs}"]
+      cidrBlocks: ["${cluster.service_cidrs}"]
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: TalosControlPlane
@@ -44,6 +44,8 @@ spec:
   template:
     spec:
       vmTemplate: ${proxmox.vm_template}
+  # If no vm_template is provided in inputs, this may be empty and CAPMOX defaults will apply
+  # vmTemplate can be overridden per environment
       cpuCores: ${cluster.control_plane.cpu}
       memoryMiB: ${cluster.control_plane.memoryMiB}
       disks:
@@ -95,6 +97,7 @@ spec:
   template:
     spec:
       vmTemplate: ${proxmox.vm_template}
+  # See note above about vmTemplate defaults
       cpuCores: ${cluster.workers.cpu}
       memoryMiB: ${cluster.workers.memoryMiB}
       disks:

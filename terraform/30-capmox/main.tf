@@ -31,7 +31,7 @@ locals {
 }
 
 resource "kubernetes_manifest" "capmox" {
-	for_each = local.enabled ? { for i, d in local.manifests : i => yamldecode(d) } : {}
+	for_each = local.enabled ? { for i, d in local.manifests : i => yamldecode(d) } : tomap({})
 	manifest = each.value
 	field_manager { force_conflicts = true }
 }

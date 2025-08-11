@@ -90,3 +90,6 @@ node_modules/
 
 referenceExamples/
 secret-*
+
+.terraform/
+.terraform.*

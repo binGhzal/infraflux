@@ -13,9 +13,9 @@ locals {
 }
 
 provider "proxmox" {
-  endpoint    = try(local.inputs.proxmox.endpoint, null)
-  api_token   = try(local.inputs.proxmox.api_token, null)
-  tls_insecure = try(local.inputs.proxmox.tls_insecure, false)
+  endpoint  = try(local.inputs.proxmox.endpoint, null)
+  api_token = try(local.inputs.proxmox.api_token, null)
+  insecure  = try(local.inputs.proxmox.tls_insecure, false)
 }
 
 provider "talos" {}

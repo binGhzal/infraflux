@@ -42,7 +42,7 @@ resource "helm_release" "capi_operator" {
 
 # Apply Provider CRs to enable infrastructure/bootstrap/control-plane providers
 resource "kubernetes_manifest" "providers" {
-  for_each = local.enable_capi ? { for i, d in local.providers_cr_docs : i => yamldecode(d) } : {}
+  for_each = local.enable_capi ? { for i, d in local.providers_cr_docs : i => yamldecode(d) } : tomap({})
   manifest = each.value
   field_manager { force_conflicts = true }
   depends_on = [helm_release.capi_operator]

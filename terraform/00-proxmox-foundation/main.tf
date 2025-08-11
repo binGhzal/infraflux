@@ -8,11 +8,7 @@ terraform {
   }
 }
 
-provider "proxmox" {
-  # These should be set in the root provider; keeping here for module-level plan if used standalone
-  # endpoint  = try(var.inputs.proxmox.endpoint, null)
-  # api_token = try(var.inputs.proxmox.api_token, null)
-}
+// Inherit Proxmox provider configuration from root module
 
 locals {
   inputs   = var.inputs
@@ -23,19 +19,20 @@ locals {
 
 # Upload Talos ISO/image to Proxmox datastore
 resource "proxmox_virtual_environment_file" "talos_image" {
-  count    = local.enabled ? 1 : 0
+  count        = local.enabled ? 1 : 0
   content_type = try(local.upload.content_type, "iso")
-  datastore    = try(local.inputs.proxmox.datastore, null)
-  node         = try(local.inputs.proxmox.node, null)
-  source_file  = try(local.upload.source_file, null)
-  # Optional checksum support
-  checksum     = try(local.upload.checksum, null)
+  datastore_id = try(local.inputs.proxmox.datastore, null)
+  node_name    = try(local.inputs.proxmox.node, null)
+
+  source_file {
+    path = try(local.upload.source_file, null)
+  }
 }
 
 # Optionally, create a base VM template from the uploaded image (disabled by default)
 resource "proxmox_virtual_environment_vm" "talos_template" {
   count    = try(local.inputs.proxmox.create_vm_template, false) ? 1 : 0
-  node     = try(local.inputs.proxmox.node, null)
+  node_name = try(local.inputs.proxmox.node, null)
   name     = try(local.inputs.proxmox.vm_template_name, "talos-template")
   on_boot  = false
   template = true
@@ -56,10 +53,10 @@ resource "proxmox_virtual_environment_vm" "talos_template" {
   }
 
   disk {
-    interface = "ide0"
-    datastore = try(local.inputs.proxmox.datastore, null)
-    file_id   = try(proxmox_virtual_environment_file.talos_image[0].id, null)
-    size      = try(local.inputs.proxmox.template_disk_gib, 20)
+    interface   = "ide0"
+    datastore_id = try(local.inputs.proxmox.datastore, null)
+    file_id     = try(proxmox_virtual_environment_file.talos_image[0].id, null)
+    size        = try(local.inputs.proxmox.template_disk_gib, 20)
   }
 
   network_device {
