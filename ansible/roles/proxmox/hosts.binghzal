@@ -1,0 +1,28 @@
+[your-username:children]
+proxmox_servers
+proxmox_vms
+k8s_masters
+k8s_workers
+
+[proxmox_servers]
+pve    ansible_host=10.0.0.69   ansible_user=root template_vm_id=201
+
+# Declare your desired proxmox VMs here. Note that the MAC address "lines up" with_
+# the IP address - this makes troubleshooting L2 issues easier under some circumstances,
+# and declaring the MAC to proxmox avoids proxmox / terraform force-restarting the VMs
+# when re-running the playbook.
+
+[proxmox_vms]
+donatello   ansible_host=10.0.1.102 mac=52:54:00:38:01:02 proxmox_node=pve
+leonardo    ansible_host=10.0.1.103 mac=52:54:00:38:01:03 proxmox_node=pve
+shredder    ansible_host=10.0.1.201 mac=52:54:00:38:02:01 proxmox_node=pve
+raphael     ansible_host=10.0.1.101 mac=52:54:00:38:01:01 proxmox_node=pve
+rocksteady  ansible_host=10.0.1.202 mac=52:54:00:38:02:02 proxmox_node=pve
+bebop       ansible_host=10.0.1.203 mac=52:54:00:38:02:03 proxmox_node=pve
+
+[k8s_masters]
+shredder     ansible_host=10.0.1.201
+
+[k8s_workers]
+rocksteady   ansible_host=10.0.1.202
+bebop        ansible_host=10.0.1.203

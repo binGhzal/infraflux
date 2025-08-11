@@ -96,3 +96,4 @@ secret-*
 secrets.auto.tfvars
 create-plan
 *.tfstate
+.lock
