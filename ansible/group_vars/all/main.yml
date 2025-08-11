@@ -20,7 +20,7 @@ proxmox_vm_disk_size_gb: 30
 ci_user: ubuntu
 ci_password: ""
 ci_ssh_authorized_keys:
-	- "{{ admin_ssh_key | default('') }}"
+  - "{{ admin_ssh_key | default('') }}"
 ci_dns_servers: ["1.1.1.1", "8.8.8.8"]
 ci_search_domains: []
 ci_packages: ["qemu-guest-agent", "curl"]

@@ -27,7 +27,7 @@
       changed_when: false
 
 - name: Create or update Proxmox VMs from inventory
-  when: inventory_hostname in groups['proxmox_vms']
+  when: inventory_hostname in groups['proxmox_servers']
   delegate_to: localhost
   run_once: true
   vars:
@@ -45,7 +45,7 @@
         vm_mac: "{{ hostvars[vmhost].mac | default(omit) }}"
         vm_node: "{{ hostvars[vmhost].proxmox_node | default(proxmox_node_default) }}"
 
-    - name: Create or update VM
+  - name: Create or update VM
       community.general.proxmox_kvm:
         api_user: "{{ api_user }}"
         api_password: "{{ api_pass }}"
@@ -67,7 +67,7 @@
         ciuser: "{{ ci_user }}"
         cipassword: "{{ ci_password | default(omit) }}"
         ci_custom:
-          ipconfig0: "ip={{ vm_ip }}/24,gw={{ proxmox_vlan_gateway | default(omit) }}"
+          ipconfig0: "{{ 'ip=' + vm_ip + '/24' + ((proxmox_vlan_gateway is defined and (proxmox_vlan_gateway | string | length) > 0) | ternary(',gw=' + proxmox_vlan_gateway, '')) }}"
           nameserver: "{{ ci_dns_servers | join(' ') }}"
           searchdomain: "{{ ci_search_domains | default([]) | join(' ') }}"
         update: true

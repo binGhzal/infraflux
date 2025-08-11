@@ -13,6 +13,60 @@
     state: present
     update_cache: true
 
+- name: Disable swap
+  become: true
+  ansible.builtin.shell: |
+    sed -ri '/\sswap\s/ s/^#?/#/' /etc/fstab
+    swapoff -a || true
+  args:
+    executable: /bin/bash
+  changed_when: false
+
+- name: Configure kernel modules and sysctl for Kubernetes
+  become: true
+  block:
+    - name: Load br_netfilter
+      ansible.builtin.shell: |
+        modprobe br_netfilter || true
+      changed_when: false
+    - name: Set sysctl params
+      ansible.builtin.copy:
+        dest: /etc/sysctl.d/99-kubernetes-cri.conf
+        content: |
+          net.bridge.bridge-nf-call-iptables = 1
+          net.bridge.bridge-nf-call-ip6tables = 1
+          net.ipv4.ip_forward = 1
+        mode: '0644'
+    - name: Apply sysctl
+      ansible.builtin.shell: sysctl --system
+      changed_when: false
+
+- name: Install containerd
+  become: true
+  block:
+    - name: Install containerd.io
+      ansible.builtin.apt:
+        name: ["containerd"]
+        state: present
+        update_cache: true
+    - name: Generate default config
+      ansible.builtin.shell: |
+        mkdir -p /etc/containerd
+        containerd config default > /etc/containerd/config.toml
+      args:
+        executable: /bin/bash
+      changed_when: false
+    - name: Use systemd cgroup driver
+      ansible.builtin.replace:
+        path: /etc/containerd/config.toml
+        regexp: 'SystemdCgroup = false'
+        replace: 'SystemdCgroup = true'
+    - name: Restart containerd
+      ansible.builtin.systemd:
+        name: containerd
+        state: restarted
+        enabled: true
+
 - name: Add Kubernetes apt key
   become: true
   ansible.builtin.shell: |
@@ -100,11 +154,12 @@
   register: join_cmd
   changed_when: false
 
-- name: Set join command fact for other hosts
+- name: Export join command to all hosts
   when: inventory_hostname == groups['k8s_masters'][0]
   ansible.builtin.set_fact:
     cp_join_command: "{{ join_cmd.stdout | trim }}"
-  delegate_to: localhost
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups['k8s_masters'] + groups['k8s_workers'] }}"
 
 - name: Wait for API to be reachable from others
   when: inventory_hostname != groups['k8s_masters'][0]
