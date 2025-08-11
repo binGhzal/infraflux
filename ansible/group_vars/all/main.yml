@@ -1,0 +1,39 @@
+ansible_python_interpreter: /usr/bin/python3
+
+# Proxmox API auth
+proxmox_host_username: "root@pam"
+proxmox_host_password: "{{ vault_proxmox_host_password | default('changeme') }}"
+
+# Proxmox infra defaults
+proxmox_api_host: "{{ hostvars['pve'].ansible_host | default('10.0.0.69') }}"
+proxmox_node_default: "pve"
+proxmox_vm_network_bridge: vmbr0
+proxmox_vm_vlan_tag: "{{ lookup('vars', 'vlan_tag', default=None) }}"
+proxmox_storage: local-lvm
+
+# VM sizing defaults
+proxmox_vm_ram: 4096
+proxmox_vm_cores: 2
+proxmox_vm_disk_size_gb: 30
+
+# Cloud-init settings
+ci_user: ubuntu
+ci_password: ""
+ci_ssh_authorized_keys:
+	- "{{ admin_ssh_key | default('') }}"
+ci_dns_servers: ["1.1.1.1", "8.8.8.8"]
+ci_search_domains: []
+ci_packages: ["qemu-guest-agent", "curl"]
+ci_bootcmd: []
+ci_runcmd: []
+
+# Kubernetes kubeadm cluster settings
+k8s_version: "1.30"
+cluster_name: infraflux
+pod_cidr: 10.244.0.0/16
+service_cidr: 10.96.0.0/12
+control_plane_endpoint: "{{ hostvars[groups['k8s_masters'][0]].ansible_host }}:6443"
+
+# SSH admin
+admin_ssh_user: "{{ lookup('vars', 'ansible_user', default='ubuntu') }}"
+admin_ssh_key: ""

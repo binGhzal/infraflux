@@ -1,0 +1,31 @@
+---
+# Play 1: Proxmox provisioning (runs on Proxmox host(s))
+- name: Provision Ubuntu cloud-init VMs on Proxmox
+	hosts: proxmox_servers
+	gather_facts: false
+	vars:
+		template_vm_id: "{{ hostvars['pve'].template_vm_id | default(201) }}"
+	roles:
+		- proxmox
+
+# Play 2: Wait for VMs to boot and be reachable over SSH
+- name: Wait for VMs to be reachable
+	hosts: proxmox_vms
+	gather_facts: false
+	vars:
+		ansible_user: "{{ ci_user }}"
+	tasks:
+		- name: Wait for SSH
+			ansible.builtin.wait_for_connection:
+				delay: 15
+				timeout: 600
+
+# Play 3: Bootstrap Kubernetes with kubeadm
+- name: Bootstrap Kubernetes cluster
+	hosts: k8s_masters:k8s_workers
+	gather_facts: true
+	vars:
+		ansible_user: "{{ ci_user }}"
+	roles:
+		- kubeadm
+
