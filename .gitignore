@@ -93,3 +93,4 @@ secret-*
 
 .terraform/
 .terraform.*
+secrets.*
