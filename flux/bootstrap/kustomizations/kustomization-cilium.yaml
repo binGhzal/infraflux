@@ -5,7 +5,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 15m
-  path: ./flux/cilium
+  path: ./flux/apps/cilium
   prune: true
   timeout: 2m
   sourceRef:
