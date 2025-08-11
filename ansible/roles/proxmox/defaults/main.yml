@@ -19,3 +19,4 @@ proxmox_host_password: changeme
 proxmox_api_host: 10.0.0.69
 proxmox_manage_template: false
 template_name: template-ubuntu
+proxmox_validate_certs: false

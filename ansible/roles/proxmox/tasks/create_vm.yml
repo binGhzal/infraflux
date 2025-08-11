@@ -18,14 +18,15 @@
       api_user: "{{ api_user }}"
       api_password: "{{ api_pass }}"
       api_host: "{{ api_host }}"
+  validate_certs: "{{ proxmox_validate_certs | bool }}"
       node: "{{ vm_node }}"
       name: "{{ vm_name }}"
       state: present
       clone: "{{ template_name }}"
       full: true
       sockets: 1
-    cores: "{{ proxmox_vm_cores }}"
-    memory: "{{ proxmox_vm_ram }}"
+  cores: {{ proxmox_vm_cores | int }}
+  memory: {{ proxmox_vm_ram | int }}
       scsihw: virtio-scsi-pci
       scsi0: "{{ proxmox_storage }}:{{ proxmox_vm_disk_size_gb }}"
       net0: "{{ vm_net0 }}"
@@ -47,6 +48,7 @@
     api_user: "{{ api_user }}"
     api_password: "{{ api_pass }}"
     api_host: "{{ api_host }}"
+  validate_certs: "{{ proxmox_validate_certs | bool }}"
     node: "{{ vm_node }}"
     name: "{{ vm_name }}"
     state: started
