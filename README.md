@@ -97,24 +97,10 @@ kubeProxyReplacement: true # kube-proxy free (socket LB) :contentReference[oaici
 ipam:
   mode: kubernetes
 l7Proxy: true # required for L7 policy/Gateway API (default true) :contentReference[oaicite:18]{index=18}
-
-  50-cilium/                 # Cilium via Helm or CRS (flag-gated)
-  _root/                     # single inputs.yaml orchestrator
-  00-proxmox-foundation/     # upload Talos ISO, optional VM template
-  10-mgmt-talos/             # bootstrap Talos mgmt cluster (kubeconfig output)
-  20-capi-operator/          # install Operator and Providers (flag-gated)
-  30-capmox/                 # CAPMOX ProxmoxCluster + credentials (flag-gated)
-  40-clusters/               # Workload cluster stack (flag-gated)
-  50-addons/                 # Cilium via Helm or CRS (flag-gated)
 gatewayAPI:
   enabled: true # Gateway API data-plane via Envoy :contentReference[oaicite:19]{index=19}
   enableAlpn: true
 
-Staged bootstrap:
-
-- Phase 1: flags enable_* = false; apply 00 + 10 to get mgmt kubeconfig.
-- Set kubernetes.kubeconfig in terraform/_root/inputs.yaml to the saved kubeconfig path.
-- Phase 2: flip flags as needed to install Operator, CAPMOX, clusters, and addons.
   enableAppProtocol: true
 ingressController:
   enabled: true # Cilium Ingress controller (optional) :contentReference[oaicite:20]{index=20}
@@ -183,6 +169,29 @@ cgroup:
 k8sServiceHost: localhost # or your API host if KubePrism not used
 k8sServicePort: 7445 # Talos KubePrism default; see Talos doc :contentReference[oaicite:33]{index=33}
 ```
+
+---
+
+## Staged bootstrap
+
+To avoid Kubernetes/Helm providers initializing before a kubeconfig exists, bootstrap in two phases:
+
+1. Phase 1 (management cluster only)
+
+- In `terraform/_root/inputs.yaml`, set all flags under `flags` to `false` (enable_capi,
+  enable_capmox, enable_clusters, enable_addons).
+- Ensure `kubernetes.kubeconfig` points to your desired kubeconfig file path (it will be created).
+- Run from `terraform/_root`: init/plan/apply. This uploads Talos image if enabled and bootstraps
+  the Talos management cluster, then writes the kubeconfig.
+
+1. Phase 2 (controllers, workload cluster, addons)
+
+- Flip flags to `true` as needed: enable_capi (Operator + Providers), enable_capmox
+  (ProxmoxCluster + credentials Secret), enable_clusters (workload cluster stack), enable_addons
+  (Cilium via Helm/CRS).
+- Apply again from `terraform/_root`.
+
+This keeps Day-0 idempotent and safe while controllers take over Day-1+.
 
 Install with flux:
 
