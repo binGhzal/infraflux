@@ -1,21 +1,14 @@
-terraform/_root/inputs.yaml
-# Generated docs/site
-site/
-
 # Node / tooling
 node_modules/
 dist/
-instructions/
-
-# macOS
-.DS_Store
 
 # Python
 __pycache__/
 *.pyc
+
 # OS
-.DS_Store
 Thumbs.db
+.DS_Store
 
 # Editors
 .vscode/
@@ -50,10 +43,10 @@ secrets/*.yml
 
 # MkDocs site output (if generated)
 site/
+
 # editor
 .vscode/
 .idea/
-.DS_Store
 
 # build
 bin/
@@ -67,17 +60,10 @@ out/
 # secrets
 **/*.secret.yaml
 **/*.enc.yaml
-sops/keys/
 
 # go
 cli/bin/
 cli/build/
-
-# mkdocs generated site
-site/
-
-# node
-node_modules/
 
 # python venvs
 .venv/
@@ -87,13 +73,3 @@ node_modules/
 *.log
 *.tmp
 *.swp
-
-referenceExamples/
-secret-*
-
-.terraform/
-.terraform.*
-secrets.auto.tfvars
-create-plan
-*.tfstate
-.lock
