@@ -95,4 +95,4 @@ secret-*
 .terraform.*
 secrets.auto.tfvars
 create-plan
-.tfstate
+*.tfstate
