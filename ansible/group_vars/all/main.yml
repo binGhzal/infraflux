@@ -8,7 +8,8 @@ proxmox_host_password: "{{ vault_proxmox_host_password | default('changeme') }}"
 proxmox_api_host: "{{ hostvars['pve'].ansible_host | default('10.0.0.69') }}"
 proxmox_node_default: "pve"
 proxmox_vm_network_bridge: vmbr0
-proxmox_vm_vlan_tag: "{{ lookup('vars', 'vlan_tag', default=None) }}"
+proxmox_vm_vlan_tag: "{{ vlan_tag | default('') }}"
+proxmox_vlan_gateway: "{{ vlan_gateway | default('') }}"
 proxmox_storage: local-lvm
 
 # VM sizing defaults
