@@ -6,12 +6,12 @@ metadata:
 data:
   values.yaml: |-
     # Cilium Helm values enabling requested features
-    kubeProxyReplacement: strict
+  kubeProxyReplacement: disabled
     k8sServiceHost: ""
     k8sServicePort: ""
 
     cni:
-      customConf: true
+      customConf: false
       exclusive: true
       # Set to true if you want Cilium to write the CNI config
       install: true
@@ -19,11 +19,11 @@ data:
     ipam:
       mode: kubernetes
 
-    routingMode: native
-    autoDirectNodeRoutes: true
+  routingMode: tunnel
+  autoDirectNodeRoutes: false
 
     encryption:
-      enabled: true
+      enabled: false
 
     containerRuntime:
       integration: none
@@ -47,7 +47,7 @@ data:
     loadBalancer:
       acceleration: disabled
       algorithm: maglev
-      mode: dsr
+      mode: snat
 
     # Ingress Controller
     ingressController:
@@ -72,7 +72,7 @@ data:
       burst: 100
 
     nodeinit:
-      enabled: true
+      enabled: false
 
     operator:
       replicas: 1
