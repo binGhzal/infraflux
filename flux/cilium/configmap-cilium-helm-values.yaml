@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cilium-helm-values
+  namespace: cilium-system
+data:
+  values.yaml: |-
+    # Cilium Helm values enabling requested features
+    kubeProxyReplacement: strict
+    k8sServiceHost: ""
+    k8sServicePort: ""
+
+    cni:
+      customConf: false
+      exclusive: true
+      # Set to true if you want Cilium to write the CNI config
+      install: true
+
+    ipam:
+      mode: kubernetes
+
+    routingMode: native
+    autoDirectNodeRoutes: true
+
+    encryption:
+      enabled: false
+
+    containerRuntime:
+      integration: none
+
+    hubble:
+      enabled: true
+      metrics:
+        enabled:
+          - dns:query;ignoreAAAA
+          - drop
+          - tcp
+          - flow
+          - icmp
+          - http
+      relay:
+        enabled: true
+      ui:
+        enabled: true
+
+    # Enable embedded load balancer (XDP/DSR depending on environment)
+    loadBalancer:
+      acceleration: disabled
+      algorithm: maglev
+      mode: dsr
+
+    # Ingress Controller
+    ingressController:
+      enabled: true
+      loadbalancerMode: shared
+      default: true
+
+    # Gateway API
+    gatewayAPI:
+      enabled: true
+      enableRequestAuthenticationFilter: true
+
+    # Enable BGP (v2 is recommended)
+    bgpControlPlane:
+      enabled: true
+    bgp:
+      enabled: false
+
+    # Disable kube-proxy and run in replacement mode
+    k8sClientRateLimit:
+      qps: 50
+      burst: 100
+
+    nodeinit:
+      enabled: false
+
+    operator:
+      replicas: 1
+      rollOutPods: true
+
+    resources:
+      limits: {}
+      requests: {}
+
+    # For clusters without kube-proxy, enable hostServices and externalIPs
+    hostServices:
+      enabled: true
+    externalIPs:
+      enabled: true
+    nodePort:
+      enabled: true
+
+    ipv4:
+      enabled: true
+    ipv6:
+      enabled: false
