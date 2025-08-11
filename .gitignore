@@ -93,4 +93,4 @@ secret-*
 
 .terraform/
 .terraform.*
-secrets.*
+secrets.auto.tfvars
