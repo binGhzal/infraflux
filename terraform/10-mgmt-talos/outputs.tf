@@ -1,4 +1,4 @@
 output "mgmt_kubeconfig" {
   description = "Kubeconfig for management cluster"
-  value       = "(placeholder)"
+  value       = try(data.talos_cluster_kubeconfig.mgmt.kubeconfig, null)
 }

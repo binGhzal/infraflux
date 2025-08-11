@@ -15,7 +15,7 @@ locals {
 	secret_yaml = templatefile(
 		"${path.module}/templates/proxmox-credentials-secret.yaml.tmpl",
 		{
-			proxmox = try(local.inputs.proxmox, {})
+			credentials = try(local.inputs.capmox.credentials, {})
 		}
 	)
 	proxmoxcluster_yaml = templatefile(

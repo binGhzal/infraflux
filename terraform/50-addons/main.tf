@@ -19,7 +19,8 @@ provider "helm" {}
 locals {
 	inputs = var.inputs
 	cilium_install_method = try(local.inputs.addons.cilium_install_method, "helm")
-	cilium_values_yaml    = file("${path.root}/../values/cilium-full.yaml")
+	# path.root points to the root module (terraform/_root); values/ lives two levels up
+	cilium_values_yaml    = file("${path.root}/../../values/cilium-full.yaml")
 }
 
 # Option A: ClusterResourceSet to auto-apply Cilium values

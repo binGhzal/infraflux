@@ -9,13 +9,59 @@ terraform {
 
 provider "talos" {}
 
-# Use talos_machine_configuration and talos_machine_bootstrap resources
-# to generate/apply configs and fetch kubeconfig.
-
 locals {
-  # Example: generate Talos machine config from a template and inputs
-  # controlplane_cfg = templatefile("${path.module}/templates/controlplane.yaml.tftpl", {
-  #   cluster_name = var.cluster_name
-  #   endpoints    = var.control_plane_endpoints
-  # })
+  inputs       = var.inputs
+  mgmt         = try(local.inputs.mgmt, {})
+  cluster_name = try(local.mgmt.cluster_name, "mgmt")
+  talos        = try(local.inputs.talos, {})
+  controlplane_endpoints = try(local.mgmt.control_plane_endpoints, [])
+  worker_endpoints       = try(local.mgmt.worker_endpoints, [])
+
+  controlplane_cfg = templatefile("${path.module}/templates/machineconfig-controlplane.yaml.tmpl", {
+    cluster = { name = local.cluster_name }
+    talos   = local.talos
+  })
+  worker_cfg = templatefile("${path.module}/templates/machineconfig-worker.yaml.tmpl", {
+    cluster = { name = local.cluster_name }
+    talos   = local.talos
+  })
+}
+
+# Generate Talos machine secrets (shared among nodes)
+resource "talos_machine_secrets" "this" {}
+
+# Apply machine configuration to control plane nodes
+resource "talos_machine_configuration_apply" "controlplane" {
+  count           = length(local.controlplane_endpoints)
+  client_configuration = talos_machine_secrets.this.client_configuration
+  endpoint        = local.controlplane_endpoints[count.index]
+  node            = local.controlplane_endpoints[count.index]
+  config          = local.controlplane_cfg
+}
+
+# Bootstrap the first control plane node
+resource "talos_machine_bootstrap" "cp" {
+  depends_on = [talos_machine_configuration_apply.controlplane]
+  client_configuration = talos_machine_secrets.this.client_configuration
+  endpoint = try(local.controlplane_endpoints[0], null)
+  node     = try(local.controlplane_endpoints[0], null)
+}
+
+# Apply worker configuration
+resource "talos_machine_configuration_apply" "worker" {
+  count           = length(local.worker_endpoints)
+  depends_on      = [talos_machine_bootstrap.cp]
+  client_configuration = talos_machine_secrets.this.client_configuration
+  endpoint        = local.worker_endpoints[count.index]
+  node            = local.worker_endpoints[count.index]
+  config          = local.worker_cfg
+}
+
+# Retrieve kubeconfig for the management cluster
+data "talos_cluster_kubeconfig" "mgmt" {
+  depends_on = [talos_machine_bootstrap.cp]
+  client_configuration = talos_machine_secrets.this.client_configuration
+  # Use the first control plane endpoint for kubeconfig retrieval
+  endpoint = try(local.controlplane_endpoints[0], null)
+  node     = try(local.controlplane_endpoints[0], null)
 }
