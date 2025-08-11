@@ -1,0 +1,47 @@
+---
+- name: Gather hostvars for VM
+  ansible.builtin.set_fact:
+    vm_name: "{{ vmhost }}"
+    vm_ip: "{{ hostvars[vmhost].ansible_host }}"
+    vm_mac: "{{ hostvars[vmhost].mac | default('') }}"
+    vm_node: "{{ hostvars[vmhost].proxmox_node | default(proxmox_node_default) }}"
+
+- name: Create or update VM
+  community.general.proxmox_kvm:
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_pass }}"
+    api_host: "{{ api_host }}"
+    node: "{{ vm_node }}"
+    name: "{{ vm_name }}"
+    state: present
+    # Use a pre-existing template name; ensure it exists out-of-band or set proxmox_manage_template=true
+    clone: "{{ template_name }}"
+    full: true
+    sockets: 1
+    cores: "{{ proxmox_vm_cores }}"
+    memory: "{{ proxmox_vm_ram }}"
+    scsihw: virtio-scsi-pci
+    scsi0: "{{ proxmox_storage }}:{{ proxmox_vm_disk_size_gb }}"
+  net0: "virtio{{ ((vm_mac | default('') | string | length) > 0) | ternary(',macaddr=' + vm_mac, '') }},bridge={{ proxmox_vm_network_bridge }}{{ (((proxmox_vm_vlan_tag | default('') | string) | length) > 0) | ternary(',tag=' + (proxmox_vm_vlan_tag | string), '') }}"
+  boot: c
+  bootdisk: scsi0
+  sshkeys: "{{ (ci_ssh_authorized_keys | reject('equalto', '')) | list | join('\n') }}"
+  ciuser: "{{ ci_user }}"
+  cipassword: "{{ (ci_password | default('')) | length > 0 | ternary(ci_password, omit) }}"
+  ipconfig0: "{{ 'ip=' + vm_ip + '/24' + ((((proxmox_vlan_gateway | default('') | string) | length) > 0) | ternary(',gw=' + (proxmox_vlan_gateway | string), '')) }}"
+  nameserver: "{{ ci_dns_servers | join(' ') }}"
+  searchdomain: "{{ ci_search_domains | default([]) | join(' ') }}"
+  update: true
+  force: false
+  onboot: true
+  register: vm_result
+  delegate_to: localhost
+
+- name: Start VM if stopped
+  community.general.proxmox_kvm:
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_pass }}"
+    api_host: "{{ api_host }}"
+    node: "{{ vm_node }}"
+    name: "{{ vm_name }}"
+    state: started

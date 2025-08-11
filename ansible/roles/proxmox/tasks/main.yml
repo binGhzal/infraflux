@@ -1,8 +1,10 @@
 ---
 # Ensure cloud-init image/template exists on Proxmox and create/update VMs using API
 
-- name: Proxmox template and VM provisioning
-  when: inventory_hostname in groups['proxmox_servers']
+- name: Proxmox template and VM provisioning (SSH to PVE)
+  when:
+    - inventory_hostname in groups['proxmox_servers']
+    - proxmox_manage_template | bool
   block:
     - name: Ensure Ubuntu cloud image downloaded on Proxmox
       ansible.builtin.get_url:
@@ -14,7 +16,7 @@
       ansible.builtin.shell: |
         set -euo pipefail
         if ! qm list | awk '{print $1}' | grep -qx {{ template_vm_id | quote }}; then
-          qm create {{ template_vm_id | quote }} --name template-ubuntu --memory {{ proxmox_vm_ram }} --cores {{ proxmox_vm_cores }} --net0 virtio,bridge={{ proxmox_vm_network_bridge }}{{ proxmox_vm_vlan_tag | ternary(',tag=' + proxmox_vm_vlan_tag|string, '') }}
+          qm create {{ template_vm_id | quote }} --name {{ template_name }} --memory {{ proxmox_vm_ram }} --cores {{ proxmox_vm_cores }} --net0 virtio,bridge={{ proxmox_vm_network_bridge }}{{ proxmox_vm_vlan_tag | ternary(',tag=' + (proxmox_vm_vlan_tag | string), '') }}
           qm importdisk {{ template_vm_id | quote }} /var/lib/vz/template/iso/{{ cloud_image_alias }}.img {{ proxmox_storage }}
           qm set {{ template_vm_id | quote }} --scsihw virtio-scsi-pci --scsi0 {{ proxmox_storage }}:vm-{{ template_vm_id }}-disk-0
           qm set {{ template_vm_id | quote }} --ide2 {{ proxmox_storage }}:cloudinit
@@ -26,60 +28,14 @@
         executable: /bin/bash
       changed_when: false
 
-- name: Create or update Proxmox VMs from inventory
+- name: Provision VMs from inventory via Proxmox API
   when: inventory_hostname in groups['proxmox_servers']
-  delegate_to: localhost
   run_once: true
+  include_tasks: create_vm.yml
+  loop: "{{ groups['proxmox_vms'] }}"
+  loop_control:
+    loop_var: vmhost
   vars:
     api_user: "{{ proxmox_host_username }}"
     api_pass: "{{ proxmox_host_password }}"
     api_host: "{{ proxmox_api_host }}"
-  loop: "{{ groups['proxmox_vms'] }}"
-  loop_control:
-    loop_var: vmhost
-  block:
-    - name: Gather hostvars for VM
-      ansible.builtin.set_fact:
-        vm_name: "{{ vmhost }}"
-        vm_ip: "{{ hostvars[vmhost].ansible_host }}"
-        vm_mac: "{{ hostvars[vmhost].mac | default(omit) }}"
-        vm_node: "{{ hostvars[vmhost].proxmox_node | default(proxmox_node_default) }}"
-
-  - name: Create or update VM
-      community.general.proxmox_kvm:
-        api_user: "{{ api_user }}"
-        api_password: "{{ api_pass }}"
-        api_host: "{{ api_host }}"
-        node: "{{ vm_node }}"
-        name: "{{ vm_name }}"
-        state: present
-        clone: template-ubuntu
-        full: true
-        sockets: 1
-        cores: "{{ proxmox_vm_cores }}"
-        memory: "{{ proxmox_vm_ram }}"
-        scsihw: virtio-scsi-pci
-        scsi0: "{{ proxmox_storage }}:{{ proxmox_vm_disk_size_gb }}"
-        net0: "virtio{{ vm_mac | default('', true) | ternary(',macaddr=' + vm_mac, '') }},bridge={{ proxmox_vm_network_bridge }}{{ proxmox_vm_vlan_tag | ternary(',tag=' + proxmox_vm_vlan_tag|string, '') }}"
-        boot: c
-        bootdisk: scsi0
-        sshkeys: "{{ (ci_ssh_authorized_keys | reject('equalto', '')) | join('\n') }}"
-        ciuser: "{{ ci_user }}"
-        cipassword: "{{ ci_password | default(omit) }}"
-        ci_custom:
-          ipconfig0: "{{ 'ip=' + vm_ip + '/24' + ((proxmox_vlan_gateway is defined and (proxmox_vlan_gateway | string | length) > 0) | ternary(',gw=' + proxmox_vlan_gateway, '')) }}"
-          nameserver: "{{ ci_dns_servers | join(' ') }}"
-          searchdomain: "{{ ci_search_domains | default([]) | join(' ') }}"
-        update: true
-        force: false
-        onboot: true
-      register: vm_result
-
-    - name: Start VM if stopped
-      community.general.proxmox_kvm:
-        api_user: "{{ api_user }}"
-        api_password: "{{ api_pass }}"
-        api_host: "{{ api_host }}"
-        node: "{{ vm_node }}"
-        name: "{{ vm_name }}"
-        state: started

@@ -17,3 +17,5 @@ admin_ssh_key: ""
 proxmox_host_username: root@pam
 proxmox_host_password: changeme
 proxmox_api_host: 10.0.0.69
+proxmox_manage_template: false
+template_name: template-ubuntu
