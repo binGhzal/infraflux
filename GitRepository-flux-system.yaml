@@ -1,0 +1,19 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  creationTimestamp: "2025-08-11T12:49:52Z"
+  generation: 1
+  name: flux-system
+  namespace: flux-system
+  resourceVersion: "1096"
+  uid: 555a554a-d793-4569-bbad-e185c3b11f16
+spec:
+  interval: 1m0s
+  ref:
+    branch: main
+  secretRef:
+    name: flux-system
+  timeout: 60s
+  url: ssh://git@github.com/binghzal/infraflux
+status:
+  observedGeneration: -1
