@@ -4,10 +4,15 @@ terraform {
       source  = "siderolabs/talos"
       version = ">= 0.4.0-alpha.0"
     }
+    local = {
+      source  = "hashicorp/local"
+      version = ">= 2.4.0"
+    }
   }
 }
 
 provider "talos" {}
+provider "local" {}
 
 locals {
   inputs       = var.inputs
@@ -64,4 +69,11 @@ data "talos_cluster_kubeconfig" "mgmt" {
   # Use the first control plane endpoint for kubeconfig retrieval
   endpoint = try(local.controlplane_endpoints[0], null)
   node     = try(local.controlplane_endpoints[0], null)
+}
+
+# Persist kubeconfig to the path provided in inputs (optional but convenient)
+resource "local_file" "mgmt_kubeconfig" {
+  count    = try(local.inputs.kubernetes.kubeconfig, null) != null ? 1 : 0
+  content  = data.talos_cluster_kubeconfig.mgmt.kubeconfig
+  filename = local.inputs.kubernetes.kubeconfig
 }

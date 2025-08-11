@@ -5,9 +5,9 @@ metadata:
 spec:
   clusterNetwork:
     pods:
-      cidrBlocks: [${cluster.pod_cidrs}]
+  cidrBlocks: ["${cluster.pod_cidrs}"]
     services:
-      cidrBlocks: [${cluster.service_cidrs}]
+  cidrBlocks: ["${cluster.service_cidrs}"]
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: TalosControlPlane
