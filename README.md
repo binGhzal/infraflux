@@ -554,7 +554,8 @@ infraflux/
 
 ```bash
 # 1) Day-0 apply (mgmt cluster + CAPI Operator + CAPMOX)
-cd terraform && tofu init && tofu apply
+cd terraform/_root && cp inputs.example.yaml inputs.yaml # then edit inputs.yaml once
+tofu init && tofu plan && tofu apply
 
 # 2) Create a workload cluster (CAPI YAML applied by Terraform or kubectl)
 #    ... wait for <cluster>-kubeconfig Secret, write to kubeconfig file
