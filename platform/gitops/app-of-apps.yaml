@@ -1,0 +1,59 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-infrastructure
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: platform-infrastructure
+    app.kubernetes.io/component: bootstrap
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/binGhzal/infraflux
+    targetRevision: main
+    path: platform/infrastructure
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-applications
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: platform-applications
+    app.kubernetes.io/component: bootstrap
+spec:
+  project: applications
+  source:
+    repoURL: https://github.com/binGhzal/PlatformNorthStar
+    targetRevision: main
+    path: environments/{{ .Values.environment | default "dev" }}
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas

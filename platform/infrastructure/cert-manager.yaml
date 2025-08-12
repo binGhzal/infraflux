@@ -1,0 +1,99 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  labels:
+    app.kubernetes.io/name: cert-manager
+    app.kubernetes.io/component: infrastructure
+spec:
+  project: platform
+  source:
+    repoURL: https://charts.jetstack.io
+    chart: cert-manager
+    targetRevision: v1.13.0
+    helm:
+      values: |
+        installCRDs: true
+        
+        # Prometheus monitoring
+        prometheus:
+          enabled: true
+          servicemonitor:
+            enabled: true
+        
+        # Security
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+        
+        # Resource limits
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+        
+        webhook:
+          resources:
+            requests:
+              cpu: 5m
+              memory: 20Mi
+            limits:
+              cpu: 50m
+              memory: 64Mi
+        
+        cainjector:
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager-issuers
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  labels:
+    app.kubernetes.io/name: cert-manager-issuers
+    app.kubernetes.io/component: infrastructure
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/binGhzal/infraflux
+    targetRevision: main
+    path: platform/infrastructure/cert-manager
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

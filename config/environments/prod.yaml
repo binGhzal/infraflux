@@ -1,4 +1,81 @@
 # Production Environment Configuration
+
+# Environment-specific overrides for production
+environment:
+  name: "prod"
+  domain: "platform.company.com"
+
+# Cluster configuration overrides
+clusterOverrides:
+  # Production-sized cluster
+  nodes:
+    controlPlane:
+      count: 3
+      cpu: 8
+      memory: "16Gi"
+      disk: "200Gi"
+    worker:
+      count: 5
+      cpu: 16
+      memory: "32Gi"
+      disk: "500Gi"
+
+# Infrastructure component overrides
+infrastructureOverrides:
+  # Use production certificates
+  certManager:
+    config:
+      defaultIssuer: "letsencrypt-prod"
+      acme:
+        server: "https://acme-v02.api.letsencrypt.org/directory"
+  
+  # Extended monitoring retention
+  monitoring:
+    prometheus:
+      retention: "90d"
+      storage: "200Gi"
+  
+  # Production Cilium configuration
+  cilium:
+    config:
+      encryption: true  # Enable encryption in production
+      hubble:
+        enabled: true
+        ui: true
+
+# Production-specific features
+featureOverrides:
+  # Disable experimental features
+  chaosEngineering: false
+  imageScanning: true
+  costMonitoring: true
+
+# Strict security for production
+securityOverrides:
+  podSecurity:
+    enforce: "restricted"
+    audit: "restricted"
+    warn: "restricted"
+
+# Larger resource quotas for production
+resourceOverrides:
+  defaultQuota:
+    requests:
+      cpu: "16"
+      memory: "32Gi"
+      storage: "200Gi"
+    limits:
+      cpu: "32"
+      memory: "64Gi"
+
+# Production-specific backup configuration
+backupOverrides:
+  enabled: true
+  etcd:
+    schedule: "0 1,13 * * *"  # Twice daily
+    retention: "90"  # Keep 90 backups
+  velero:
+    enabled: true
 # High-availability multi-node cluster for production workloads
 
 cluster:

@@ -1,0 +1,77 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cilium
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  labels:
+    app.kubernetes.io/name: cilium
+    app.kubernetes.io/component: infrastructure
+spec:
+  project: platform
+  source:
+    repoURL: https://helm.cilium.io
+    chart: cilium
+    targetRevision: 1.15.0
+    helm:
+      values: |
+        cluster:
+          name: {{ .Values.cluster.name | default "platform" }}
+          id: {{ .Values.cluster.id | default 1 }}
+        
+        kubeProxyReplacement: strict
+        k8sServiceHost: {{ .Values.cluster.apiServer.host }}
+        k8sServicePort: {{ .Values.cluster.apiServer.port | default 6443 }}
+        
+        # CNI Configuration
+        tunnel: {{ .Values.cilium.tunnel | default "vxlan" }}
+        encryption:
+          enabled: {{ .Values.cilium.encryption | default false }}
+          type: wireguard
+        
+        # Hubble Configuration
+        hubble:
+          enabled: {{ .Values.cilium.hubble.enabled | default true }}
+          relay:
+            enabled: {{ .Values.cilium.hubble.enabled | default true }}
+          ui:
+            enabled: {{ .Values.cilium.hubble.ui | default true }}
+            service:
+              type: ClusterIP
+        
+        # Gateway API
+        gatewayAPI:
+          enabled: {{ .Values.cilium.gatewayAPI | default true }}
+        
+        # Load Balancer
+        loadBalancer:
+          mode: {{ .Values.cilium.loadBalancer.mode | default "dsr" }}
+          acceleration: {{ .Values.cilium.loadBalancer.acceleration | default "native" }}
+        
+        # Security
+        policyEnforcementMode: {{ .Values.cilium.policyEnforcementMode | default "default" }}
+        
+        # Observability
+        prometheus:
+          enabled: true
+          serviceMonitor:
+            enabled: true
+        
+        operator:
+          prometheus:
+            enabled: true
+            serviceMonitor:
+              enabled: true
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
