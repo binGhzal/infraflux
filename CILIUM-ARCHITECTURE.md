@@ -71,6 +71,8 @@ Instead of deploying separate solutions for networking, security, service mesh, 
 
 ### What Cilium Replaces:
 
+### What Cilium Replaces
+
 - ❌ **Traditional CNI plugins** → ✅ Cilium CNI
 - ❌ **Separate ingress controllers** → ✅ Cilium Ingress
 - ❌ **Service mesh sidecars (Istio/Linkerd)** → ✅ Cilium Service Mesh
@@ -79,7 +81,7 @@ Instead of deploying separate solutions for networking, security, service mesh, 
 - ❌ **Gatekeeper admission control** → ✅ Tetragon Runtime Enforcement
 - ❌ **Separate observability tools** → ✅ Hubble + Tetragon
 
-### What Remains:
+### What Remains
 
 - ✅ **External-DNS** (enhanced for Cilium integration)
 - ✅ **Prometheus/Grafana** (optimized for Cilium metrics)
