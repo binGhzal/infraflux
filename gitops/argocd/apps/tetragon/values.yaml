@@ -1,0 +1,131 @@
+# === TETRAGON RUNTIME SECURITY CONFIGURATION ===
+# Comprehensive eBPF-based runtime security and observability
+
+# === CORE FEATURES ===
+# Enable comprehensive observability and export configuration
+export:
+  stdout:
+    enabled: true
+    enabledStackTrace: true
+  filenames:
+    - "/var/log/tetragon/tetragon.log"
+
+# Enable enforcement mode for runtime security
+enableProcessCredentials: true
+enableProcessNamespaces: true
+
+# === SECURITY POLICIES ===
+# Enable default security policies
+policyDirectory: "/etc/tetragon/policies"
+
+# === OBSERVABILITY & MONITORING ===
+# Prometheus metrics
+prometheus:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    labels:
+      prometheus: kube-prometheus
+
+# === PERFORMANCE & RESOURCE MANAGEMENT ===
+# Resource limits for production deployment
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# === RBAC & SECURITY ===
+# Service account configuration
+serviceAccount:
+  create: true
+  name: tetragon
+
+# Pod security context
+securityContext:
+  privileged: false
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: false # Tetragon needs root for eBPF
+  runAsUser: 0
+  capabilities:
+    add:
+      - SYS_ADMIN
+      - SYS_RESOURCE
+      - SYS_PTRACE
+    drop:
+      - ALL
+
+# === eBPF CONFIGURATION ===
+# eBPF file system
+bpf:
+  masqueradeInterfaces: {}
+
+# === RUNTIME POLICIES ===
+# Enable default Tetragon policies for security enforcement
+enabledPolicies:
+  # Process execution monitoring
+  - name: "process-execution"
+    spec:
+      processes:
+        - binary: "/usr/bin/kubectl"
+          action: "audit"
+        - binary: "/bin/bash"
+          action: "audit"
+        - binary: "/bin/sh"
+          action: "audit"
+
+  # File access monitoring
+  - name: "file-access"
+    spec:
+      files:
+        - path: "/etc/passwd"
+          action: "audit"
+        - path: "/etc/shadow"
+          action: "enforce"
+        - path: "/etc/kubernetes"
+          action: "audit"
+
+  # Network activity monitoring
+  - name: "network-activity"
+    spec:
+      network:
+        - protocol: "tcp"
+          port: 22
+          action: "audit"
+        - protocol: "tcp"
+          port: 6443
+          action: "audit"
+
+# === CLUSTER INTEGRATION ===
+# Kubernetes integration
+k8s:
+  enabled: true
+
+# gRPC configuration for external integrations
+grpc:
+  enabled: true
+  address: "localhost:54321"
+
+# === ADDITIONAL FEATURES ===
+# Enable TTY detection for interactive shell monitoring
+enableTtyDetection: true
+
+# Enable namespace filtering
+enableK8sAPI: true
+
+# Configure log levels
+logLevel: "info"
+
+# === DEPLOYMENT CONFIGURATION ===
+# Ensure Tetragon runs on all nodes
+nodeSelector: {}
+tolerations:
+  - operator: Exists
+affinity: {}
+
+# Update strategy
+updateStrategy:
+  type: RollingUpdate

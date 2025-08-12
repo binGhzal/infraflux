@@ -33,9 +33,9 @@ spec:
             "k8s:io.kubernetes.pod.namespace": "monitoring"
       toPorts:
         - ports:
-            - port: "9962" # Cilium metrics
-            - port: "9963" # Cilium operator metrics
-            - port: "4245" # Hubble relay
+          - port: "9962"  # Cilium metrics
+          - port: "9963"  # Cilium operator metrics
+          - port: "4245"  # Hubble relay
   egress:
     - {} # Allow all egress for system components
 ---
@@ -57,8 +57,8 @@ spec:
             "k8s:io.cilium.io/policy": "ingress"
       toPorts:
         - ports:
-            - port: "8080"
-              protocol: TCP
+          - port: "8080"
+            protocol: TCP
           rules:
             http:
               - method: "GET"
@@ -78,8 +78,8 @@ spec:
             app.kubernetes.io/component: backend
       toPorts:
         - ports:
-            - port: "8080"
-              protocol: TCP
+          - port: "8080"
+            protocol: TCP
     # Allow DNS resolution
     - toEndpoints:
         - matchLabels:
@@ -87,10 +87,10 @@ spec:
             k8s-app: kube-dns
       toPorts:
         - ports:
-            - port: "53"
-              protocol: UDP
-            - port: "53"
-              protocol: TCP
+          - port: "53"
+            protocol: UDP
+          - port: "53"
+            protocol: TCP
 ---
 # === DATABASE SECURITY POLICY ===
 apiVersion: "cilium.io/v2"
@@ -110,20 +110,20 @@ spec:
             app.kubernetes.io/component: backend
       toPorts:
         - ports:
-            - port: "5432" # PostgreSQL
-              protocol: TCP
-            - port: "3306" # MySQL
-              protocol: TCP
+          - port: "5432"  # PostgreSQL
+            protocol: TCP
+          - port: "3306"  # MySQL
+            protocol: TCP
     # Allow monitoring access
     - fromEndpoints:
         - matchLabels:
             "k8s:io.kubernetes.pod.namespace": "monitoring"
       toPorts:
         - ports:
-            - port: "9187" # PostgreSQL exporter
-              protocol: TCP
-            - port: "9104" # MySQL exporter
-              protocol: TCP
+          - port: "9187"  # PostgreSQL exporter
+            protocol: TCP
+          - port: "9104"  # MySQL exporter
+            protocol: TCP
   egress:
     # Allow DNS resolution only
     - toEndpoints:
@@ -132,8 +132,8 @@ spec:
             k8s-app: kube-dns
       toPorts:
         - ports:
-            - port: "53"
-              protocol: UDP
+          - port: "53"
+            protocol: UDP
 ---
 # === L7 HTTP SECURITY POLICY ===
 apiVersion: "cilium.io/v2"
@@ -152,8 +152,8 @@ spec:
             app.kubernetes.io/component: frontend
       toPorts:
         - ports:
-            - port: "8080"
-              protocol: TCP
+          - port: "8080"
+            protocol: TCP
           rules:
             http:
               # Allow specific API endpoints
@@ -182,7 +182,7 @@ spec:
     matchExpressions:
       - key: "k8s:io.kubernetes.pod.namespace"
         operator: NotIn
-        values: [ "kube-system", "cilium-system" ]
+        values: ["kube-system", "cilium-system"]
   egress:
     # Allow DNS resolution
     - toEndpoints:
@@ -191,8 +191,8 @@ spec:
             k8s-app: kube-dns
       toPorts:
         - ports:
-            - port: "53"
-              protocol: UDP
+          - port: "53"
+            protocol: UDP
     # Allow HTTPS to external services (e.g., package repos)
     - toFQDNs:
         - matchName: "*.archive.ubuntu.com"
@@ -201,8 +201,8 @@ spec:
         - matchName: "*.githubusercontent.com"
       toPorts:
         - ports:
-            - port: "443"
-              protocol: TCP
+          - port: "443"
+            protocol: TCP
     # Block all other external traffic
 ---
 # === MONITORING NAMESPACE POLICY ===
@@ -221,19 +221,19 @@ spec:
             "k8s:io.cilium.io/policy": "ingress"
       toPorts:
         - ports:
-            - port: "3000" # Grafana
-              protocol: TCP
+          - port: "3000"  # Grafana
+            protocol: TCP
   egress:
     # Allow scraping metrics from all namespaces
     - toEndpoints: []
       toPorts:
         - ports:
-            - port: "9090" # Prometheus
-            - port: "9962" # Cilium agent
-            - port: "9963" # Cilium operator
-            - port: "4245" # Hubble relay
-            - port: "2112" # Tetragon
-              protocol: TCP
+          - port: "9090"  # Prometheus
+          - port: "9962"  # Cilium agent
+          - port: "9963"  # Cilium operator
+          - port: "4245"  # Hubble relay
+          - port: "2112"  # Tetragon
+            protocol: TCP
     # Allow DNS
     - toEndpoints:
         - matchLabels:
@@ -241,8 +241,8 @@ spec:
             k8s-app: kube-dns
       toPorts:
         - ports:
-            - port: "53"
-              protocol: UDP
+          - port: "53"
+            protocol: UDP
 ---
 # === TETRAGON ENFORCEMENT POLICIES ===
 # These policies work alongside Tetragon for runtime enforcement
@@ -262,8 +262,8 @@ spec:
             "k8s:io.kubernetes.pod.namespace": "monitoring"
       toPorts:
         - ports:
-            - port: "2112"
-              protocol: TCP
+          - port: "2112"
+            protocol: TCP
   egress:
     # Allow Tetragon to communicate with Kubernetes API
     - toEntities:
@@ -275,5 +275,5 @@ spec:
             k8s-app: kube-dns
       toPorts:
         - ports:
-            - port: "53"
-              protocol: UDP
+          - port: "53"
+            protocol: UDP

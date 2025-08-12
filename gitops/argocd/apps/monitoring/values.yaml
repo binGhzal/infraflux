@@ -1,22 +1,55 @@
+# === GRAFANA CONFIGURATION ===
 grafana:
   adminPassword: "admin"
   dashboards:
     default:
+      # Cilium Network Dashboards
+      cilium-overview:
+        url: https://raw.githubusercontent.com/cilium/cilium/main/install/kubernetes/cilium/files/cilium-monitoring/dashboards/cilium-dashboard.json
+        datasource: Prometheus
+      cilium-operator:
+        url: https://raw.githubusercontent.com/cilium/cilium/main/install/kubernetes/cilium/files/cilium-monitoring/dashboards/cilium-operator-dashboard.json
+        datasource: Prometheus
+      hubble-metrics:
+        url: https://raw.githubusercontent.com/cilium/cilium/main/install/kubernetes/cilium/files/hubble-monitoring/dashboards/hubble-dashboard.json
+        datasource: Prometheus
+      # Tetragon Security Dashboards
+      tetragon-overview:
+        url: https://raw.githubusercontent.com/cilium/tetragon/main/install/kubernetes/tetragon/files/tetragon-monitoring/dashboard.json
+        datasource: Prometheus
+      # Infrastructure Dashboards
       infraflux-overview:
         url: https://raw.githubusercontent.com/your-org/infraflux/main/gitops/argocd/apps/monitoring/dashboards/cluster-overview.json
+        datasource: Prometheus
       infraflux-nodes:
         url: https://raw.githubusercontent.com/your-org/infraflux/main/gitops/argocd/apps/monitoring/dashboards/node-details.json
+        datasource: Prometheus
+  # Enable Cilium plugin for enhanced network visibility
+  plugins:
+    - grafana-piechart-panel
+    - grafana-polystat-panel
 
+# === PROMETHEUS CONFIGURATION ===
 prometheus:
   prometheusSpec:
     scrapeInterval: "30s"
     evaluationInterval: "30s"
     retention: "15d"
+
+    # Service monitor selector for Cilium components
+    serviceMonitorSelector:
+      matchLabels:
+        prometheus: kube-prometheus
+
+    # Additional rule selector for Cilium rules
     ruleSelector:
       matchLabels:
         prometheus: kube-prometheus
         role: alert-rules
+
+    # Enhanced scrape configurations focusing on Cilium ecosystem
     additionalScrapeConfigs:
+      # Talos API monitoring
       - job_name: 'talos-apid'
         kubernetes_sd_configs:
           - role: node
@@ -29,33 +62,157 @@ prometheus:
             regex: '([^:]+)(?::\d+)?'
             replacement: '${1}:50000'
 
+      # Cilium agent metrics
+      - job_name: 'cilium-agent'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [ kube-system ]
+        relabel_configs:
+          - source_labels: [ __meta_kubernetes_pod_label_k8s_app ]
+            action: keep
+            regex: cilium
+          - source_labels: [ __address__ ]
+            regex: '([^:]+)(?::\d+)?'
+            target_label: __address__
+            replacement: '${1}:9962'
+
+      # Cilium operator metrics
+      - job_name: 'cilium-operator'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [ kube-system ]
+        relabel_configs:
+          - source_labels: [ __meta_kubernetes_pod_label_name ]
+            action: keep
+            regex: cilium-operator
+          - source_labels: [ __address__ ]
+            regex: '([^:]+)(?::\d+)?'
+            target_label: __address__
+            replacement: '${1}:9963'
+
+      # Hubble relay metrics
+      - job_name: 'hubble-relay'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [ kube-system ]
+        relabel_configs:
+          - source_labels: [ __meta_kubernetes_pod_label_k8s_app ]
+            action: keep
+            regex: hubble-relay
+          - source_labels: [ __address__ ]
+            regex: '([^:]+)(?::\d+)?'
+            target_label: __address__
+            replacement: '${1}:9965'
+
+      # Tetragon metrics
+      - job_name: 'tetragon'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [ kube-system ]
+        relabel_configs:
+          - source_labels: [ __meta_kubernetes_pod_label_app_kubernetes_io_name ]
+            action: keep
+            regex: tetragon
+          - source_labels: [ __address__ ]
+            regex: '([^:]+)(?::\d+)?'
+            target_label: __address__
+            replacement: '${1}:2112'
+
+# === ALERTMANAGER CONFIGURATION ===
 alertmanager:
   config:
     global:
       smtp_smarthost: 'localhost:587'
       smtp_from: 'alerts@infraflux.local'
+
     route:
-      group_by: [ 'alertname', 'cluster', 'service' ]
+      group_by: [ 'alertname', 'cluster', 'service', 'namespace' ]
       group_wait: 10s
       group_interval: 10s
       repeat_interval: 1h
       receiver: 'web.hook'
       routes:
+        # Critical Cilium infrastructure alerts
+        - match:
+            severity: critical
+            component: cilium
+          receiver: 'cilium-critical'
+
+        # Tetragon security alerts
+        - match:
+            severity: warning
+            component: tetragon
+          receiver: 'security-warning'
+
+        # Network policy violations
+        - match:
+            alertname: NetworkPolicyViolation
+          receiver: 'security-critical'
+
+        # General critical alerts
         - match:
             severity: critical
           receiver: 'critical'
+
+        # General warning alerts
         - match:
             severity: warning
           receiver: 'warning'
+
     receivers:
       - name: 'web.hook'
         webhook_configs:
           - url: 'http://localhost:5001/'
+
+      - name: 'cilium-critical'
+        webhook_configs:
+          - url: 'http://localhost:5001/'
+            title: 'CRITICAL CILIUM: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+            text: 'Cilium infrastructure issue detected requiring immediate attention'
+
+      - name: 'security-critical'
+        webhook_configs:
+          - url: 'http://localhost:5001/'
+            title: 'SECURITY VIOLATION: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+            text: 'Security policy violation detected by Tetragon or Cilium'
+
+      - name: 'security-warning'
+        webhook_configs:
+          - url: 'http://localhost:5001/'
+            title: 'SECURITY WARNING: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+            text: 'Security event requiring review'
+
       - name: 'critical'
         webhook_configs:
           - url: 'http://localhost:5001/'
             title: 'CRITICAL: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+
       - name: 'warning'
         webhook_configs:
           - url: 'http://localhost:5001/'
             title: 'WARNING: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+
+# === ADDITIONAL MONITORING COMPONENTS ===
+# Enable specific monitoring for Cilium ecosystem
+defaultRules:
+  create: true
+  rules:
+    # Cilium-specific rules
+    cilium: true
+    # Kubernetes rules
+    kubernetesApps: true
+    kubernetesResources: true
+    kubernetesStorage: true
+    kubernetesSystem: true
+    # Node and infrastructure rules
+    node: true
+    nodeExporter: true
+    prometheus: true
+    prometheusOperator: true
+
+# Service monitors for Cilium components are automatically created
+# when prometheus.serviceMonitor.enabled: true in respective values files

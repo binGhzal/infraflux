@@ -1,14 +1,115 @@
+# === EXTERNAL DNS CONFIGURATION FOR CILIUM ===
+# External DNS configuration optimized for Cilium Ingress and Gateway API
+
 provider: cloudflare
+
+# Environment variables for authentication
 env:
   - name: CF_API_TOKEN
     valueFrom:
       secretKeyRef:
         name: external-dns
         key: CF_API_TOKEN
+
+# Sources to monitor for DNS records
 sources:
-  - service
-  - ingress
-  - gateway-httproute
-domainFilters: [ "example.com" ]
+  - service # Monitor LoadBalancer services (Cilium ingress)
+  - ingress # Monitor traditional Ingress resources
+  - gateway-httproute # Monitor Gateway API HTTPRoute resources
+  - cilium-ingress # Monitor Cilium-specific ingress resources
+
+# Domain filtering
+domainFilters: [ "infraflux.local", "*.infraflux.local" ]
+
+# Policy for DNS record management
 policy: upsert-only
-txtOwnerId: "infraflux"
+
+# Unique identifier for this ExternalDNS instance
+txtOwnerId: "infraflux-cilium"
+
+# === CILIUM-SPECIFIC CONFIGURATION ===
+# Enable support for Cilium LoadBalancer services
+serviceTypeFilter: [ "LoadBalancer" ]
+
+# Annotation filters for Cilium ingress services
+annotationFilter: "external-dns.alpha.kubernetes.io/hostname"
+
+# Registry configuration for tracking DNS records
+registry: "txt"
+txtPrefix: "infraflux-"
+
+# === LOGGING & MONITORING ===
+logLevel: info
+logFormat: json
+
+# Dry run mode for testing (set to false for production)
+dryRun: false
+
+# === INTERVALS & TIMEOUTS ===
+interval: 1m
+triggerLoopOnEvent: true
+
+# === FILTERING & SELECTION ===
+# Include Cilium ingress controller services
+source:
+  service:
+    serviceTypeFilter: [ "LoadBalancer" ]
+    fqdnTemplate: "{{.metadata.name}}.infraflux.local"
+
+  ingress:
+    # Monitor Cilium ingress class
+    ingressClassNames: [ "cilium" ]
+
+  # Gateway API configuration for Cilium
+  gateway:
+    namespaceFilter: []
+    gatewayClassNames: [ "cilium" ]
+
+# === EXTERNAL DNS METRICS ===
+metrics:
+  enabled: true
+  port: 7979
+
+# === RBAC CONFIGURATION ===
+rbac:
+  create: true
+
+serviceAccount:
+  create: true
+  name: external-dns
+
+# === RESOURCE LIMITS ===
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 128Mi
+
+# === DEPLOYMENT CONFIGURATION ===
+replicaCount: 1
+
+# Node selector for running ExternalDNS
+nodeSelector: {}
+
+# Tolerations for scheduling
+tolerations: []
+
+# Affinity rules
+affinity: {}
+
+# === SECURITY CONTEXT ===
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 65534
+  fsGroup: 65534
+  capabilities:
+    drop:
+      - ALL
+
+# === ADDITIONAL ANNOTATIONS ===
+# Add annotations for Cilium network policies if needed
+podAnnotations:
+  # Allow ExternalDNS to communicate with external DNS providers
+  "policy.cilium.io/egress-cloudflare": "true"
