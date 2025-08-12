@@ -1,0 +1,201 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: etcd-backup-script
+  namespace: backup
+data:
+  backup.sh: |
+    #!/bin/bash
+    set -euo pipefail
+
+    # Configuration
+    ETCD_ENDPOINTS="https://localhost:2379"
+    BACKUP_DIR="/var/lib/etcd-backup"
+    RETENTION_DAYS=7
+    DATE=$(date +%Y%m%d-%H%M%S)
+    BACKUP_NAME="etcd-backup-${DATE}"
+
+    # Create backup directory
+    mkdir -p ${BACKUP_DIR}
+
+    # Perform etcd backup using etcdctl
+    echo "Starting etcd backup: ${BACKUP_NAME}"
+    etcdctl snapshot save ${BACKUP_DIR}/${BACKUP_NAME}.db \
+      --endpoints=${ETCD_ENDPOINTS} \
+      --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+      --cert=/etc/kubernetes/pki/etcd/server.crt \
+      --key=/etc/kubernetes/pki/etcd/server.key
+
+    # Verify backup
+    echo "Verifying backup..."
+    etcdctl snapshot status ${BACKUP_DIR}/${BACKUP_NAME}.db \
+      --write-out=table
+
+    # Compress backup
+    echo "Compressing backup..."
+    gzip ${BACKUP_DIR}/${BACKUP_NAME}.db
+
+    # Clean up old backups
+    echo "Cleaning up backups older than ${RETENTION_DAYS} days..."
+    find ${BACKUP_DIR} -name "etcd-backup-*.db.gz" -mtime +${RETENTION_DAYS} -delete
+
+    # Upload to S3 (optional)
+    if [ -n "${AWS_S3_BUCKET:-}" ]; then
+      echo "Uploading to S3..."
+      aws s3 cp ${BACKUP_DIR}/${BACKUP_NAME}.db.gz s3://${AWS_S3_BUCKET}/etcd-backups/
+    fi
+
+    echo "Backup completed successfully: ${BACKUP_NAME}.db.gz"
+
+  restore.sh: |
+    #!/bin/bash
+    set -euo pipefail
+
+    # Configuration
+    BACKUP_FILE="${1:-}"
+    ETCD_DATA_DIR="/var/lib/etcd"
+    ETCD_CLUSTER_TOKEN="infraflux-etcd-cluster"
+
+    if [ -z "${BACKUP_FILE}" ]; then
+      echo "Usage: $0 <backup-file>"
+      echo "Available backups:"
+      ls -la /var/lib/etcd-backup/
+      exit 1
+    fi
+
+    if [ ! -f "${BACKUP_FILE}" ]; then
+      echo "Backup file not found: ${BACKUP_FILE}"
+      exit 1
+    fi
+
+    # Stop etcd (this should be done carefully in production)
+    echo "Stopping etcd..."
+    systemctl stop etcd || true
+
+    # Remove old data
+    echo "Removing old etcd data..."
+    rm -rf ${ETCD_DATA_DIR}/*
+
+    # Restore from backup
+    echo "Restoring from backup: ${BACKUP_FILE}"
+    etcdctl snapshot restore ${BACKUP_FILE} \
+      --data-dir=${ETCD_DATA_DIR} \
+      --initial-cluster-token=${ETCD_CLUSTER_TOKEN} \
+      --initial-advertise-peer-urls=https://localhost:2380 \
+      --name=etcd-restore \
+      --initial-cluster=etcd-restore=https://localhost:2380
+
+    # Fix ownership
+    chown -R etcd:etcd ${ETCD_DATA_DIR}
+
+    # Start etcd
+    echo "Starting etcd..."
+    systemctl start etcd
+
+    echo "Restore completed successfully"
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: etcd-backup
+  namespace: backup
+spec:
+  schedule: "0 2 * * *" # Daily at 2 AM
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: etcd-backup
+          containers:
+            - name: etcd-backup
+              image: bitnami/etcd:3.5
+              command:
+                - /bin/bash
+                - /backup/backup.sh
+              volumeMounts:
+                - name: backup-script
+                  mountPath: /backup
+                - name: etcd-backup-storage
+                  mountPath: /var/lib/etcd-backup
+                - name: etcd-certs
+                  mountPath: /etc/kubernetes/pki/etcd
+                  readOnly: true
+              env:
+                - name: ETCDCTL_API
+                  value: "3"
+                - name: AWS_S3_BUCKET
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-config
+                      key: s3-bucket
+                      optional: true
+              resources:
+                limits:
+                  memory: 256Mi
+                  cpu: 200m
+                requests:
+                  memory: 128Mi
+                  cpu: 100m
+          volumes:
+            - name: backup-script
+              configMap:
+                name: etcd-backup-script
+                defaultMode: 755
+            - name: etcd-backup-storage
+              persistentVolumeClaim:
+                claimName: etcd-backup-pvc
+            - name: etcd-certs
+              hostPath:
+                path: /etc/kubernetes/pki/etcd
+                type: Directory
+          restartPolicy: OnFailure
+          nodeSelector:
+            node-role.kubernetes.io/control-plane: ""
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+              effect: NoSchedule
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: etcd-backup-pvc
+  namespace: backup
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: longhorn
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: etcd-backup
+  namespace: backup
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: etcd-backup
+rules:
+  - apiGroups: [ "" ]
+    resources: [ "nodes" ]
+    verbs: [ "get", "list" ]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: etcd-backup
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: etcd-backup
+subjects:
+  - kind: ServiceAccount
+    name: etcd-backup
+    namespace: backup

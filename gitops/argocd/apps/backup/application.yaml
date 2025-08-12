@@ -1,0 +1,52 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: etcd-backup
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  project: platform
+  source:
+    repoURL: https://charts.bitnami.com/bitnami
+    chart: etcd
+    targetRevision: 10.x.x
+    helm:
+      values: |
+        auth:
+          rbac:
+            create: true
+        metrics:
+          enabled: true
+          serviceMonitor:
+            enabled: true
+        extraVolumes:
+        - name: backup-script
+          configMap:
+            name: etcd-backup-script
+            defaultMode: 0755
+        extraVolumeMounts:
+        - name: backup-script
+          mountPath: /backup
+        persistence:
+          enabled: true
+          size: 10Gi
+        startupProbe:
+          enabled: true
+          initialDelaySeconds: 30
+        resources:
+          limits:
+            memory: 512Mi
+            cpu: 500m
+          requests:
+            memory: 256Mi
+            cpu: 100m
+  destination:
+    namespace: backup
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

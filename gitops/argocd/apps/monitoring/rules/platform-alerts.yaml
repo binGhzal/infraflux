@@ -1,0 +1,136 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: infraflux-platform-alerts
+  namespace: monitoring
+  labels:
+    prometheus: kube-prometheus
+    role: alert-rules
+spec:
+  groups:
+    - name: infraflux.argocd.rules
+      rules:
+        - alert: ArgoCDApplicationNotSynced
+          expr: argocd_app_info{sync_status!="Synced"} == 1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ArgoCD application {{ $labels.name }} not synced"
+            description: "ArgoCD application {{ $labels.name }} in namespace {{ $labels.namespace }} is not in sync."
+
+        - alert: ArgoCDApplicationUnhealthy
+          expr: argocd_app_info{health_status!="Healthy"} == 1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ArgoCD application {{ $labels.name }} unhealthy"
+            description: "ArgoCD application {{ $labels.name }} in namespace {{ $labels.namespace }} is not healthy."
+
+        - alert: ArgoCDServerDown
+          expr: up{job="argocd-server-metrics"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "ArgoCD server is down"
+            description: "ArgoCD server has been down for more than 5 minutes."
+
+    - name: infraflux.storage.rules
+      rules:
+        - alert: LonghornVolumeHighUsage
+          expr: (longhorn_volume_actual_size_bytes / longhorn_volume_size_bytes) * 100 > 90
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Longhorn volume {{ $labels.volume }} usage high"
+            description: "Longhorn volume {{ $labels.volume }} is using more than 90% of its capacity."
+
+        - alert: LonghornNodeStorageUsage
+          expr: (longhorn_node_storage_usage_bytes / longhorn_node_storage_capacity_bytes) * 100 > 85
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Longhorn node {{ $labels.node }} storage usage high"
+            description: "Longhorn node {{ $labels.node }} storage usage is above 85%."
+
+        - alert: LonghornVolumeAttachmentFailed
+          expr: longhorn_volume_state{state="attached"} == 0 and longhorn_volume_robustness{robustness="degraded"} == 1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Longhorn volume {{ $labels.volume }} attachment failed"
+            description: "Longhorn volume {{ $labels.volume }} failed to attach properly."
+
+    - name: infraflux.networking.rules
+      rules:
+        - alert: CiliumAgentDown
+          expr: up{job="cilium-agent"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Cilium agent down on {{ $labels.instance }}"
+            description: "Cilium agent has been down for more than 5 minutes on {{ $labels.instance }}."
+
+        - alert: CiliumEndpointNotReady
+          expr: cilium_endpoint_state{endpoint_state!="ready"} > 0
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Cilium endpoints not ready"
+            description: "{{ $value }} Cilium endpoints are not in ready state."
+
+        - alert: CiliumPolicyImportErrors
+          expr: increase(cilium_policy_import_errors_total[5m]) > 0
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Cilium policy import errors"
+            description: "Cilium is experiencing policy import errors."
+
+    - name: infraflux.certificates.rules
+      rules:
+        - alert: CertManagerCertificateExpiringSoon
+          expr: (certmanager_certificate_expiration_timestamp_seconds - time()) / 86400 < 30
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: "Certificate {{ $labels.name }} expiring soon"
+            description: "Certificate {{ $labels.name }} in namespace {{ $labels.namespace }} will expire in less than 30 days."
+
+        - alert: CertManagerCertificateNotReady
+          expr: certmanager_certificate_ready_status{condition="False"} == 1
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Certificate {{ $labels.name }} not ready"
+            description: "Certificate {{ $labels.name }} in namespace {{ $labels.namespace }} is not ready."
+
+    - name: infraflux.dns.rules
+      rules:
+        - alert: ExternalDNSDown
+          expr: up{job="external-dns"} == 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "External DNS is down"
+            description: "External DNS has been down for more than 5 minutes."
+
+        - alert: ExternalDNSErrors
+          expr: increase(external_dns_registry_errors_total[5m]) > 0
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "External DNS errors"
+            description: "External DNS is experiencing registry errors."

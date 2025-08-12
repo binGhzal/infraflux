@@ -1,5 +1,61 @@
 grafana:
   adminPassword: "admin"
+  dashboards:
+    default:
+      infraflux-overview:
+        url: https://raw.githubusercontent.com/your-org/infraflux/main/gitops/argocd/apps/monitoring/dashboards/cluster-overview.json
+      infraflux-nodes:
+        url: https://raw.githubusercontent.com/your-org/infraflux/main/gitops/argocd/apps/monitoring/dashboards/node-details.json
+
 prometheus:
   prometheusSpec:
     scrapeInterval: "30s"
+    evaluationInterval: "30s"
+    retention: "15d"
+    ruleSelector:
+      matchLabels:
+        prometheus: kube-prometheus
+        role: alert-rules
+    additionalScrapeConfigs:
+      - job_name: 'talos-apid'
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          insecure_skip_verify: true
+        relabel_configs:
+          - source_labels: [ __address__ ]
+            target_label: __address__
+            regex: '([^:]+)(?::\d+)?'
+            replacement: '${1}:50000'
+
+alertmanager:
+  config:
+    global:
+      smtp_smarthost: 'localhost:587'
+      smtp_from: 'alerts@infraflux.local'
+    route:
+      group_by: [ 'alertname', 'cluster', 'service' ]
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 1h
+      receiver: 'web.hook'
+      routes:
+        - match:
+            severity: critical
+          receiver: 'critical'
+        - match:
+            severity: warning
+          receiver: 'warning'
+    receivers:
+      - name: 'web.hook'
+        webhook_configs:
+          - url: 'http://localhost:5001/'
+      - name: 'critical'
+        webhook_configs:
+          - url: 'http://localhost:5001/'
+            title: 'CRITICAL: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+      - name: 'warning'
+        webhook_configs:
+          - url: 'http://localhost:5001/'
+            title: 'WARNING: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
