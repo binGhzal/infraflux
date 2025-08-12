@@ -1,5 +1,5 @@
 kubeconfig           = "~/.kube/config"
 namespace            = "capmox-system"
 proxmox_url          = "https://proxmox.example:8006/api2/json"
-proxmox_token_id     = "user@pam!token"
-proxmox_token_secret = "REDACTED"
+pm_user              = "root@pam"
+pm_password          = "changeme"

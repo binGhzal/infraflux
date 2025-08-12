@@ -15,13 +15,13 @@ variable "proxmox_url" {
 	type        = string
 }
 
-variable "proxmox_token_id" {
-	description = "Proxmox API token ID"
+variable "pm_user" {
+	description = "Proxmox username (e.g., root@pam)"
 	type        = string
 }
 
-variable "proxmox_token_secret" {
-	description = "Proxmox API token secret"
+variable "pm_password" {
+	description = "Proxmox password"
 	type        = string
 	sensitive   = true
 }
@@ -43,9 +43,9 @@ resource "kubernetes_secret" "capmox_credentials" {
 	}
 	type = "Opaque"
 	data = {
-		url         = base64encode(var.proxmox_url)
-		tokenID     = base64encode(var.proxmox_token_id)
-		tokenSecret = base64encode(var.proxmox_token_secret)
+	PM_API_URL = base64encode(var.proxmox_url)
+	PM_USER    = base64encode(var.pm_user)
+	PM_PASSWORD= base64encode(var.pm_password)
 	}
 }
 

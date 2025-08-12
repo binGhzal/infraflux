@@ -13,6 +13,8 @@ node_modules/
 .terraform/
 .terraform.lock.hcl
 crash.log
+*.tfvars
+*.auto.tfvars
 
 # Age/SOPS
 age.key
