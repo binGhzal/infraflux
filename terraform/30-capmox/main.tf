@@ -42,10 +42,10 @@ resource "kubernetes_secret" "capmox_credentials" {
 		namespace = kubernetes_namespace.capmox.metadata[0].name
 	}
 	type = "Opaque"
-	string_data = {
-		url         = var.proxmox_url
-		tokenID     = var.proxmox_token_id
-		tokenSecret = var.proxmox_token_secret
+	data = {
+		url         = base64encode(var.proxmox_url)
+		tokenID     = base64encode(var.proxmox_token_id)
+		tokenSecret = base64encode(var.proxmox_token_secret)
 	}
 }
 
