@@ -37,9 +37,7 @@ resource "proxmox_vm_qemu" "cp" {
     bridge = var.bridge
   }
 
-  os_type = "cloud-init"
-
-  cicustom = "user=local:snippets/${local.cp_names[count.index]}.yaml"
+  ostype = "l26"
   ciuser   = var.cloud_init_user
   cipassword = var.cloud_init_password
   sshkeys    = var.ssh_public_keys
@@ -72,9 +70,7 @@ resource "proxmox_vm_qemu" "worker" {
     bridge = var.bridge
   }
 
-  os_type = "cloud-init"
-
-  cicustom = "user=local:snippets/${local.worker_names[count.index]}.yaml"
+  ostype = "l26"
   ciuser   = var.cloud_init_user
   cipassword = var.cloud_init_password
   sshkeys    = var.ssh_public_keys

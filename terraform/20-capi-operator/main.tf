@@ -16,6 +16,10 @@ provider "helm" {
 	}
 }
 
+provider "kubernetes" {
+	config_path = var.kubeconfig
+}
+
 resource "kubernetes_namespace" "capi_operator" {
 	metadata {
 		name = var.namespace
