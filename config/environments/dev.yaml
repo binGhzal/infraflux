@@ -8,6 +8,10 @@ environment:
 # Cluster configuration overrides
 clusterOverrides:
   # Smaller cluster for development
+  name: "infraflux-dev"
+  controlplane_count: 1
+  worker_count: 0
+  allow_scheduling_on_controlplane: true
   nodes:
     controlPlane:
       count: 1
@@ -46,6 +50,8 @@ featureOverrides:
   # Enable useful dev features
   chaosEngineering: true
   imageScanning: true
+  ciliumMesh: false
+  tetragon: true
 
 # Relaxed security for development
 securityOverrides:
@@ -53,6 +59,8 @@ securityOverrides:
     enforce: "privileged"
     audit: "baseline"
     warn: "baseline"
+  networkPolicies: true
+  encryptionAtRest: false # Dev environment
 
 # Smaller resource quotas for dev
 resourceOverrides:
@@ -64,14 +72,8 @@ resourceOverrides:
     limits:
       cpu: "4"
       memory: "8Gi"
-# Single-node cluster for development and testing
 
-cluster:
-  name: "infraflux-dev"
-  controlplane_count: 1
-  worker_count: 0
-  allow_scheduling_on_controlplane: true
-
+# Proxmox configuration for dev environment
 proxmox:
   api_url: "https://proxmox.local:8006/api2/json"
   user: "terraform@pve"
@@ -79,10 +81,12 @@ proxmox:
   storage: "local-lvm"
   tls_insecure: true
 
+# Talos configuration
 talos:
   template_id: 9000
   version: "v1.6.0"
 
+# Network configuration
 network:
   bridge: "vmbr0"
   vlan_tag: null
@@ -93,37 +97,3 @@ network:
   dns_servers:
     - "1.1.1.1"
     - "8.8.8.8"
-
-nodes:
-  controlplane:
-    cpu_cores: 2
-    memory_mb: 4096
-    disk_size_gb: 40
-  worker:
-    cpu_cores: 2
-    memory_mb: 2048
-    disk_size_gb: 20
-
-features:
-  cilium:
-    enabled: true
-    cluster_mesh: false
-    hubble: true
-    tetragon: true
-
-  monitoring:
-    enabled: true
-    prometheus: true
-    grafana: true
-
-  cert_manager:
-    enabled: true
-
-  argocd:
-    enabled: true
-    repo_url: "https://github.com/binGhzal/PlatformNorthStar"
-
-security:
-  pod_security_standards: "restricted"
-  network_policies: true
-  encryption_at_rest: false # Dev environment

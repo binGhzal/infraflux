@@ -1,0 +1,99 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-dns
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  labels:
+    app.kubernetes.io/name: external-dns
+    app.kubernetes.io/component: infrastructure
+spec:
+  project: platform
+  source:
+    repoURL: https://kubernetes-sigs.github.io/external-dns
+    chart: external-dns
+    targetRevision: 1.14.0
+    helm:
+      values: |
+        # Provider configuration
+        provider: {{ .Values.externalDns.provider | default "cloudflare" }}
+
+        # Domain filters
+        domainFilters: {{ .Values.externalDns.domainFilters | toJson }}
+
+        # TXT owner ID
+        txtOwnerId: {{ .Values.externalDns.txtOwnerId | default "platform" }}
+
+        # Policy
+        policy: sync
+
+        # Registry
+        registry: txt
+
+        # Interval
+        interval: 1m
+
+        # Log configuration
+        logLevel: info
+        logFormat: text
+
+        # Security context
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65534
+          runAsGroup: 65534
+          readOnlyRootFilesystem: true
+
+        # Resource configuration
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+
+        # Service account
+        serviceAccount:
+          create: true
+          annotations: {}
+
+        # Extra arguments
+        extraArgs:
+          - --txt-prefix=external-dns-
+
+        # Environment variables for provider
+        env:
+          - name: CF_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: cloudflare-api-token
+                key: api-token
+                optional: true
+
+        # Sources to monitor
+        sources:
+          - ingress
+          - service
+
+        # Annotations to filter
+        annotationFilter: external-dns.alpha.kubernetes.io/hostname
+
+        # Service monitor for Prometheus
+        serviceMonitor:
+          enabled: true
+          interval: 30s
+          scrapeTimeout: 10s
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: external-dns
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

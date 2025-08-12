@@ -133,24 +133,47 @@ graph TB
     C --> K
 ```
 
-## 📁 Directory Structure
+## 📁 Repository Structure
 
 ```text
 infraflux/
-├── config/                    # Configuration management
-│   ├── defaults/              # Default values
-│   ├── environments/          # Environment-specific configs
-│   └── clusters/              # Cluster-specific configs
-├── terraform/                 # Infrastructure provisioning
-│   ├── modules/               # Reusable Terraform modules
-│   └── environments/          # Environment-specific deployments
-├── platform/                  # Platform service definitions
-│   ├── bootstrap/             # Bootstrap configurations
-│   ├── infrastructure/        # Infrastructure services
-│   └── gitops/                # GitOps configurations
-├── clusters/                  # Cluster templates and overlays
-├── scripts/                   # Automation scripts
-└── docs/                      # Documentation
+├── config/                     # 🎛️ Configuration Management
+│   ├── defaults/               # Default infrastructure values
+│   ├── environments/           # Environment-specific overrides
+│   │   ├── dev.yaml           # Development configuration
+│   │   ├── staging.yaml       # Staging configuration
+│   │   └── prod.yaml          # Production configuration
+│   └── clusters/               # Cluster-specific configurations
+├── terraform/                  # 🏗️ Infrastructure Provisioning
+│   ├── modules/                # Reusable Terraform modules
+│   │   ├── proxmox-vm/        # VM provisioning module
+│   │   ├── talos-cluster/     # Talos cluster module
+│   │   └── networking/        # Network configuration module
+│   └── environments/           # Environment-specific deployments
+│       ├── dev/               # Development infrastructure
+│       ├── staging/           # Staging infrastructure
+│       └── prod/              # Production infrastructure
+├── platform/                   # 🚀 Platform Services
+│   ├── bootstrap/              # Initial cluster bootstrap
+│   ├── infrastructure/         # Platform infrastructure services
+│   │   ├── cilium.yaml        # CNI and networking
+│   │   ├── cert-manager.yaml  # Certificate management
+│   │   ├── monitoring.yaml    # Prometheus stack
+│   │   ├── external-dns.yaml  # DNS automation
+│   │   └── longhorn.yaml      # Distributed storage
+│   └── gitops/                 # GitOps configurations
+│       ├── app-of-apps.yaml   # Main application orchestrator
+│       ├── projects.yaml      # ArgoCD projects
+│       └── repositories.yaml  # Repository configurations
+├── clusters/                   # 📋 Cluster Templates
+│   ├── templates/              # Size-based cluster templates
+│   └── overlays/               # Environment-specific overlays
+├── scripts/                    # 🔧 Automation Scripts
+│   ├── deploy.sh              # Infrastructure deployment
+│   └── platform-manager.sh    # Unified platform management
+└── docs/                       # 📚 Documentation
+    ├── quick-start.md
+    └── configuration.md
 ```
 
 ## 🌍 Multi-Environment Support

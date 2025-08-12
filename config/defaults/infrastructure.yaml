@@ -4,7 +4,7 @@
 # These values can be overridden by environment-specific or cluster-specific configurations.
 
 # Global Configuration
-global:
+globalConfig:
   # Domain configuration
   domain: "platform.local"
 
