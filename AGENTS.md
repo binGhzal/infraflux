@@ -394,4 +394,4 @@ creation_rules:
 
 ---
 
-This document is the **contract** for agents: act within these guardrails, prefer minimal diffs that advance the platform, validate every change, and propose mergeable PRs with clear signals, but also create documentation.
+This document is the **contract** for agents: act within these guardrails, validate every change, and propose mergeable PRs with clear signals, but also create documentation.
