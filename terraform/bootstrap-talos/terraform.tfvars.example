@@ -5,27 +5,21 @@ pm_password     = "changeme"
 target_node     = "pve01"
 datastore       = "local-lvm"
 bridge          = "vmbr0"
+
 # Prefer using the template VMID for cloning (set one of these)
 # talos_template  = "talos-1-8-template"   # Name
 talos_template_id = 9100                    # VMID
-iso_path = "local:iso/your-installer.iso"
 
-cluster_name    = "mgmt"
-cp_count        = 3
-worker_count    = 0
-cp_cpu          = 2
-cp_memory_mb    = 4096
-worker_cpu      = 2
-worker_memory_mb= 4096
-disk_size_gb    = 40
-ssh_public_keys = "ssh-ed25519 AAAA... user@example"
-cloud_init_user = "talos"
+bootstrap_node_name = "talos-bootstrap"
+# bootstrap_vmid    = 7000                 # Optional explicit VMID
+cpu_cores         = 2
+memory_mb         = 4096
+disk_size_gb      = 40
+
+ssh_public_keys     = "ssh-ed25519 AAAA... user@example"
+cloud_init_user     = "talos"
 cloud_init_password = "changeme"
 
 # Optionally mount an ISO as a CD-ROM (slot ide2)
 # Format: "<storage>:iso/<file.iso>"
 # iso_path = "local:iso/your-installer.iso"
-
-# Optional explicit VMIDs (override the base counters when set)
-# cp_vmids     = [7001, 7002, 7003]
-# worker_vmids = [7101, 7102]

@@ -29,70 +29,27 @@ variable "talos_template_id" {
     default     = null
 }
 
-variable "cluster_name" {
-    description = "Cluster name prefix for VMs"
+variable "bootstrap_node_name" {
+    description = "Name for the single bootstrap Talos node"
     type        = string
-    default     = "mgmt"
+    default     = "talos-bootstrap"
 }
 
-variable "cp_count" {
-    description = "Number of control plane nodes"
+variable "bootstrap_vmid" {
+    description = "VMID for the bootstrap node (optional, will auto-assign if not set)"
     type        = number
-    default     = 3
-}
-
-variable "worker_count" {
-    description = "Number of worker nodes"
-    type        = number
-    default     = 0
-}
-
-variable "cp_vmid_base" {
-    description = "Base VMID for control plane nodes; incremented per node"
-    type        = number
-    default     = 7000
-}
-
-variable "worker_vmid_base" {
-    description = "Base VMID for worker nodes; incremented per node"
-    type        = number
-    default     = 7100
-}
-
-# Optional explicit VMIDs; if provided, they override the base counters
-variable "cp_vmids" {
-    description = "List of VMIDs for control plane nodes (length must equal cp_count if set)"
-    type        = list(number)
     default     = null
 }
 
-variable "worker_vmids" {
-    description = "List of VMIDs for worker nodes (length must equal worker_count if set)"
-    type        = list(number)
-    default     = null
-}
-
-variable "cp_cpu" {
+variable "cpu_cores" {
     type        = number
-    description = "vCPU cores for control plane nodes"
+    description = "vCPU cores for the bootstrap node"
     default     = 2
 }
 
-variable "cp_memory_mb" {
+variable "memory_mb" {
     type        = number
-    description = "Memory MB for control plane nodes"
-    default     = 4096
-}
-
-variable "worker_cpu" {
-    type        = number
-    description = "vCPU cores for worker nodes"
-    default     = 2
-}
-
-variable "worker_memory_mb" {
-    type        = number
-    description = "Memory MB for worker nodes"
+    description = "Memory MB for the bootstrap node"
     default     = 4096
 }
 
