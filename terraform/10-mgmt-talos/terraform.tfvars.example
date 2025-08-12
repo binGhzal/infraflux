@@ -5,7 +5,9 @@ pm_password     = "changeme"
 target_node     = "pve01"
 datastore       = "local-lvm"
 bridge          = "vmbr0"
-talos_template  = "talos-1-8-template"
+# Prefer using the template VMID for cloning (set one of these)
+# talos_template  = "talos-1-8-template"   # Name
+talos_template_id = 9100                    # VMID
 
 cluster_name    = "mgmt"
 cp_count        = 3
@@ -18,3 +20,7 @@ disk_size_gb    = 40
 ssh_public_keys = "ssh-ed25519 AAAA... user@example"
 cloud_init_user = "talos"
 cloud_init_password = "changeme"
+
+# Optional explicit VMIDs (override the base counters when set)
+# cp_vmids     = [7001, 7002, 7003]
+# worker_vmids = [7101, 7102]

@@ -18,8 +18,15 @@ variable "bridge" {
 }
 
 variable "talos_template" {
-    description = "Name of an existing Talos VM template to clone"
+    description = "(Deprecated) Name of an existing Talos VM template to clone"
     type        = string
+    default     = null
+}
+
+variable "talos_template_id" {
+    description = "VMID of the Talos template to clone (preferred)"
+    type        = number
+    default     = null
 }
 
 variable "cluster_name" {
@@ -50,6 +57,19 @@ variable "worker_vmid_base" {
     description = "Base VMID for worker nodes; incremented per node"
     type        = number
     default     = 7100
+}
+
+# Optional explicit VMIDs; if provided, they override the base counters
+variable "cp_vmids" {
+    description = "List of VMIDs for control plane nodes (length must equal cp_count if set)"
+    type        = list(number)
+    default     = null
+}
+
+variable "worker_vmids" {
+    description = "List of VMIDs for worker nodes (length must equal worker_count if set)"
+    type        = list(number)
+    default     = null
 }
 
 variable "cp_cpu" {
