@@ -27,17 +27,19 @@ resource "proxmox_vm_qemu" "cp" {
   boot     = "order=scsi0;net0"
 
   disk {
+    slot    = 0
     size    = format("%dG", var.disk_size_gb)
     type    = "scsi"
     storage = var.datastore
   }
 
   network {
+    id     = 0
     model  = "virtio"
     bridge = var.bridge
   }
 
-  ostype = "l26"
+  os_type = "l26"
   ciuser   = var.cloud_init_user
   cipassword = var.cloud_init_password
   sshkeys    = var.ssh_public_keys
@@ -60,17 +62,19 @@ resource "proxmox_vm_qemu" "worker" {
   boot   = "order=scsi0;net0"
 
   disk {
+    slot    = 0
     size    = format("%dG", var.disk_size_gb)
     type    = "scsi"
     storage = var.datastore
   }
 
   network {
+    id     = 0
     model  = "virtio"
     bridge = var.bridge
   }
 
-  ostype = "l26"
+  os_type = "l26"
   ciuser   = var.cloud_init_user
   cipassword = var.cloud_init_password
   sshkeys    = var.ssh_public_keys
