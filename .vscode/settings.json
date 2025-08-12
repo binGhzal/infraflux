@@ -2,7 +2,11 @@
   "yaml.schemaStore.enable": true,
   "yaml.validate": true,
   "yaml.schemas": {
-    "kubernetes": ["clusters/**/*.yaml", "platform/**/*.yaml", "argo/**/*.yaml"]
+    "kubernetes": [
+      "clusters/**/*.yaml",
+      "gitops/argocd/bootstrap/**/*.yaml",
+      "gitops/argocd/apps/**/application.yaml"
+    ]
   },
   "yaml.customTags": [
     "!Equals mapping",

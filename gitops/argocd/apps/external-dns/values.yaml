@@ -1,0 +1,14 @@
+provider: cloudflare
+env:
+  - name: CF_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: external-dns
+        key: CF_API_TOKEN
+sources:
+  - service
+  - ingress
+  - gateway-httproute
+domainFilters: [ "example.com" ]
+policy: upsert-only
+txtOwnerId: "infraflux"

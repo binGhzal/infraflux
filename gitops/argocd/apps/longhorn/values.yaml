@@ -1,0 +1,5 @@
+defaultSettings:
+  defaultReplicaCount: 2
+  defaultDataPath: /var/lib/longhorn
+persistence:
+  defaultClass: true
