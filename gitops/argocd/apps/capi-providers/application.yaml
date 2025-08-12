@@ -1,21 +1,17 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: dashboard
+  name: capi-providers
   namespace: argocd
 spec:
   project: platform
   source:
-    repoURL: https://kubernetes.github.io/dashboard/
-    chart: kubernetes-dashboard
-    targetRevision: 7.x.x
-    helm:
-      values: |
-        metricsScraper:
-          enabled: true
+    repoURL: https://github.com/binGhzal/infraflux
+    targetRevision: main
+    path: clusters/mgmt/providers
   destination:
-    namespace: kubernetes-dashboard
     server: https://kubernetes.default.svc
+    namespace: capi-operator-system
   syncPolicy:
     automated:
       prune: true

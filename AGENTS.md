@@ -4,7 +4,7 @@ This document instructs automation agents how to work in this repo safely and ef
 
 ## goals
 
-- Provision a Talos management cluster on Proxmox via Terraform
+- Provision a Talos management cluster on Proxmox via OpenTofu
 - Install Cluster API Operator and Proxmox provider
 - Bootstrap Argo CD and GitOps-managed platform add-ons
 - Define workload clusters via Cluster API (Talos + Proxmox)
@@ -43,7 +43,7 @@ This document instructs automation agents how to work in this repo safely and ef
 
 - Lint: yamllint, markdownlint should pass
 - Schema: kubeconform with `-ignore-missing-schemas` should pass
-- Build: Terraform `init/plan` should succeed in changed modules
+- Build: OpenTofu `init/validate` should succeed in changed modules
 - Smoke test: validate Argo CD Application manifests render minimal required fields
 
 ## CRD schemas in editor

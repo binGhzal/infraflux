@@ -14,8 +14,6 @@ spec:
         kubeProxyReplacement: "true"
         ipam:
           mode: kubernetes
-        k8sServiceHost: "localhost"
-        k8sServicePort: 7445
         securityContext:
           capabilities:
             ciliumAgent: ["CHOWN","KILL","NET_ADMIN","NET_RAW","IPC_LOCK","SYS_ADMIN","SYS_RESOURCE","DAC_OVERRIDE","FOWNER","SETGID","SETUID"]
@@ -63,3 +61,5 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

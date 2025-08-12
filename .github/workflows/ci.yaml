@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+
+jobs:
+  lint-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node for markdownlint
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install linters
+        run: |
+          npm install -g markdownlint-cli@0.39.0
+          pipx install yamllint
+          brew install kubeconform || curl -sL https://github.com/yannh/kubeconform/releases/download/v0.6.4/kubeconform-linux-amd64.tar.gz | sudo tar xz -C /usr/local/bin kubeconform
+
+      - name: Markdownlint
+        run: markdownlint '**/*.md' --config .markdownlint.json
+
+      - name: Yamllint
+        run: yamllint -c .yamllint .
+
+      - name: Kubeconform
+        run: |
+          kubeconform -summary -strict -ignore-missing-schemas \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            $(git ls-files '*.yaml' '*.yml')
+
+  opentofu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+      - name: Init/validate fmt
+        run: |
+          set -euo pipefail
+          tofu fmt -recursive -check
+          for dir in terraform/*; do
+            [ -d "$dir" ] || continue
+            (cd "$dir" && tofu init -backend=false && tofu validate || true)
+          done

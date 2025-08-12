@@ -67,15 +67,15 @@ Infrastructure-as-code for Talos Linux + Cluster API on Proxmox, managed declara
 ## prerequisites
 
 - Proxmox access (API URL/user/password)
-- Terraform >= 1.6, Talosctl if testing outside Terraform
+- OpenTofu (tofu) >= 1.6, Talosctl if testing outside Terraform
 - Helm, kubectl
 - SOPS + age (for secret management)
 - Pre-commit
 
 ## bootstrap (quick outline)
 
-1. Configure Terraform variables in `terraform/mgmt-proxmox-talos/variables.tf` (pm creds, IP addresses).
-2. Apply `terraform/mgmt-proxmox-talos` to bring up Talos and get kubeconfig.
+1. Configure OpenTofu variables in `terraform/mgmt-proxmox-talos/variables.tf` (pm creds, IP addresses).
+2. Apply `terraform/mgmt-proxmox-talos` with OpenTofu to bring up Talos and get kubeconfig.
 3. Confirm `capi-operator` Helm release is installed.
 4. Install Argo CD (either via Terraform or Helm manually) with `gitops/argocd/values/argocd-values.yaml`.
 5. Apply `gitops/argocd/bootstrap/` (AppProject + App-of-Apps).
