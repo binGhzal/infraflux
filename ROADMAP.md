@@ -1,117 +1,143 @@
 # InfraFlux Roadmap
 
-## Current State: Unified Cilium-Based Platform
+## Mission: Infrastructure-as-Code Kubernetes Platform
 
-InfraFlux has been redesigned around Cilium's comprehensive eBPF-based platform, providing unified networking, security, and observability with maximum automation and minimal operational complexity.
+InfraFlux provides **production-ready Kubernetes clusters** as infrastructure, following GitOps and Infrastructure-as-Code principles. This repository focuses solely on the infrastructure layer, delivering configurable, secure, and performant Kubernetes clusters ready for platform and application deployment.
 
-### ✅ Completed (Unified Cilium Architecture)
+## Architecture Scope
 
-#### Core Infrastructure
+### ✅ **Infrastructure Layer** (InfraFlux Repository)
 
-- **Automated Bootstrap**: Single Terraform module creates VM, configures Talos, and bootstraps Kubernetes cluster
-- **Local Access**: Automatic kubeconfig generation for immediate cluster access
-- **GitOps Foundation**: ArgoCD applications with sync waves for ordered deployment
-- **Cluster API Integration**: CAPMox provider for Proxmox VM provisioning
-- **Secrets Management**: SOPS with age encryption for all sensitive data
+- VM/Container provisioning (Terraform + Proxmox)
+- Immutable OS management (Talos Linux)
+- Kubernetes cluster installation and base configuration
+- Core networking infrastructure (Cilium CNI)
+- Cluster lifecycle management (Cluster API)
+- Infrastructure security policies and base configurations
 
-#### Unified Cilium Platform Services
+### 🔄 **Platform Layer** (Separate GitOps Repository)
 
-- **Advanced Networking**: Cilium CNI with eBPF dataplane, complete kube-proxy replacement
-- **Service Mesh**: Cilium Service Mesh with sidecar-less architecture and L7 load balancing
-- **Ingress Controller**: Cilium Ingress with native L4/L7 load balancing and XDP acceleration
-- **Network Security**: Cilium Network Policies with L3/L4/L7 enforcement and identity-based security
-- **Encryption**: WireGuard transparent encryption for all cluster traffic
-- **BGP Control Plane**: Cilium BGP for advanced routing and multi-homing capabilities
-- **Network Observability**: Hubble for comprehensive network and security observability
-- **Runtime Security**: Tetragon eBPF-based runtime security replacing traditional policy engines
+- Application deployment and management (ArgoCD)
+- Observability stack (Prometheus, Grafana, Loki)
+- Application ingress and routing
+- Developer platform services
+- Application security policies
+- Workload applications and services
 
-#### Supporting Platform Services
+### ✅ Completed (Infrastructure Foundation)
 
-- **TLS**: cert-manager for automated certificate management (integrated with Cilium Ingress)
-- **DNS**: external-dns for automated record management (integrated with Cilium BGP)
-- **Storage**: Longhorn distributed storage
-- **Monitoring**: Prometheus, Grafana, Alertmanager stack optimized for Cilium ecosystem
-- **Backup**: Automated etcd backup with disaster recovery procedures
+#### Core Infrastructure Automation
 
-#### Cluster Management
+- **Infrastructure as Code**: Terraform modules for Proxmox VM provisioning
+- **Immutable OS**: Talos Linux installation and configuration automation
+- **Kubernetes Bootstrap**: Automated cluster installation with Cilium CNI
+- **Cluster API Integration**: CAPMox provider for cluster lifecycle management
+- **Multi-Environment Support**: Dev, staging, production environment templates
 
-- **ClusterClass Templates**: Standardized cluster definitions (small, medium, large)
-- **Multi-Cluster Management**: Production workload clusters via Cluster API
-- **Application Templates**: ArgoCD ApplicationSets for common workload patterns
-- **Resource Management**: Resource quotas, limits, and policies
+#### Networking Infrastructure
 
-#### Operational Features
+- **Cilium CNI**: eBPF-based networking with kube-proxy replacement
+- **Core Network Policies**: Base security policies for cluster networking
+- **Load Balancing**: Infrastructure-level load balancing capabilities
+- **Encryption**: WireGuard node-to-node encryption
+- **BGP Integration**: Basic BGP configuration for network routing
 
-- **CI/CD Pipeline**: GitHub Actions with kubeconform, markdownlint, yamllint
-- **Comprehensive Documentation**: Architecture guides, Cilium feature documentation, and examples
-- **Advanced Alerting**: Cilium-focused monitoring with Hubble metrics and Tetragon security alerts
-- **Custom Dashboards**: Grafana dashboards for Cilium platform visibility and security monitoring
+#### Configuration Management
+
+- **Environment-Specific Configs**: Parameterized configurations per environment
+- **Cluster Templates**: Small, medium, large cluster template definitions
+- **Infrastructure Secrets**: Secure handling of infrastructure credentials
+- **GitOps Integration**: Git-based infrastructure change management
+
+#### Operational Infrastructure
+
+- **CI/CD Pipelines**: Terraform validation, planning, and apply workflows
+- **Infrastructure Testing**: Cluster validation and health checking
+- **Documentation**: Comprehensive setup and configuration guides
+- **Backup Infrastructure**: Automated etcd backup and recovery procedures
 
 ### 🚧 In Progress
 
-#### Cilium Platform Enhancement
+#### Infrastructure Modularity & Configuration
 
-- **Multi-Cluster Mesh**: Cilium Cluster Mesh for cross-cluster connectivity and service discovery
-- **Advanced BGP**: BGP route reflection and policy-based routing
-- **Enhanced eBPF Policies**: Custom Tetragon policies for application-specific security enforcement
-- **Service Mesh Federation**: Multi-cluster service mesh with Cilium
+- **Terraform Module Refactoring**: Modular, reusable infrastructure components
+- **Enhanced Configuration System**: Environment-specific, parameterized configurations
+- **Multi-Provider Foundation**: Preparing for AWS, Azure, GCP integration
+- **Advanced Cluster Templates**: More granular cluster sizing and configuration options
 
-#### Advanced Monitoring & Observability
+#### Networking Infrastructure Enhancement
 
-- **Log Aggregation**: Centralized logging with Loki integrated with Cilium/Hubble data
-- **Distributed Tracing**: Jaeger integration with Cilium service mesh
-- **SLO/SLI Monitoring**: Service level objective tracking with Cilium metrics
+- **Cilium Advanced Features**: Enhanced eBPF networking capabilities
+- **Multi-Cluster Networking**: Cilium Cluster Mesh for cross-cluster connectivity
+- **Advanced BGP Configuration**: Route reflection and policy-based routing
+- **Network Security Hardening**: Enhanced network policies and security controls
 
-#### Multi-Provider Support
+#### Infrastructure Automation
 
-- **Provider Abstraction**: Support for additional infrastructure providers
-- **Hybrid Deployments**: On-premises and cloud resource management with Cilium multi-cloud
+- **Cluster Lifecycle Automation**: Improved CAPI integration and cluster management
+- **Infrastructure Testing**: Comprehensive validation and testing frameworks
+- **Configuration Drift Detection**: Automated infrastructure state monitoring
+- **Disaster Recovery**: Enhanced backup and recovery automation
 
 ### 🎯 Near-Term Goals (Next 3 Months)
 
-#### Advanced Cilium Features
+#### Multi-Cloud Infrastructure
 
-- **Bandwidth Management**: Cilium's eBPF-based traffic shaping and QoS
-- **Advanced Load Balancing**: XDP-based L4 load balancing and Maglev consistent hashing
-- **Network Policy Automation**: Dynamic policy generation based on service discovery
-- **Cilium Egress Gateway**: Centralized egress for regulatory compliance
+- **AWS Provider Integration**: Terraform modules and CAPI provider for AWS EKS
+- **Azure Provider Integration**: Terraform modules and CAPI provider for AKS
+- **Cloud-Agnostic Templates**: Unified cluster templates across providers
+- **Infrastructure Abstraction**: Common interfaces for multi-cloud deployment
 
-#### Enhanced Security & Compliance
+#### Enhanced Configuration & GitOps
 
-- **Zero Trust Networking**: Complete microsegmentation with Cilium identity-based policies
-- **Runtime Threat Detection**: Advanced Tetragon policies for behavioral analysis
-- **Compliance Automation**: Automated security scanning and policy validation
-- **Network Forensics**: Enhanced Hubble capabilities for security investigation
+- **Advanced Configuration Management**: Hierarchical configurations with environment inheritance
+- **Infrastructure GitOps**: Git-based infrastructure change workflows
+- **Configuration Validation**: Comprehensive validation and policy checking
+- **Self-Service Infrastructure**: Standardized infrastructure request workflows
 
-#### Developer Experience
+#### Networking & Security Infrastructure
 
-- **Local Development**: Cilium-compatible local testing with Kind
-- **CI/CD Integration**: Seamless deployment pipelines optimized for Cilium platform
-- **Network Debugging**: Enhanced tooling for Cilium network troubleshooting
-- **API Gateway**: Cilium Ingress-based API management and routing
+- **Zero Trust Network Foundation**: Infrastructure-level zero trust networking
+- **Advanced Cilium Configuration**: Enhanced eBPF features and performance tuning
+- **Cross-Cloud Networking**: Cilium Cluster Mesh spanning multiple environments
+- **Infrastructure Security Policies**: Base security configurations and hardening
+
+#### Developer Experience & Automation
+
+- **Infrastructure Self-Service**: Easy cluster provisioning via Git workflows
+- **Local Development Environment**: Infrastructure testing and development tools
+- **Automated Infrastructure Testing**: Comprehensive validation and benchmarking
+- **Documentation & Guides**: Enhanced infrastructure setup and configuration guides
 
 ### 🚀 Long-Term Vision (6-12 Months)
 
-#### Multi-Cloud Cilium Platform
+#### Global Multi-Cloud Infrastructure
 
-- **Cilium Multi-Cloud**: Unified networking across cloud providers with Cilium
-- **Edge Computing**: Lightweight Cilium deployments for edge and IoT workloads
-- **Hybrid Cloud Mesh**: Seamless connectivity between on-premises and cloud with Cilium
-- **Global Load Balancing**: Cilium-based traffic management across regions
+- **Multi-Cloud Kubernetes OS**: Unified infrastructure layer across all major cloud providers
+- **Global Infrastructure Mesh**: Seamless connectivity and management across regions
+- **Infrastructure Federation**: Cross-cloud cluster federation and resource sharing
+- **Edge Infrastructure**: Lightweight infrastructure deployment for edge computing
 
-#### AI/ML Integration with eBPF
+#### Advanced Infrastructure Automation
 
-- **GPU Networking Optimization**: eBPF-optimized networking for GPU workloads
-- **ML Model Serving**: Cilium service mesh for high-performance model inference
-- **Data Pipeline Acceleration**: eBPF-based data processing and pipeline optimization
-- **Intelligent Traffic Management**: AI-driven network optimization with Cilium metrics
+- **Self-Healing Infrastructure**: AI-driven automated infrastructure remediation
+- **Predictive Scaling**: Machine learning-driven infrastructure capacity planning
+- **Infrastructure Optimization**: Automated cost and performance optimization
+- **Zero-Touch Operations**: Fully automated infrastructure lifecycle management
 
-#### Enterprise Cilium Features
+#### Next-Generation Networking
 
-- **Identity Integration**: OIDC/SAML with Cilium identity-aware policies
-- **Advanced Audit**: Comprehensive audit trails with Tetragon and Hubble
-- **Enterprise BGP**: Advanced BGP features for enterprise networking requirements
-- **Cost Optimization**: Cilium-based network cost allocation and optimization
+- **eBPF Infrastructure Acceleration**: Advanced eBPF features for infrastructure optimization
+- **Quantum-Safe Infrastructure**: Post-quantum cryptography integration
+- **Programmable Infrastructure**: Custom eBPF programs for specialized requirements
+- **Carbon-Aware Infrastructure**: Sustainable computing and carbon footprint optimization
+
+#### Enterprise Infrastructure Features
+
+- **Compliance Infrastructure**: Automated compliance and regulatory frameworks
+- **Enterprise Identity Integration**: Infrastructure-level identity and access management
+- **Advanced Audit Infrastructure**: Comprehensive infrastructure audit and logging
+- **Enterprise SLA Infrastructure**: Infrastructure-level service level agreements
 
 ### 🔬 Research & Experimentation
 
@@ -131,22 +157,24 @@ InfraFlux has been redesigned around Cilium's comprehensive eBPF-based platform,
 
 ## Design Principles
 
-1. **Cilium-First Architecture**: Leverage Cilium's eBPF capabilities to replace traditional networking, security, and observability tools
-2. **Automation First**: Minimize manual intervention at every level with eBPF-accelerated automation
-3. **GitOps Native**: All changes flow through Git and are auditable, including Cilium configurations
-4. **Security by Design**: Defense in depth with encrypted secrets, identity-based policies, and runtime security
-5. **eBPF Performance**: Utilize eBPF for maximum performance and minimal resource overhead
-6. **Unified Observability**: Single source of truth for networking, security, and application metrics through Hubble
-7. **Developer Experience**: Fast, reliable, and intuitive workflows with transparent networking
+1. **Infrastructure-as-Code First**: Everything defined as code, version controlled, and reproducible
+2. **Configuration-Driven**: Highly configurable and customizable infrastructure components
+3. **GitOps Native**: All infrastructure changes flow through Git with full audit trails
+4. **Multi-Cloud Ready**: Cloud-agnostic infrastructure layer supporting multiple providers
+5. **Modular Architecture**: Composable, reusable infrastructure modules and templates
+6. **Security by Design**: Zero-trust networking and security built into infrastructure foundation
+7. **Developer Self-Service**: Enable teams to provision infrastructure through standardized workflows
+8. **Operational Excellence**: Automated testing, validation, and monitoring of infrastructure
 
 ## Success Metrics
 
-- **Time to Production**: < 30 minutes from git clone to running Cilium-enabled cluster
-- **Network Performance**: > 95% line-rate throughput with eBPF acceleration
-- **Security Posture**: 100% encrypted secrets, comprehensive L3-L7 policies, zero-trust networking
-- **Mean Time to Recovery**: < 15 minutes for common incidents with Cilium self-healing
-- **Developer Productivity**: Zero networking concerns for application teams
-- **Operational Cost**: Minimal ongoing operational overhead with unified platform
+- **Infrastructure Provisioning Time**: < 15 minutes for new production-ready cluster
+- **Configuration Consistency**: 100% infrastructure drift detection and prevention
+- **Multi-Cloud Deployment**: Identical infrastructure behavior across all providers
+- **Developer Self-Service**: Zero infrastructure team intervention for standard requests
+- **Infrastructure Reliability**: 99.9% infrastructure uptime with automated recovery
+- **Cost Optimization**: Automated infrastructure cost monitoring and optimization
+- **Security Posture**: Zero-trust infrastructure with comprehensive security policies
 
 ## Contributing to the Roadmap
 
