@@ -10,8 +10,12 @@ spec:
     chart: kube-prometheus-stack
     targetRevision: 62.x.x
     helm:
-      valueFiles:
-        - gitops/argocd/apps/monitoring/values.yaml
+      values: |
+        grafana:
+          adminPassword: "admin"
+        prometheus:
+          prometheusSpec:
+            scrapeInterval: "30s"
   destination:
     namespace: monitoring
     server: https://kubernetes.default.svc

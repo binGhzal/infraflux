@@ -1,9 +1,0 @@
-# external-dns values
-sources:
-  - gateway-httproute
-# add 'ingress' if you also use Ingress resources
-# - ingress
-policy: upsert-only
-registry: txt
-provider: cloudflare # change as needed
-interval: 1m

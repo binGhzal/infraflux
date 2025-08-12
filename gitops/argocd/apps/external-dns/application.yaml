@@ -10,8 +10,21 @@ spec:
     chart: external-dns
     targetRevision: 8.x.x
     helm:
-      valueFiles:
-        - gitops/argocd/apps/external-dns/values.yaml
+      values: |
+        provider: cloudflare
+        env:
+          - name: CF_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: external-dns
+                key: CF_API_TOKEN
+        sources:
+          - service
+          - ingress
+          - gateway-httproute
+        domainFilters: ["example.com"]
+        policy: upsert-only
+        txtOwnerId: "infraflux"
   destination:
     namespace: external-dns
     server: https://kubernetes.default.svc

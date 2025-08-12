@@ -10,8 +10,12 @@ spec:
     chart: longhorn
     targetRevision: 1.6.x
     helm:
-      valueFiles:
-        - gitops/argocd/apps/longhorn/values.yaml
+      values: |
+        defaultSettings:
+          defaultReplicaCount: 2
+          defaultDataPath: /var/lib/longhorn
+        persistence:
+          defaultClass: true
   destination:
     namespace: longhorn-system
     server: https://kubernetes.default.svc

@@ -1,22 +1,4 @@
 {
   "yaml.schemaStore.enable": true,
-  "yaml.validate": true,
-  "yaml.schemas": {
-    "kubernetes": [
-      "clusters/**/*.yaml",
-      "gitops/argocd/bootstrap/**/*.yaml",
-      "gitops/argocd/apps/**/application.yaml"
-    ]
-  },
-  "yaml.customTags": [
-    "!Equals mapping",
-    "!FindInMap mapping",
-    "!GetAtt scalar",
-    "!GetAtt sequence",
-    "!Sub scalar",
-    "!Ref scalar"
-  ],
-  "files.exclude": {
-    "**/.git": true
-  }
+  "yaml.validate": true
 }

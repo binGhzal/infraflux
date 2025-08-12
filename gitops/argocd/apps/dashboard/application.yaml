@@ -10,8 +10,9 @@ spec:
     chart: kubernetes-dashboard
     targetRevision: 7.x.x
     helm:
-      valueFiles:
-        - gitops/argocd/apps/dashboard/values.yaml
+      values: |
+        metricsScraper:
+          enabled: true
   destination:
     namespace: kubernetes-dashboard
     server: https://kubernetes.default.svc
