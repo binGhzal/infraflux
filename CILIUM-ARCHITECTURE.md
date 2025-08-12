@@ -69,8 +69,6 @@ Instead of deploying separate solutions for networking, security, service mesh, 
 
 ## Replaced Components
 
-### What Cilium Replaces:
-
 ### What Cilium Replaces
 
 - ❌ **Traditional CNI plugins** → ✅ Cilium CNI
