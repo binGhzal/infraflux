@@ -1,6 +1,0 @@
-pm_api_url    = "https://proxmox.example:8006/api2/json"
-pm_user       = "root@pam"
-pm_password   = "REPLACEME"
-cluster_name  = "mgmt"
-controlplane_ips = ["10.0.0.2"]
-worker_ips       = []

@@ -65,6 +65,29 @@ variable "iso_path" {
     default     = null
 }
 
+variable "talos_cluster_name" {
+    type        = string
+    description = "Name of the Talos cluster"
+    default     = "talos-bootstrap"
+}
+
+variable "talos_cluster_endpoint" {
+    type        = string
+    description = "Kubernetes API server endpoint (IP or FQDN)"
+}
+
+variable "cluster_domain" {
+    type        = string
+    description = "Cluster domain for internal DNS"
+    default     = "cluster.local"
+}
+
+variable "cluster_vip" {
+    type        = string
+    description = "Virtual IP for the Kubernetes API server (optional for single node)"
+    default     = null
+}
+
 variable "ssh_public_keys" {
     type        = string
     description = "SSH public keys appended to cloud-init for Talos (optional)"
