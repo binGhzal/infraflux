@@ -27,6 +27,7 @@ age.key
 
 # Kube configs
 kubeconfig
+talosconfig
 .kube/
 
 # Misc

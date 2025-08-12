@@ -44,11 +44,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
-      - name: Init/validate fmt
+      - name: Validate Terraform
         run: |
           set -euo pipefail
+          cd terraform
           tofu fmt -recursive -check
-          for dir in terraform/*; do
-            [ -d "$dir" ] || continue
-            (cd "$dir" && tofu init -backend=false && tofu validate || true)
-          done
+          tofu init -backend=false
+          tofu validate

@@ -1,7 +1,46 @@
-# Secrets
+# Secrets Management
 
-Encrypted secrets live here. Use SOPS with age to encrypt any secret material.
+This directory contains example secret files for the InfraFlux platform.
 
-1. Generate an age key and create the `sops-age` Kubernetes Secret (see `secrets/age/README.age.md`).
-2. Copy `proxmox-credentials.sops.example.yaml` to `proxmox-credentials.sops.yaml` and replace placeholders.
-3. Encrypt with `sops --encrypt proxmox-credentials.sops.yaml` before committing.
+## Required Secrets
+
+### Age Key (SOPS Encryption)
+
+```bash
+# Generate age key
+age-keygen -o age.key
+
+# Export public key for .sops.yaml
+export SOPS_AGE_KEY_FILE=age.key
+```
+
+Copy `sops-age.secret.example.yaml` to `sops-age.secret.yaml` and add your age key.
+
+### External DNS (Optional)
+
+If using external-dns with cloud providers, copy and encrypt your DNS provider credentials:
+
+```bash
+cp external-dns.secret.sops.example.yaml external-dns.secret.yaml
+# Edit with your credentials
+sops -e -i external-dns.secret.yaml
+```
+
+## Encryption
+
+All secrets use SOPS with age encryption:
+
+```bash
+# Encrypt a secret
+sops -e -i secret.yaml
+
+# Edit an encrypted secret
+sops secret.yaml
+
+# Decrypt for viewing
+sops -d secret.yaml
+```
+
+## GitOps Integration
+
+Encrypted secrets are safe to commit to Git and will be automatically deployed by ArgoCD with the SOPS operator.
