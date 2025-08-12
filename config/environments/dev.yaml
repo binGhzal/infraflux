@@ -1,0 +1,64 @@
+# Development Environment Configuration
+# Single-node cluster for development and testing
+
+cluster:
+  name: "infraflux-dev"
+  controlplane_count: 1
+  worker_count: 0
+  allow_scheduling_on_controlplane: true
+
+proxmox:
+  api_url: "https://proxmox.local:8006/api2/json"
+  user: "terraform@pve"
+  target_node: "pve"
+  storage: "local-lvm"
+  tls_insecure: true
+
+talos:
+  template_id: 9000
+  version: "v1.6.0"
+
+network:
+  bridge: "vmbr0"
+  vlan_tag: null
+  subnet: "192.168.1.0/24"
+  base_ip: "192.168.1."
+  ip_start: 100
+  gateway: "192.168.1.1"
+  dns_servers:
+    - "1.1.1.1"
+    - "8.8.8.8"
+
+nodes:
+  controlplane:
+    cpu_cores: 2
+    memory_mb: 4096
+    disk_size_gb: 40
+  worker:
+    cpu_cores: 2
+    memory_mb: 2048
+    disk_size_gb: 20
+
+features:
+  cilium:
+    enabled: true
+    cluster_mesh: false
+    hubble: true
+    tetragon: true
+
+  monitoring:
+    enabled: true
+    prometheus: true
+    grafana: true
+
+  cert_manager:
+    enabled: true
+
+  argocd:
+    enabled: true
+    repo_url: "https://github.com/binGhzal/PlatformNorthStar"
+
+security:
+  pod_security_standards: "restricted"
+  network_policies: true
+  encryption_at_rest: false # Dev environment
