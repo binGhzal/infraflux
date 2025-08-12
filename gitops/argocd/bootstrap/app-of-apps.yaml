@@ -6,7 +6,7 @@ metadata:
 spec:
   project: platform
   source:
-    repoURL: https://github.com/YOU/infraflux
+  repoURL: https://github.com/binGhzal/infraflux
     targetRevision: main
     path: gitops/argocd/apps
   destination:
