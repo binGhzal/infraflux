@@ -20,43 +20,38 @@ InfraFlux has been redesigned for maximum automation and minimal operational com
 - **TLS**: cert-manager for automated certificate management
 - **DNS**: external-dns for automated record management
 - **Storage**: Longhorn distributed storage
-- **Monitoring**: Prometheus, Grafana, Alertmanager stack
+- **Monitoring**: Prometheus, Grafana, Alertmanager stack with custom dashboards
+- **Backup**: Automated etcd backup with disaster recovery procedures
+- **Security**: Pod Security Standards, OPA Gatekeeper policies, network policies
+
+#### Cluster Management
+
+- **ClusterClass Templates**: Standardized cluster definitions (small, medium, large)
+- **Multi-Cluster Management**: Production workload clusters via Cluster API
+- **Application Templates**: ArgoCD ApplicationSets for common workload patterns
+- **Resource Management**: Resource quotas, limits, and policies
 
 #### Operational Features
 
 - **CI/CD Pipeline**: GitHub Actions with kubeconform, markdownlint, yamllint
 - **Documentation**: Comprehensive guides and examples
-- **Security**: Immutable OS, encrypted secrets, network policies
+- **Alerting**: Infrastructure and application monitoring with comprehensive rules
+- **Custom Dashboards**: Grafana dashboards for platform visibility
 
 ### 🚧 In Progress
 
-#### Cluster Expansion
-
-- **ClusterClass Development**: Reusable templates for different cluster types
-- **Multi-Cluster Management**: Production workload clusters via Cluster API
-- **Workload Separation**: Management vs. production cluster isolation
-
 #### Enhanced Monitoring
 
-- **Alerting Rules**: Comprehensive alerting for infrastructure and applications
-- **Dashboard Development**: Custom Grafana dashboards for platform visibility
 - **Log Aggregation**: Centralized logging with Loki or similar
+- **Distributed Tracing**: Jaeger or similar for application tracing
+- **SLO/SLI Monitoring**: Service level objective tracking
+
+#### Multi-Provider Support
+
+- **Provider Abstraction**: Support for additional infrastructure providers
+- **Hybrid Deployments**: On-premises and cloud resource management
 
 ### 🎯 Near-Term Goals (Next 3 Months)
-
-#### Production Readiness
-
-- **Backup Strategy**: Automated etcd backups and disaster recovery procedures
-- **High Availability**: Multi-node clusters for production workloads
-- **Resource Management**: Resource quotas, limits, and policies
-- **Security Hardening**: Pod security standards, admission controllers
-
-#### Developer Experience
-
-- **Application Templates**: ArgoCD ApplicationSets for common workload patterns
-- **Local Development**: Kind or similar for local testing
-- **CI/CD Integration**: Seamless deployment pipelines for applications
-- **Documentation**: Video tutorials and quick-start guides
 
 #### Advanced Features
 
@@ -64,6 +59,13 @@ InfraFlux has been redesigned for maximum automation and minimal operational com
 - **Multi-Tenancy**: Namespace isolation and RBAC policies
 - **Cost Optimization**: Resource monitoring and optimization recommendations
 - **Compliance**: Security scanning and compliance reporting
+
+#### Developer Experience
+
+- **Local Development**: Kind or similar for local testing
+- **CI/CD Integration**: Seamless deployment pipelines for applications
+- **Documentation**: Video tutorials and quick-start guides
+- **API Gateway**: Centralized API management and routing
 
 ### 🚀 Long-Term Vision (6-12 Months)
 

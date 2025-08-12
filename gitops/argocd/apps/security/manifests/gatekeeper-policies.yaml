@@ -1,0 +1,202 @@
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: k8srequiredsecuritycontext
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequiredSecurityContext
+      validation:
+        type: object
+        properties:
+          runAsNonRoot:
+            type: boolean
+          runAsUser:
+            type: integer
+          runAsGroup:
+            type: integer
+          fsGroup:
+            type: integer
+          allowPrivilegeEscalation:
+            type: boolean
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8srequiredsecuritycontext
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not container.securityContext.runAsNonRoot
+          msg := "Container must run as non-root user"
+        }
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          container.securityContext.allowPrivilegeEscalation
+          msg := "Container must not allow privilege escalation"
+        }
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not container.securityContext.readOnlyRootFilesystem
+          msg := "Container must have read-only root filesystem"
+        }
+---
+apiVersion: config.gatekeeper.sh/v1alpha1
+kind: K8sRequiredSecurityContext
+metadata:
+  name: must-have-security-context
+spec:
+  match:
+    - apiGroups: [ "apps" ]
+      kinds: [ "Deployment", "StatefulSet", "DaemonSet" ]
+    - apiGroups: [ "" ]
+      kinds: [ "Pod" ]
+  parameters:
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+---
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: k8srequiredresources
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequiredResources
+      validation:
+        type: object
+        properties:
+          cpu:
+            type: string
+          memory:
+            type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8srequiredresources
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not container.resources.requests.cpu
+          msg := "Container must specify CPU requests"
+        }
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not container.resources.requests.memory
+          msg := "Container must specify memory requests"
+        }
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not container.resources.limits.cpu
+          msg := "Container must specify CPU limits"
+        }
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not container.resources.limits.memory
+          msg := "Container must specify memory limits"
+        }
+---
+apiVersion: config.gatekeeper.sh/v1alpha1
+kind: K8sRequiredResources
+metadata:
+  name: must-have-resources
+spec:
+  match:
+    - apiGroups: [ "apps" ]
+      kinds: [ "Deployment", "StatefulSet", "DaemonSet" ]
+    - apiGroups: [ "" ]
+      kinds: [ "Pod" ]
+  parameters:
+    cpu: "100m"
+    memory: "128Mi"
+---
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: k8sdeniedregistries
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sDeniedRegistries
+      validation:
+        type: object
+        properties:
+          deniedRegistries:
+            type: array
+            items:
+              type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8sdeniedregistries
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          denied_registry := input.parameters.deniedRegistries[_]
+          startswith(container.image, denied_registry)
+          msg := sprintf("Container image %v uses denied registry %v", [container.image, denied_registry])
+        }
+---
+apiVersion: config.gatekeeper.sh/v1alpha1
+kind: K8sDeniedRegistries
+metadata:
+  name: denied-registries
+spec:
+  match:
+    - apiGroups: [ "apps" ]
+      kinds: [ "Deployment", "StatefulSet", "DaemonSet" ]
+    - apiGroups: [ "" ]
+      kinds: [ "Pod" ]
+  parameters:
+    deniedRegistries:
+      - "docker.io/" # Require specific registries
+      - "index.docker.io/"
+---
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: k8srequiredlabels
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequiredLabels
+      validation:
+        type: object
+        properties:
+          labels:
+            type: array
+            items:
+              type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8srequiredlabels
+
+        violation[{"msg": msg}] {
+          required := input.parameters.labels
+          missing := required[_]
+          not input.review.object.metadata.labels[missing]
+          msg := sprintf("Missing required label: %v", [missing])
+        }
+---
+apiVersion: config.gatekeeper.sh/v1alpha1
+kind: K8sRequiredLabels
+metadata:
+  name: must-have-labels
+spec:
+  match:
+    - apiGroups: [ "apps" ]
+      kinds: [ "Deployment", "StatefulSet", "DaemonSet" ]
+  parameters:
+    labels:
+      - "app.kubernetes.io/name"
+      - "app.kubernetes.io/version"
+      - "app.kubernetes.io/managed-by"
