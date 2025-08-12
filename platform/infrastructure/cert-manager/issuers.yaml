@@ -8,7 +8,7 @@ metadata:
 spec:
   acme:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
-    email: {{ .Values.certManager.acme.email | default "admin@platform.local" }}
+    email: { ? { .Values.certManager.acme.email | default "admin@platform.local" } }
     privateKeySecretRef:
       name: letsencrypt-staging
     solvers:
@@ -17,11 +17,10 @@ spec:
             class: nginx
       - dns01:
           cloudflare:
-            email: {{ .Values.certManager.acme.email | default "admin@platform.local" }}
+            email: { ? { .Values.certManager.acme.email | default "admin@platform.local" } }
             apiTokenSecretRef:
               name: cloudflare-api-token
               key: api-token
-
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -33,7 +32,7 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: {{ .Values.certManager.acme.email | default "admin@platform.local" }}
+    email: { ? { .Values.certManager.acme.email | default "admin@platform.local" } }
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:
@@ -42,11 +41,10 @@ spec:
             class: nginx
       - dns01:
           cloudflare:
-            email: {{ .Values.certManager.acme.email | default "admin@platform.local" }}
+            email: { ? { .Values.certManager.acme.email | default "admin@platform.local" } }
             apiTokenSecretRef:
               name: cloudflare-api-token
               key: api-token
-
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer

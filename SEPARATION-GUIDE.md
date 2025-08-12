@@ -14,6 +14,7 @@ We have successfully restructured your platform into two focused repositories fo
 **Purpose**: Provides the foundational infrastructure for your multi-cluster Kubernetes operating system
 
 **Responsibilities**:
+
 - ✅ Terraform infrastructure provisioning (VMs, networking, storage)
 - ✅ Kubernetes cluster creation and lifecycle management
 - ✅ Platform services (Cilium, cert-manager, monitoring, DNS)
@@ -24,6 +25,7 @@ We have successfully restructured your platform into two focused repositories fo
 - ✅ Platform secrets management (SOPS encrypted)
 
 **What it provides**:
+
 - Ready-to-use Kubernetes clusters
 - Configured platform services
 - GitOps platform (ArgoCD) ready to deploy applications
@@ -34,6 +36,7 @@ We have successfully restructured your platform into two focused repositories fo
 **Purpose**: Deploys and manages all application workloads on the InfraFlux infrastructure
 
 **Responsibilities**:
+
 - ✅ Application workloads (web services, APIs, databases)
 - ✅ Application-specific ArgoCD applications and configurations
 - ✅ Workload configurations and environment-specific values
@@ -43,6 +46,7 @@ We have successfully restructured your platform into two focused repositories fo
 - ✅ Application deployment patterns (blue-green, canary, rolling)
 
 **What it consumes**:
+
 - Kubernetes clusters from InfraFlux
 - Platform services (networking, certificates, monitoring)
 - GitOps platform for application deployment
@@ -57,7 +61,7 @@ sequenceDiagram
     participant K8s as Kubernetes
     participant ArgoCD as ArgoCD
     participant PNS as PlatformNorthStar
-    
+
     Dev->>IF: Deploy infrastructure
     IF->>K8s: Provision clusters & platform services
     IF->>ArgoCD: Bootstrap GitOps platform
@@ -72,11 +76,13 @@ sequenceDiagram
 ### ⚙️ Everything is Configurable
 
 **Hierarchical Configuration System**:
+
 1. **Defaults** (`config/defaults/`) - Base configurations
 2. **Environment** (`config/environments/`) - Environment-specific overrides
 3. **Custom** - Optional custom configuration files
 
 **Configuration Merging**:
+
 ```yaml
 # Final config = defaults + environment + custom
 defaults.yaml + dev.yaml + custom.yaml = final-config.yaml
@@ -85,6 +91,7 @@ defaults.yaml + dev.yaml + custom.yaml = final-config.yaml
 ### 🔄 Easy to Change
 
 **Infrastructure Changes**:
+
 ```bash
 # Update environment configuration
 vim config/environments/prod.yaml
@@ -94,6 +101,7 @@ vim config/environments/prod.yaml
 ```
 
 **Application Changes**:
+
 ```bash
 # Update application values
 vim environments/prod/values/my-app.yaml
@@ -142,6 +150,7 @@ argocd app sync sample-web-app
 ### 🏗️ Infrastructure Configuration
 
 **Environment-specific infrastructure** (`infraflux/config/environments/prod.yaml`):
+
 ```yaml
 environment:
   name: "prod"
@@ -171,6 +180,7 @@ infrastructureOverrides:
 ### 🚀 Application Configuration
 
 **Environment-specific application** (`PlatformNorthStar/environments/prod/values/my-app.yaml`):
+
 ```yaml
 environment: prod
 domain: platform.company.com
@@ -202,17 +212,20 @@ ingress:
 Development → Staging → Production
 ```
 
-**Development**: 
+**Development**:
+
 - Small clusters, relaxed security
 - Latest features, quick iteration
 - Debug mode enabled
 
-**Staging**: 
+**Staging**:
+
 - Production-like environment
 - Performance testing, integration testing
 - Staging certificates
 
-**Production**: 
+**Production**:
+
 - High availability, security hardened
 - Monitoring, alerting, backups
 - Production certificates
@@ -220,7 +233,7 @@ Development → Staging → Production
 ### 📈 Promotion Workflow
 
 1. **Develop** in `dev` environment
-2. **Test** changes in `staging` environment  
+2. **Test** changes in `staging` environment
 3. **Promote** to `prod` environment
 4. **Monitor** and validate in production
 
@@ -300,26 +313,31 @@ argocd app get my-app
 ## Benefits of This Architecture
 
 ### ✅ Clear Separation of Concerns
+
 - Infrastructure team focuses on platform stability
 - Application teams focus on business logic
 - No mixing of infrastructure and application code
 
 ### ✅ Independent Scaling
+
 - Infrastructure changes don't affect applications
 - Application deployments don't affect infrastructure
 - Teams can work independently
 
 ### ✅ Environment Consistency
+
 - Same infrastructure patterns across all environments
 - Consistent application deployment patterns
 - Reduced configuration drift
 
 ### ✅ Security and Compliance
+
 - Infrastructure-level security policies
 - Application-level security contexts
 - Audit trails for all changes
 
 ### ✅ Operational Excellence
+
 - Standardized monitoring and alerting
 - Automated deployment and rollback
 - Disaster recovery procedures

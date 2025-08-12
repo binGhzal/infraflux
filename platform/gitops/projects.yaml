@@ -67,7 +67,6 @@ spec:
         - p, proj:platform:platform-admin, repositories, *, *, allow
       groups:
         - platform-team
-
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
@@ -91,7 +90,7 @@ spec:
       server: https://kubernetes.default.svc
     - namespace: 'service-*'
       server: https://kubernetes.default.svc
-  clusterResourceWhitelist: []  # Applications cannot create cluster resources
+  clusterResourceWhitelist: [] # Applications cannot create cluster resources
   namespaceResourceWhitelist:
     - group: ''
       kind: '*'

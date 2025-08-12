@@ -27,7 +27,6 @@ spec:
       kind: Deployment
       jsonPointers:
         - /spec/replicas
-
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application

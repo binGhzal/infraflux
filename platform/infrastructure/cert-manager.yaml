@@ -17,19 +17,19 @@ spec:
     helm:
       values: |
         installCRDs: true
-        
+
         # Prometheus monitoring
         prometheus:
           enabled: true
           servicemonitor:
             enabled: true
-        
+
         # Security
         securityContext:
           runAsNonRoot: true
           runAsUser: 1000
           runAsGroup: 1000
-        
+
         # Resource limits
         resources:
           requests:
@@ -38,7 +38,7 @@ spec:
           limits:
             cpu: 100m
             memory: 128Mi
-        
+
         webhook:
           resources:
             requests:
@@ -47,7 +47,7 @@ spec:
             limits:
               cpu: 50m
               memory: 64Mi
-        
+
         cainjector:
           resources:
             requests:
@@ -56,11 +56,11 @@ spec:
             limits:
               cpu: 300m
               memory: 256Mi
-  
+
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
-  
+
   syncPolicy:
     automated:
       prune: true
@@ -68,7 +68,6 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
-
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -86,11 +85,11 @@ spec:
     repoURL: https://github.com/binGhzal/infraflux
     targetRevision: main
     path: platform/infrastructure/cert-manager
-  
+
   destination:
     server: https://kubernetes.default.svc
     namespace: cert-manager
-  
+
   syncPolicy:
     automated:
       prune: true

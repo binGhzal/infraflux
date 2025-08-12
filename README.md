@@ -1,151 +1,279 @@
 # InfraFlux
 
-A streamlined Kubernetes infrastructure platform using Talos, Cluster API, and GitOps for automated deployment and management.
+A pure infrastructure platform for multi-cluster Kubernetes environments using Talos, Cluster API, and GitOps. InfraFlux provides the foundational infrastructure that enables application teams to deploy workloads through the companion [PlatformNorthStar](https://github.com/binGhzal/PlatformNorthStar) repository.
 
-## Architecture
+## 🎯 Mission
 
-**Fully Automated Bootstrap + GitOps Approach:**
+**Provide reliable, scalable, and secure Kubernetes infrastructure that application teams can consume without worrying about platform complexity.**
 
-- **Bootstrap**: Single Talos node with full automation (VM + cluster configuration)
-- **Expansion**: Additional nodes via Cluster API (CAPMox) - no manual provisioning
-- **Management**: All services deployed and managed via ArgoCD (GitOps)
+## 🏗️ What InfraFlux Provides
 
-This design minimizes manual intervention and embraces automation for scalable, maintainable infrastructure.
+- **🖥️ Infrastructure Provisioning**: Terraform-based VM and cluster provisioning
+- **⚙️ Kubernetes Clusters**: Multi-environment cluster management (dev/staging/prod)
+- **🌐 Platform Services**: Cilium CNI, cert-manager, monitoring, external DNS
+- **🔄 GitOps Platform**: ArgoCD setup for infrastructure and application deployment
+- **🔒 Security Foundation**: RBAC, network policies, pod security standards
+- **📊 Observability**: Infrastructure monitoring, logging, and alerting
+- **🎛️ Configuration Management**: Hierarchical, environment-aware configuration
 
-## Quick Start
+## 🚀 What PlatformNorthStar Consumes
 
-### 1. Bootstrap Talos Cluster (Fully Automated)
+InfraFlux hands off to [PlatformNorthStar](https://github.com/binGhzal/PlatformNorthStar) for:
+
+- Application workloads and services
+- Business logic deployment
+- Application-specific configurations
+- Workload monitoring and observability
+
+## ⚡ Quick Start
+
+### 1. Deploy Development Environment
 
 ```bash
-cd terraform/bootstrap-talos
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your Proxmox and network details
-tofu init && tofu apply
+# Clone the repository
+git clone https://github.com/binGhzal/infraflux.git
+cd infraflux
+
+# Deploy development infrastructure
+./scripts/deploy.sh -e dev
 ```
 
-This single command:
+This command will:
 
-- Creates VM from Talos template
-- Generates and applies Talos configuration
-- Bootstraps single-node Kubernetes cluster
-- Creates local kubeconfig for immediate access
+- ✅ Provision VMs with Terraform
+- ✅ Bootstrap Talos Kubernetes cluster
+- ✅ Deploy platform services (Cilium, cert-manager, monitoring)
+- ✅ Configure ArgoCD for GitOps
+- ✅ Set up integration with PlatformNorthStar
 
-### 2. Access Your Cluster
+### 2. Access Your Platform
 
 ```bash
+# Set up kubectl access
 export KUBECONFIG=$(pwd)/kubeconfig
+
+# Check cluster status
 kubectl get nodes
+
+# Check platform services
+kubectl get applications -n argocd
+
+# Access ArgoCD UI
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 ```
 
-### 3. Deploy GitOps
+### 3. Deploy Applications
 
-```bash
-# Apply ArgoCD bootstrap
-kubectl apply -k gitops/argocd/bootstrap/
+Applications are deployed via the [PlatformNorthStar](https://github.com/binGhzal/PlatformNorthStar) repository, which ArgoCD automatically monitors and deploys.
 
-# Everything else deploys automatically via ArgoCD:
-# - Cluster API Operator & CAPMox provider
-# - Cilium, cert-manager, external-dns, monitoring
-# - Additional cluster nodes via ClusterClass
-```
+## 🛠️ Configuration
 
-## Components
+### Everything is Configurable
 
-### Core Infrastructure
-
-- **Talos**: Immutable Kubernetes OS
-- **Cluster API**: Declarative cluster management
-- **CAPMox**: Proxmox provider for Cluster API
-- **ArgoCD**: GitOps continuous deployment
-
-### Platform Services
-
-- **Cilium**: CNI and network policies
-- **cert-manager**: TLS certificate automation
-- **external-dns**: DNS record automation
-- **Longhorn**: Distributed storage
-- **Monitoring**: Prometheus, Grafana, Alertmanager
-
-### Sync Waves & Dependencies
-
-ArgoCD applications deploy in ordered sync waves:
-
-- **Wave -1**: Cluster API providers (infrastructure foundation)
-- **Wave 0**: Cilium (networking must be ready first)
-- **Wave 1**: cert-manager (TLS for other services)
-- **Wave 2**: external-dns, Longhorn (parallel deployment)
-- **Wave 3**: Monitoring (depends on storage and networking)
-- **Wave 4**: Dashboard (depends on all core services)
-
-## Directory Structure
+InfraFlux uses a hierarchical configuration system:
 
 ```text
-├── terraform/bootstrap-talos/    # Single Talos node bootstrap
-├── gitops/argocd/               # GitOps manifests
-│   ├── apps/                    # Application definitions
-│   ├── bootstrap/               # ArgoCD installation
-│   └── values/                  # Helm values
-├── clusters/                    # Cluster definitions
-│   ├── mgmt/                    # Management cluster config
-│   └── prod/                    # Production cluster config
-├── secrets/                     # SOPS-encrypted secrets
-└── docs/                        # Documentation
+config/
+├── defaults/           # Base configurations
+│   └── infrastructure.yaml
+├── environments/       # Environment-specific overrides
+│   ├── dev.yaml       # Development settings
+│   ├── staging.yaml   # Staging settings
+│   └── prod.yaml      # Production settings
+└── clusters/          # Cluster-specific configs
 ```
 
-## Secrets Management
-
-Secrets are encrypted using SOPS with age:
+### Easy Environment Deployment
 
 ```bash
-# Encrypt a secret
-sops -e secrets/example.yaml > secrets/example.secret.yaml
+# Development (small, relaxed security)
+./scripts/deploy.sh -e dev
 
-# Edit encrypted secret
-sops secrets/example.secret.yaml
+# Staging (production-like testing)
+./scripts/deploy.sh -e staging
 
-# Decrypt for viewing
-sops -d secrets/example.secret.yaml
+# Production (HA, security hardened)
+./scripts/deploy.sh -e prod
+
+# Custom configuration
+./scripts/deploy.sh -e prod -c /path/to/custom.yaml
+
+# Dry run (see what would be deployed)
+./scripts/deploy.sh -e prod --dry-run
 ```
 
-See `secrets/README.md` for setup instructions.
+## 🔧 Architecture
 
-## Development Workflow
+```mermaid
+graph TB
+    subgraph "InfraFlux (Infrastructure)"
+        A[Terraform] --> B[Kubernetes Clusters]
+        B --> C[Platform Services]
+        C --> D[ArgoCD GitOps]
+    end
 
-1. **Infrastructure Changes**: Modify Cluster API manifests in `clusters/`
-2. **Application Updates**: Update ArgoCD applications in `gitops/argocd/apps/`
-3. **Configuration Changes**: Update Helm values in `gitops/argocd/values/`
-4. **Secret Updates**: Use SOPS to encrypt secrets in `secrets/`
+    subgraph "PlatformNorthStar (Applications)"
+        E[Application Workloads]
+        F[Service Configurations]
+        G[Business Logic]
+    end
 
-All changes are automatically deployed via GitOps - no manual kubectl commands needed.
+    D --> E
 
-## Cluster Expansion
+    subgraph "Platform Services"
+        H[Cilium CNI]
+        I[cert-manager]
+        J[Monitoring Stack]
+        K[External DNS]
+    end
 
-Additional clusters are defined declaratively in `clusters/` and managed entirely through Cluster API. No additional Terraform required.
-
-Example:
-
-```bash
-# Add a new cluster
-kubectl apply -f clusters/prod/prod-cluster.yaml
+    C --> H
+    C --> I
+    C --> J
+    C --> K
 ```
 
-CAPMox will automatically provision VMs and join them to the cluster based on the ClusterClass definition.
+## 📁 Directory Structure
 
-## Monitoring
+```text
+infraflux/
+├── config/                    # Configuration management
+│   ├── defaults/              # Default values
+│   ├── environments/          # Environment-specific configs
+│   └── clusters/              # Cluster-specific configs
+├── terraform/                 # Infrastructure provisioning
+│   ├── modules/               # Reusable Terraform modules
+│   └── environments/          # Environment-specific deployments
+├── platform/                  # Platform service definitions
+│   ├── bootstrap/             # Bootstrap configurations
+│   ├── infrastructure/        # Infrastructure services
+│   └── gitops/                # GitOps configurations
+├── clusters/                  # Cluster templates and overlays
+├── scripts/                   # Automation scripts
+└── docs/                      # Documentation
+```
 
-Access the platform dashboard at `https://dashboard.yourdomain.com` (configured via external-dns and cert-manager).
+## 🌍 Multi-Environment Support
 
-- **Grafana**: Cluster and application metrics
-- **Prometheus**: Metrics collection and alerting
-- **ArgoCD**: GitOps deployment status
-- **Kubernetes Dashboard**: Cluster resource management
+### Environment Characteristics
 
-## Contributing
+| Environment | Purpose                | Cluster Size             | Security | Certificates |
+| ----------- | ---------------------- | ------------------------ | -------- | ------------ |
+| **dev**     | Development & testing  | Small (1 CP, 2 workers)  | Relaxed  | Staging      |
+| **staging** | Pre-production testing | Medium (3 CP, 3 workers) | Standard | Staging      |
+| **prod**    | Production workloads   | Large (3 CP, 5+ workers) | Hardened | Production   |
 
-1. All infrastructure is declared in Git
-2. Changes are deployed via ArgoCD automatically
-3. Use sync waves to manage deployment dependencies
-4. Encrypt secrets with SOPS before committing
-5. Test changes in a development cluster first
+### Configuration Examples
 
-For detailed setup and configuration guides, see the `docs/` directory.
+**Development** (`config/environments/dev.yaml`):
+
+```yaml
+environment:
+  name: "dev"
+  domain: "dev.platform.local"
+
+clusterOverrides:
+  nodes:
+    controlPlane:
+      count: 1
+      cpu: 2
+      memory: "4Gi"
+```
+
+**Production** (`config/environments/prod.yaml`):
+
+```yaml
+environment:
+  name: "prod"
+  domain: "platform.company.com"
+
+clusterOverrides:
+  nodes:
+    controlPlane:
+      count: 3
+      cpu: 8
+      memory: "16Gi"
+    worker:
+      count: 5
+      cpu: 16
+      memory: "32Gi"
+```
+
+## 🔐 Security & Compliance
+
+- **🛡️ Pod Security Standards**: Enforced at platform level
+- **🌐 Network Policies**: Cilium-based micro-segmentation
+- **🔑 RBAC**: Kubernetes role-based access control
+- **🔒 Secret Management**: SOPS encryption for sensitive data
+- **📜 Certificate Management**: Automated TLS with cert-manager
+
+## 📊 Monitoring & Observability
+
+- **📈 Prometheus**: Metrics collection and alerting
+- **📊 Grafana**: Visualization and dashboards
+- **🔍 Cilium Hubble**: Network observability
+- **📝 Centralized Logging**: Infrastructure and application logs
+- **🚨 Alerting**: Platform and application alerts
+
+## 🔄 GitOps Integration
+
+### How It Works
+
+1. **InfraFlux** deploys and configures ArgoCD
+2. **ArgoCD** monitors both repositories:
+   - InfraFlux for platform services
+   - PlatformNorthStar for applications
+3. **All changes** flow through Git (Infrastructure as Code)
+4. **Automatic deployment** with rollback capabilities
+
+### Repository Integration
+
+```yaml
+# ArgoCD automatically configures these repositories
+repositories:
+  - url: https://github.com/binGhzal/infraflux
+    name: infraflux (platform services)
+  - url: https://github.com/binGhzal/PlatformNorthStar
+    name: platform-north-star (applications)
+```
+
+## 📚 Documentation
+
+- **[Architecture Guide](ARCHITECTURE.md)**: Detailed architecture overview
+- **[Separation Guide](SEPARATION-GUIDE.md)**: Complete separation explanation
+- **[Quick Start](docs/quick-start.md)**: Step-by-step deployment
+- **[Configuration](docs/configuration.md)**: Configuration management
+- **[Troubleshooting](docs/troubleshooting.md)**: Common issues and solutions
+
+## 🤝 Integration with PlatformNorthStar
+
+InfraFlux provides the foundation, PlatformNorthStar provides the applications:
+
+| Repository            | Responsibility          | Technology Focus                                 |
+| --------------------- | ----------------------- | ------------------------------------------------ |
+| **InfraFlux**         | Infrastructure platform | Terraform, Kubernetes, Platform services         |
+| **PlatformNorthStar** | Application workloads   | Helm charts, Application configs, Business logic |
+
+## 🚀 Getting Started
+
+1. **Deploy Infrastructure**: Use InfraFlux to create your platform
+2. **Set up Applications**: Use PlatformNorthStar for application deployment
+3. **Monitor & Operate**: Use the integrated observability stack
+4. **Scale & Evolve**: Add environments and applications as needed
+
+## 🏆 Benefits
+
+- ✅ **Clear Separation**: Infrastructure vs. Application concerns
+- ✅ **Easy Configuration**: Hierarchical, environment-aware config
+- ✅ **Multi-Environment**: Consistent patterns across dev/staging/prod
+- ✅ **GitOps Native**: All changes flow through Git
+- ✅ **Security Focused**: Defense in depth security model
+- ✅ **Observability First**: Comprehensive monitoring and alerting
+- ✅ **Production Ready**: HA, disaster recovery, compliance
+
+## 📞 Support
+
+For infrastructure-related questions, use this repository's issues.
+For application deployment questions, use [PlatformNorthStar issues](https://github.com/binGhzal/PlatformNorthStar/issues).
+
+**Ready to build your Kubernetes operating system? Start with `./scripts/deploy.sh -e dev`!**

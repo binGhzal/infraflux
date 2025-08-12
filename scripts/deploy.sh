@@ -142,7 +142,7 @@ parse_args() {
 # Validate environment
 validate_environment() {
     log_info "Validating environment: ${ENVIRONMENT}"
-    
+
     local env_config="${CONFIG_DIR}/environments/${ENVIRONMENT}.yaml"
     if [[ ! -f "${env_config}" ]]; then
         log_error "Environment configuration not found: ${env_config}"
@@ -150,7 +150,7 @@ validate_environment() {
         ls -1 "${CONFIG_DIR}/environments/" | sed 's/\.yaml$//' | sed 's/^/  - /'
         exit 1
     fi
-    
+
     # Validate required tools
     local required_tools=("kubectl" "helm" "yq")
     if [[ "${SKIP_TERRAFORM}" != "true" ]]; then
@@ -163,47 +163,47 @@ validate_environment() {
             exit 1
         fi
     fi
-    
+
     for tool in "${required_tools[@]}"; do
         if ! command -v "${tool}" >/dev/null 2>&1; then
             log_error "Required tool not found: ${tool}"
             exit 1
         fi
     done
-    
+
     log_success "Environment validation completed"
 }
 
 # Load and merge configurations
 load_configuration() {
     log_info "Loading configuration for environment: ${ENVIRONMENT}"
-    
+
     local default_config="${CONFIG_DIR}/defaults/infrastructure.yaml"
     local env_config="${CONFIG_DIR}/environments/${ENVIRONMENT}.yaml"
     local merged_config="/tmp/infraflux-config-${ENVIRONMENT}.yaml"
-    
+
     # Start with defaults
     cp "${default_config}" "${merged_config}"
-    
+
     # Merge environment-specific configuration
     if [[ -f "${env_config}" ]]; then
         log_verbose "Merging environment config: ${env_config}"
         yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' "${merged_config}" "${env_config}" > "${merged_config}.tmp"
         mv "${merged_config}.tmp" "${merged_config}"
     fi
-    
+
     # Merge custom configuration if provided
     if [[ -n "${CONFIG_FILE}" ]] && [[ -f "${CONFIG_FILE}" ]]; then
         log_verbose "Merging custom config: ${CONFIG_FILE}"
         yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' "${merged_config}" "${CONFIG_FILE}" > "${merged_config}.tmp"
         mv "${merged_config}.tmp" "${merged_config}"
     fi
-    
+
     # Export configuration path for other functions
     export INFRAFLUX_CONFIG="${merged_config}"
-    
+
     log_success "Configuration loaded and merged"
-    
+
     if [[ "${VERBOSE}" == "true" ]]; then
         log_verbose "Final configuration:"
         cat "${merged_config}" | head -50
@@ -217,26 +217,26 @@ deploy_terraform() {
         log_info "Skipping Terraform deployment"
         return 0
     fi
-    
+
     log_info "Deploying infrastructure with Terraform for environment: ${ENVIRONMENT}"
-    
+
     local terraform_env_dir="${TERRAFORM_DIR}/environments/${ENVIRONMENT}"
-    
+
     if [[ ! -d "${terraform_env_dir}" ]]; then
         log_error "Terraform environment directory not found: ${terraform_env_dir}"
         exit 1
     fi
-    
+
     cd "${terraform_env_dir}"
-    
+
     # Choose terraform or tofu
     local tf_cmd="terraform"
     if command -v tofu >/dev/null 2>&1; then
         tf_cmd="tofu"
     fi
-    
+
     log_verbose "Using ${tf_cmd} for infrastructure deployment"
-    
+
     # Initialize Terraform
     log_info "Initializing Terraform..."
     if [[ "${DRY_RUN}" == "true" ]]; then
@@ -244,7 +244,7 @@ deploy_terraform() {
     else
         ${tf_cmd} init
     fi
-    
+
     # Plan
     log_info "Planning infrastructure changes..."
     if [[ "${DRY_RUN}" == "true" ]]; then
@@ -252,12 +252,12 @@ deploy_terraform() {
     else
         ${tf_cmd} plan
     fi
-    
+
     # Apply
     if [[ "${DRY_RUN}" != "true" ]]; then
         log_info "Applying infrastructure changes..."
         ${tf_cmd} apply -auto-approve
-        
+
         # Extract kubeconfig
         if ${tf_cmd} output -raw kubeconfig >/dev/null 2>&1; then
             ${tf_cmd} output -raw kubeconfig > "${SCRIPT_DIR}/../kubeconfig"
@@ -266,7 +266,7 @@ deploy_terraform() {
             log_success "Kubeconfig saved to ${SCRIPT_DIR}/../kubeconfig"
         fi
     fi
-    
+
     cd - >/dev/null
     log_success "Terraform deployment completed"
 }
@@ -274,35 +274,35 @@ deploy_terraform() {
 # Bootstrap ArgoCD
 bootstrap_argocd() {
     log_info "Bootstrapping ArgoCD..."
-    
+
     # Install ArgoCD
     if [[ "${DRY_RUN}" == "true" ]]; then
         log_info "DRY RUN: Would install ArgoCD"
         return 0
     fi
-    
+
     # Create argocd namespace
     kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
-    
+
     # Install ArgoCD using Helm
     helm repo add argo https://argoproj.github.io/argo-helm
     helm repo update
-    
+
     # Create ArgoCD values from configuration
     local argocd_values="/tmp/argocd-values-${ENVIRONMENT}.yaml"
     yq eval '.infrastructure.argocd.config' "${INFRAFLUX_CONFIG}" > "${argocd_values}"
-    
+
     helm upgrade --install argocd argo/argo-cd \
         --namespace argocd \
         --values "${argocd_values}" \
         --wait
-    
+
     # Apply GitOps configuration
     kubectl apply -f "${PLATFORM_DIR}/gitops/"
-    
+
     # Wait for ArgoCD to be ready
     kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=300s
-    
+
     log_success "ArgoCD bootstrap completed"
 }
 
@@ -312,59 +312,59 @@ deploy_platform() {
         log_info "Skipping platform services deployment"
         return 0
     fi
-    
+
     log_info "Deploying platform services for environment: ${ENVIRONMENT}"
-    
+
     if [[ "${DRY_RUN}" == "true" ]]; then
         log_info "DRY RUN: Would deploy platform services"
         return 0
     fi
-    
+
     # Bootstrap ArgoCD first
     bootstrap_argocd
-    
+
     # Apply the app-of-apps pattern
     log_info "Applying app-of-apps pattern..."
-    
+
     # Process the app-of-apps template with environment values
     local app_of_apps="/tmp/app-of-apps-${ENVIRONMENT}.yaml"
     yq eval '.environment.name as $env | (.. | select(. == "{{ .Values.environment }}")) = $env' \
         "${PLATFORM_DIR}/gitops/app-of-apps.yaml" > "${app_of_apps}"
-    
+
     kubectl apply -f "${app_of_apps}"
-    
+
     # Wait for applications to sync
     log_info "Waiting for applications to sync..."
     sleep 30
-    
+
     # Check ArgoCD application status
     local max_attempts=60
     local attempt=0
-    
+
     while [[ ${attempt} -lt ${max_attempts} ]]; do
         local healthy_apps=$(kubectl get applications -n argocd -o jsonpath='{.items[?(@.status.health.status=="Healthy")].metadata.name}' | wc -w)
         local total_apps=$(kubectl get applications -n argocd -o jsonpath='{.items[*].metadata.name}' | wc -w)
-        
+
         log_info "Applications healthy: ${healthy_apps}/${total_apps}"
-        
+
         if [[ ${healthy_apps} -eq ${total_apps} ]] && [[ ${total_apps} -gt 0 ]]; then
             break
         fi
-        
+
         sleep 10
         ((attempt++))
     done
-    
+
     log_success "Platform services deployment completed"
 }
 
 # Generate access information
 generate_access_info() {
     log_info "Generating access information..."
-    
+
     local domain
     domain=$(yq eval '.environment.domain' "${INFRAFLUX_CONFIG}")
-    
+
     cat << EOF
 
 ${GREEN}=== InfraFlux Platform Access Information ===${NC}
@@ -413,24 +413,24 @@ cleanup() {
 # Main execution
 main() {
     log_info "Starting InfraFlux deployment..."
-    
+
     parse_args "$@"
     validate_environment
     load_configuration
-    
+
     if [[ "${DRY_RUN}" == "true" ]]; then
         log_warn "DRY RUN MODE - No changes will be made"
     fi
-    
+
     deploy_terraform
     deploy_platform
-    
+
     if [[ "${DRY_RUN}" != "true" ]]; then
         generate_access_info
     fi
-    
+
     cleanup
-    
+
     log_success "InfraFlux deployment completed successfully!"
 }
 

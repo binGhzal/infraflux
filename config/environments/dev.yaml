@@ -26,20 +26,20 @@ infrastructureOverrides:
   certManager:
     config:
       defaultIssuer: "letsencrypt-staging"
-  
+
   # Reduced monitoring retention
   monitoring:
     prometheus:
       retention: "7d"
       storage: "20Gi"
-  
+
   # Simpler Cilium configuration
   cilium:
     config:
       encryption: false
       hubble:
         enabled: true
-        ui: false  # Disable UI in dev to save resources
+        ui: false # Disable UI in dev to save resources
 
 # Development-specific features
 featureOverrides:

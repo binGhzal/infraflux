@@ -28,17 +28,17 @@ infrastructureOverrides:
       defaultIssuer: "letsencrypt-prod"
       acme:
         server: "https://acme-v02.api.letsencrypt.org/directory"
-  
+
   # Extended monitoring retention
   monitoring:
     prometheus:
       retention: "90d"
       storage: "200Gi"
-  
+
   # Production Cilium configuration
   cilium:
     config:
-      encryption: true  # Enable encryption in production
+      encryption: true # Enable encryption in production
       hubble:
         enabled: true
         ui: true
@@ -72,8 +72,8 @@ resourceOverrides:
 backupOverrides:
   enabled: true
   etcd:
-    schedule: "0 1,13 * * *"  # Twice daily
-    retention: "90"  # Keep 90 backups
+    schedule: "0 1,13 * * *" # Twice daily
+    retention: "90" # Keep 90 backups
   velero:
     enabled: true
 # High-availability multi-node cluster for production workloads
