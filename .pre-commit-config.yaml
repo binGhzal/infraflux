@@ -1,0 +1,38 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-added-large-files
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: ["-c", ".yamllint"]
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.39.0
+    hooks:
+      - id: markdownlint
+        args: ["--config", ".markdownlint.json"]
+
+  - repo: local
+    hooks:
+      - id: kubeconform
+        name: kubeconform (skip if missing)
+        language: system
+        entry: >
+          bash -c 'command -v kubeconform >/dev/null 2>&1 || { echo "kubeconform not installed, skipping"; exit 0; }; kubeconform -summary -strict -ignore-missing-schemas "$@"' --
+        files: "\\.(yaml|yml)$"
+        pass_filenames: true
+      - id: helm-lint
+        name: helm lint (skip if missing)
+        language: system
+        entry: >
+          bash -c 'command -v helm >/dev/null 2>&1 || { echo "helm not installed, skipping"; exit 0; }; if compgen -G "**/Chart.yaml" >/dev/null; then for chart in $(git ls-files | grep "Chart.yaml" | xargs -n1 dirname | sort -u); do helm lint "$chart" || exit 1; done; else echo "No charts found, skipping"; fi'
+        files: "\\.(yaml|yml|tpl|gotmpl)$"
+        pass_filenames: false

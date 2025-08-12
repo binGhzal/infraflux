@@ -13,8 +13,20 @@ Structure overview:
 
 Getting started:
 
-1. Fill out terraform modules and variables per folder.
-2. Bootstrap Argo CD (argo/install) and push app-of-apps (argo/apps).
-3. Commit secrets using SOPS with age keys in platform/secrets.
+1) Fill out terraform modules and variables per folder.
+2) Bootstrap Argo CD (argo/install) and push app-of-apps (argo/apps).
+3) Commit secrets using SOPS with age keys in platform/secrets.
+
+Dev hooks:
+
+- Install pre-commit then enable hooks for this repo:
+  - pipx install pre-commit
+  - pre-commit install
+- Optional: run on all files once: pre-commit run --all-files
+- Notes: kubeconform/helm hooks skip if tools aren’t installed locally. CI still validates.
+
+Editor note:
+
+- VS Code YAML LSP may flag CAPI CRDs (Cluster API) with schema warnings. CI ignores missing schemas. You can keep validation on, or adjust .vscode/settings.json schema mappings per your preference.
 
 This repo is a starter layout; adjust to your needs.

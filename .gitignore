@@ -1,78 +1,32 @@
-# Node / tooling
-node_modules/
-dist/
-
-# Python
-__pycache__/
-*.pyc
-
-# OS
-Thumbs.db
+# macOS
 .DS_Store
 
-# Editors
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Python
-__pycache__/
+# Python/virtualenv
 .venv/
-venv/
-*.pyc
 
-# Node/JS
+# Node
 node_modules/
-dist/
-build/
 
-# Go
-bin/
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+crash.log
 
-# Logs & temp
-*.log
-tmp/
-
-# Kubernetes/Flux/Talos
-*.kubeconfig
-secrets/*.yaml
-secrets/*.yml
-*.crt
-*.key
-
-# MkDocs site output (if generated)
-site/
-
-# editor
-.vscode/
-.idea/
-
-# build
-bin/
-dist/
-out/
-
-# flux and kube
-.kube/
-.kustomize/
-
-# secrets
+# Age/SOPS
+age.key
+*.agekey
+*.age
+*.enc
 **/*.secret.yaml
-**/*.enc.yaml
+**/*.secret.yml
+**/*.secret.json
 
-# go
-cli/bin/
-cli/build/
-
-# python venvs
-.venv/
-.env
-
-# os/editor
-*.log
-*.tmp
-*.swp
-
-talos/
+# Kube configs
 kubeconfig
+.kube/
+
+# Misc
+.env
+*.log
