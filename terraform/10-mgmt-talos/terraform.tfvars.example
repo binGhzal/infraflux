@@ -1,0 +1,20 @@
+pm_api_url      = "https://proxmox.example:8006/api2/json"
+pm_user         = "root@pam"
+pm_password     = "changeme"
+
+target_node     = "pve01"
+datastore       = "local-lvm"
+bridge          = "vmbr0"
+talos_template  = "talos-1-8-template"
+
+cluster_name    = "mgmt"
+cp_count        = 3
+worker_count    = 0
+cp_cpu          = 2
+cp_memory_mb    = 4096
+worker_cpu      = 2
+worker_memory_mb= 4096
+disk_size_gb    = 40
+ssh_public_keys = "ssh-ed25519 AAAA... user@example"
+cloud_init_user = "talos"
+cloud_init_password = "changeme"
