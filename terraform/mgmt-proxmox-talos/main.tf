@@ -2,9 +2,9 @@ terraform {
   # OpenTofu compatible version constraint
   required_version = ">= 1.6"
   required_providers {
-    proxmox = { source = "Telmate/proxmox", version = "~> 3.0" }
-    talos   = { source = "siderolabs/talos", version = "~> 0.8" }
-    helm    = { source = "hashicorp/helm",   version = "~> 2.12" }
+    proxmox    = { source = "Telmate/proxmox", version = "~> 3.0" }
+    talos      = { source = "siderolabs/talos", version = "~> 0.8" }
+    helm       = { source = "hashicorp/helm", version = "~> 2.12" }
     kubernetes = { source = "hashicorp/kubernetes", version = "~> 2.33" }
   }
 }
