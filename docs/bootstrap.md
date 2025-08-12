@@ -16,6 +16,8 @@ After Argo syncs:
 
 Notes:
 
+- Use `terraform/mgmt-proxmox-talos/terraform.tfvars.example` for variable guidance
+- Copy `secrets/proxmox-credentials.sops.example.yaml` and encrypt with SOPS before applying
 - Keep secrets encrypted with SOPS (platform/secrets)
 - Use kubeconform CI to validate manifests
 - Prefer Gateway API over Ingress where possible

@@ -15,7 +15,7 @@ Infrastructure-as-code for Talos Linux + Cluster API on Proxmox, managed declara
   - `30-capmox/` – Proxmox provider setup (placeholder)
   - `40-clusters/` – workload cluster automation (placeholder)
   - `50-argo/` – Argo CD installation (placeholder)
-  - `mgmt-proxmox-talos/` – active module for Talos bootstrap + CAPI Operator helm release
+  - `mgmt-proxmox-talos/` – active module for Talos bootstrap + CAPI Operator helm release (includes `terraform.tfvars.example`)
 - `clusters/`
   - `mgmt/` – provider/operator configuration for the management cluster
   - `prod/` – workload cluster manifests (to be added)
@@ -25,7 +25,8 @@ Infrastructure-as-code for Talos Linux + Cluster API on Proxmox, managed declara
   - `values/` – Argo CD chart values
 - `secrets/`
   - `age/` – guidance for SOPS age keys
-- repo hygiene: `.pre-commit-config.yaml`, `.kubeconform.yaml`, `.yamllint`, `.markdownlint.json`, `.vscode/`
+  - `README.md` and `proxmox-credentials.sops.example.yaml`
+- repo hygiene: `.pre-commit-config.yaml`, `.kubeconform.yaml`, `.sops.yaml`, `.yamllint`, `.markdownlint.json`, `.vscode/`
 
 ## end-to-end plan
 

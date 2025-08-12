@@ -1,0 +1,5 @@
+kubernetesVersion: "1.29.0"
+strict: true
+ignoreMissingSchemas: true
+ignoreFilenamePattern:
+  - secrets/
