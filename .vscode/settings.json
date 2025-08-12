@@ -1,4 +1,5 @@
 {
   "yaml.schemaStore.enable": true,
-  "yaml.validate": true
+  "yaml.validate": true,
+  "azureTerraform.checkTerraformCmd": false
 }
