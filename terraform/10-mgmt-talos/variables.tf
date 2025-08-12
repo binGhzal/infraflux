@@ -102,6 +102,12 @@ variable "disk_size_gb" {
     default     = 40
 }
 
+variable "iso_path" {
+    type        = string
+    description = "Optional ISO to mount as cdrom (format: <storage>:iso/<file.iso>)"
+    default     = null
+}
+
 variable "ssh_public_keys" {
     type        = string
     description = "SSH public keys appended to cloud-init for Talos (optional)"

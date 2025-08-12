@@ -44,13 +44,23 @@ resource "proxmox_vm_qemu" "cp" {
   cores    = var.cp_cpu
   memory   = var.cp_memory_mb
   scsihw   = "virtio-scsi-pci"
-  boot     = "order=scsi0;net0"
+  boot     = var.iso_path != null ? "order=ide2;scsi0;net0" : "order=scsi0;net0"
 
   disk {
     slot    = "scsi0"
     size    = format("%dG", var.disk_size_gb)
     type    = "disk"
     storage = var.datastore
+  }
+
+  # Optional ISO mount on ide2 as cdrom
+  dynamic "disk" {
+    for_each = var.iso_path != null ? [1] : []
+    content {
+      slot = "ide2"
+      type = "cdrom"
+      iso  = var.iso_path
+    }
   }
 
   network {
@@ -81,13 +91,23 @@ resource "proxmox_vm_qemu" "worker" {
   cores  = var.worker_cpu
   memory = var.worker_memory_mb
   scsihw = "virtio-scsi-pci"
-  boot   = "order=scsi0;net0"
+  boot   = var.iso_path != null ? "order=ide2;scsi0;net0" : "order=scsi0;net0"
 
   disk {
     slot    = "scsi0"
     size    = format("%dG", var.disk_size_gb)
     type    = "disk"
     storage = var.datastore
+  }
+
+  # Optional ISO mount on ide2 as cdrom
+  dynamic "disk" {
+    for_each = var.iso_path != null ? [1] : []
+    content {
+      slot = "ide2"
+      type = "cdrom"
+      iso  = var.iso_path
+    }
   }
 
   network {
