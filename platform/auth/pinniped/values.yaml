@@ -1,0 +1,3 @@
+# pinniped (helm) values
+concierge:
+  enabled: true

@@ -1,0 +1,3 @@
+# cert-manager values
+enableGatewayAPI: true
+installCRDs: true

@@ -1,0 +1,21 @@
+name: Lint Helm
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+jobs:
+  helmlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - name: Lint charts
+        run: |
+          set -euo pipefail
+          if compgen -G "**/Chart.yaml" > /dev/null; then
+            for chart in $(git ls-files | grep 'Chart.yaml' | xargs -n1 dirname); do
+              helm lint "$chart" || exit 1
+            done
+          else
+            echo "No charts found, skipping"
+          fi

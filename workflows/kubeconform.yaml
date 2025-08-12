@@ -1,0 +1,21 @@
+name: Kubeconform
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+jobs:
+  kubeconform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install kubeconform
+        run: |
+          VERSION=v0.6.7
+          curl -L https://github.com/yannh/kubeconform/releases/download/${VERSION}/kubeconform-linux-amd64.tar.gz | tar xz
+          sudo mv kubeconform /usr/local/bin/
+      - name: Validate manifests
+        run: |
+          set -euo pipefail
+          find . -type f -name '*.yaml' -o -name '*.yml' | \
+            grep -vE '/charts/|/vendor/|/\.git/' | \
+            xargs -r kubeconform -summary -strict -ignore-missing-schemas

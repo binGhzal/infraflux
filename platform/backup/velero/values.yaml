@@ -1,0 +1,10 @@
+# Velero values
+initContainers: []
+credentials:
+  useSecret: true
+configuration:
+  features: EnableCSI
+  defaultVolumesToFsBackup: true
+snapshotsEnabled: true
+metrics:
+  enabled: true

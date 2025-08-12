@@ -1,0 +1,6 @@
+# authentik (helm) values
+postgresql:
+  enabled: true
+server:
+  env:
+    AUTHENTIK_SECRET_KEY: "${AUTHENTIK_SECRET_KEY}"

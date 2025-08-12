@@ -1,0 +1,5 @@
+# Kubernetes Dashboard values
+ingress:
+  enabled: false
+metricsScraper:
+  enabled: true
