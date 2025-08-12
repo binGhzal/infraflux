@@ -12,13 +12,13 @@ repos:
     rev: v1.35.1
     hooks:
       - id: yamllint
-        args: [ "-c", ".yamllint" ]
+        args: ["-c", ".yamllint"]
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.39.0
     hooks:
       - id: markdownlint
-        args: [ "--config", ".markdownlint.json" ]
+        args: ["--config", ".markdownlint.json"]
 
   - repo: local
     hooks:
@@ -34,8 +34,8 @@ repos:
         language: system
         entry: >
           bash -c 'command -v tofu >/dev/null 2>&1 || { echo "opentofu not installed, skipping"; exit 0; }; tofu fmt -recursive -check'
-  files: "\\.tf$|\\.tfvars$"
-  pass_filenames: false
+        files: "\\.tf$|\\.tfvars$"
+        pass_filenames: false
       - id: helm-lint
         name: helm lint (skip if missing)
         language: system
