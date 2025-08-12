@@ -38,7 +38,7 @@ resource "kubernetes_namespace" "capmox" {
 
 resource "kubernetes_secret" "capmox_credentials" {
 	metadata {
-		name      = "proxmox-credentials"
+	name      = "capmox-credentials"
 		namespace = kubernetes_namespace.capmox.metadata[0].name
 	}
 	type = "Opaque"
