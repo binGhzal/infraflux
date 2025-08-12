@@ -1,0 +1,9 @@
+configs:
+  cm:
+    # Disable admin user if you manage via SSO later
+    admin.enabled: "true"
+server:
+  service:
+    type: LoadBalancer
+  extraArgs:
+    - --insecure
