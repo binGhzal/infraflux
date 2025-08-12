@@ -4,28 +4,38 @@ A streamlined Kubernetes infrastructure platform using Talos, Cluster API, and G
 
 ## Architecture
 
-**Single Bootstrap + GitOps Approach:**
+**Fully Automated Bootstrap + GitOps Approach:**
 
-- **Bootstrap**: One Talos node provisioned via OpenTofu (minimal Terraform dependency)
-- **Expansion**: Additional nodes provisioned via Cluster API (CAPMox) - fully automated
+- **Bootstrap**: Single Talos node with full automation (VM + cluster configuration)
+- **Expansion**: Additional nodes via Cluster API (CAPMox) - no manual provisioning
 - **Management**: All services deployed and managed via ArgoCD (GitOps)
 
 This design minimizes manual intervention and embraces automation for scalable, maintainable infrastructure.
 
 ## Quick Start
 
-### 1. Bootstrap Talos Node
+### 1. Bootstrap Talos Cluster (Fully Automated)
 
 ```bash
 cd terraform/bootstrap-talos
 cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your Proxmox details
+# Edit terraform.tfvars with your Proxmox and network details
 tofu init && tofu apply
 ```
 
-### 2. Configure Talos
+This single command:
 
-Follow the [Talos documentation](https://www.talos.dev/v1.8/introduction/getting-started/) to configure your bootstrap node and create a single-node cluster.
+- Creates VM from Talos template
+- Generates and applies Talos configuration
+- Bootstraps single-node Kubernetes cluster
+- Creates local kubeconfig for immediate access
+
+### 2. Access Your Cluster
+
+```bash
+export KUBECONFIG=$(pwd)/kubeconfig
+kubectl get nodes
+```
 
 ### 3. Deploy GitOps
 
