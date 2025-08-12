@@ -12,13 +12,13 @@ repos:
     rev: v1.35.1
     hooks:
       - id: yamllint
-        args: ["-c", ".yamllint"]
+        args: [ "-c", ".yamllint" ]
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.39.0
     hooks:
       - id: markdownlint
-        args: ["--config", ".markdownlint.json"]
+        args: [ "--config", ".markdownlint.json" ]
 
   - repo: local
     hooks:

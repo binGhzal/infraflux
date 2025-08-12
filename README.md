@@ -13,9 +13,9 @@ Structure overview:
 
 Getting started:
 
-1) Fill out terraform modules and variables per folder.
-2) Bootstrap Argo CD (argo/install) and push app-of-apps (argo/apps).
-3) Commit secrets using SOPS with age keys in platform/secrets.
+1. Fill out terraform modules and variables per folder.
+2. Bootstrap Argo CD (argo/install) and push app-of-apps (argo/apps).
+3. Commit secrets using SOPS with age keys in platform/secrets.
 
 Dev hooks:
 
