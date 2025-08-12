@@ -1,4 +1,5 @@
 creation_rules:
-  - path_regex: secrets/.*\\.sops\\.yaml$
+  - path_regex: (secrets|platform/secrets)/.*\.sops\.ya?ml$
     encrypted_regex: '^(data|stringData)$'
-    age: AGE_PUBLIC_KEY_PLACEHOLDER
+    age:
+      - AGE_PUBLIC_KEY_PLACEHOLDER

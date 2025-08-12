@@ -21,10 +21,12 @@ jobs:
         run: |
           npm install -g markdownlint-cli@0.39.0
           pipx install yamllint
-          brew install kubeconform || curl -sL https://github.com/yannh/kubeconform/releases/download/v0.6.4/kubeconform-linux-amd64.tar.gz | sudo tar xz -C /usr/local/bin kubeconform
+          VERSION=v0.6.7
+          curl -L "https://github.com/yannh/kubeconform/releases/download/${VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz
+          sudo mv kubeconform /usr/local/bin/
 
       - name: Markdownlint
-        run: markdownlint '**/*.md' --config .markdownlint.json
+        run: markdownlint "**/*.md" --config .markdownlint.json
 
       - name: Yamllint
         run: yamllint -c .yamllint .
