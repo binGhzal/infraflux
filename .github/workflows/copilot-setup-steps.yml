@@ -1,0 +1,35 @@
+name: Copilot Setup Steps
+on:
+  workflow_dispatch:
+  push:
+    paths: [ ".github/workflows/copilot-setup-steps.yml" ]
+  pull_request:
+    paths: [ ".github/workflows/copilot-setup-steps.yml" ]
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      # Terraform + linters
+      - uses: hashicorp/setup-terraform@v3
+        with: { terraform_version: "1.9.x" }
+      - name: Install tflint
+        run: |
+          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+
+      # K8s toolchain often needed in this repo
+      - name: Install kubectl/helm/kustomize/yq
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y jq
+          curl -L https://get.helm.sh/helm-v3.15.2-linux-amd64.tar.gz | tar zx && sudo mv linux-amd64/helm /usr/local/bin/helm
+          curl -L https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.4.3/kustomize_v5.4.3_linux_amd64.tar.gz | tar zx && sudo mv kustomize /usr/local/bin/kustomize
+          curl -L https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64 -o yq && chmod +x yq && sudo mv yq /usr/local/bin/yq
+          curl -LO https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+      # Optional: larger runners if plans/tests are heavy (set runs-on to a larger label).
