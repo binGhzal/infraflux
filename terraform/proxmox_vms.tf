@@ -51,8 +51,8 @@ resource "proxmox_virtual_environment_vm" "cp" {
 
   initialization {
     ip_config {
-  # For DHCP, proxmox provider expects an empty ipv4 block
-  ipv4 {}
+      # For DHCP, proxmox provider expects an empty ipv4 block
+      ipv4 {}
     }
   }
 }
@@ -110,8 +110,8 @@ resource "proxmox_virtual_environment_vm" "worker" {
 
   initialization {
     ip_config {
-  # For DHCP, proxmox provider expects an empty ipv4 block
-  ipv4 {}
+      # For DHCP, proxmox provider expects an empty ipv4 block
+      ipv4 {}
     }
   }
 }

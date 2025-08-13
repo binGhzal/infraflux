@@ -1,6 +1,11 @@
 kubeProxyReplacement: ${kubeProxyReplacement}
+# Required when kube-proxy is disabled; Talos KubePrism exposes API on localhost:7445
+k8sServiceHost: ${k8sServiceHost}
+k8sServicePort: ${k8sServicePort}
 # Talos-specific: don’t try to load kernel modules
 cgroup:
+  autoMount:
+    enabled: false
   hostRoot: /sys/fs/cgroup
 securityContext:
   capabilities:

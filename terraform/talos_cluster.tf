@@ -44,17 +44,17 @@ data "talos_machine_configuration" "worker" {
 
 # Apply machine configs to nodes discovered via Proxmox agent IPs
 resource "talos_machine_configuration_apply" "cp_apply" {
-  count                        = var.controlplane_count
-  node                         = element(proxmox_virtual_environment_vm.cp.*.ipv4_addresses, count.index)[0]
-  client_configuration         = talos_machine_secrets.cluster.client_configuration
-  machine_configuration_input  = data.talos_machine_configuration.cp.machine_configuration
+  count                       = var.controlplane_count
+  node                        = element(proxmox_virtual_environment_vm.cp.*.ipv4_addresses, count.index)[0]
+  client_configuration        = talos_machine_secrets.cluster.client_configuration
+  machine_configuration_input = data.talos_machine_configuration.cp.machine_configuration
 }
 
 resource "talos_machine_configuration_apply" "wrk_apply" {
-  count                        = var.worker_count
-  node                         = element(proxmox_virtual_environment_vm.worker.*.ipv4_addresses, count.index)[0]
-  client_configuration         = talos_machine_secrets.cluster.client_configuration
-  machine_configuration_input  = data.talos_machine_configuration.worker.machine_configuration
+  count                       = var.worker_count
+  node                        = element(proxmox_virtual_environment_vm.worker.*.ipv4_addresses, count.index)[0]
+  client_configuration        = talos_machine_secrets.cluster.client_configuration
+  machine_configuration_input = data.talos_machine_configuration.worker.machine_configuration
 }
 
 resource "talos_machine_bootstrap" "bootstrap" {

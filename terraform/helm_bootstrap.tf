@@ -14,6 +14,8 @@ locals {
     enableWireGuard      = var.enable_wireguard
     lbStart              = var.lb_ip_pool_start
     lbEnd                = var.lb_ip_pool_end
+    k8sServiceHost       = "127.0.0.1"
+    k8sServicePort       = 7445
   })
 
   argocd_values = templatefile("${path.module}/templates/argocd-values.yaml.tftpl", {
