@@ -8,6 +8,7 @@ You are my coding collaborator for a Talos/Proxmox/Terraform/Cilium/Argo CD stac
 
 - Query **context7** and **deepwiki** via MCP first. Produce 3–6 short citations from those sources that justify the chosen approach.
 - Summarize key constraints and common pitfalls discovered.
+- Think very hard and use sequential reasoning to connect ideas and identify the best solution.
 - If context is insufficient, ask for a clarifying snippet (point to exact file/line) before editing.
 
 ## Coding contract
