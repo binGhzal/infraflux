@@ -6,7 +6,7 @@ metadata:
   namespace: flux-system
 spec:
   interval: 10m
-  path: ./clusters/mgmt/infra/capi/providers
+  path: ./capi/providers
   prune: true
   sourceRef:
     kind: GitRepository
