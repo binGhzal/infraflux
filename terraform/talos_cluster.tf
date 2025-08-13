@@ -17,8 +17,8 @@ data "talos_machine_configuration" "cp_cfg" {
     yamlencode({
       cluster = {
         network = {
-          cni = { name = "none" }   # we'll install Cilium ourselves
-          podSubnets = [var.pod_cidr]
+          cni            = { name = "none" } # we'll install Cilium ourselves
+          podSubnets     = [var.pod_cidr]
           serviceSubnets = [var.svc_cidr]
         }
         proxy = { disabled = true } # kube-proxy off for Cilium
@@ -48,8 +48,8 @@ data "talos_machine_configuration" "wrk_cfg" {
     yamlencode({
       cluster = {
         network = {
-          cni = { name = "none" }
-          podSubnets = [var.pod_cidr]
+          cni            = { name = "none" }
+          podSubnets     = [var.pod_cidr]
           serviceSubnets = [var.svc_cidr]
         }
         proxy = { disabled = true }
@@ -89,7 +89,7 @@ resource "talos_machine_bootstrap" "bootstrap" {
 resource "talos_cluster_kubeconfig" "admin" {
   node                 = talos_machine_configuration_apply.cp_apply[0].node
   client_configuration = talos_machine_secrets.cluster.client_configuration
-  depends_on = [talos_machine_bootstrap.bootstrap]
+  depends_on           = [talos_machine_bootstrap.bootstrap]
 }
 
 # Wire providers only after cluster is ready

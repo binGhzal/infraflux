@@ -1,21 +1,21 @@
 locals {
   vm_common = {
-    node_name   = var.pve_node
-    bios        = "ovmf"
-    machine     = "q35"
-    scsihw      = "virtio-scsi-pci"
-    on_boot     = true
-    tablet      = false
+    node_name        = var.pve_node
+    bios             = "ovmf"
+    machine          = "q35"
+    scsihw           = "virtio-scsi-pci"
+    on_boot          = true
+    tablet           = false
     qemu_guest_agent = true
-    boot_order  = "scsi0;ide2;net0"
-    bridge      = var.bridge
-    iso_path    = "${var.iso_storage}:iso/talos-installer-${var.talos_version}.iso"
+    boot_order       = "scsi0;ide2;net0"
+    bridge           = var.bridge
+    iso_path         = "${var.iso_storage}:iso/talos-installer-${var.talos_version}.iso"
   }
 }
 
 # Control planes
 resource "proxmox_virtual_environment_vm" "cp" {
-  count = var.controlplane_count
+  count       = var.controlplane_count
   name        = format("%s-cp-%02d", var.cluster_name, count.index + 1)
   description = "Talos control-plane"
   node_name   = local.vm_common.node_name
@@ -79,7 +79,7 @@ resource "proxmox_virtual_environment_vm" "cp" {
 
 # Workers
 resource "proxmox_virtual_environment_vm" "worker" {
-  count = var.worker_count
+  count       = var.worker_count
   name        = format("%s-wrk-%02d", var.cluster_name, count.index + 1)
   description = "Talos worker"
   node_name   = local.vm_common.node_name
@@ -120,13 +120,13 @@ resource "proxmox_virtual_environment_vm" "worker" {
   }
 
   initialization {
-    user_account { 
-      username = "talos" 
+    user_account {
+      username = "talos"
     }
-    ip_config { 
-      ipv4 { 
+    ip_config {
+      ipv4 {
         # DHCP enabled by default when no address/gateway specified
-      } 
+      }
     }
   }
 }
