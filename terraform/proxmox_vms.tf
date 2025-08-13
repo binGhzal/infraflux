@@ -56,7 +56,6 @@ resource "proxmox_virtual_environment_vm" "cp" {
   }
 
   cdrom {
-    enabled = true
     file_id = local.vm_common.iso_path
   }
 
@@ -72,7 +71,7 @@ resource "proxmox_virtual_environment_vm" "cp" {
     }
     ip_config {
       ipv4 {
-        dhcp = var.use_dhcp
+        # DHCP enabled by default when no address/gateway specified
       }
     }
   }
@@ -112,7 +111,6 @@ resource "proxmox_virtual_environment_vm" "worker" {
   efi_disk { datastore_id = var.vm_disk_storage }
 
   cdrom {
-    enabled = true
     file_id = local.vm_common.iso_path
   }
 
@@ -122,8 +120,14 @@ resource "proxmox_virtual_environment_vm" "worker" {
   }
 
   initialization {
-    user_account { username = "talos" }
-    ip_config { ipv4 { dhcp = var.use_dhcp } }
+    user_account { 
+      username = "talos" 
+    }
+    ip_config { 
+      ipv4 { 
+        # DHCP enabled by default when no address/gateway specified
+      } 
+    }
   }
 }
 
