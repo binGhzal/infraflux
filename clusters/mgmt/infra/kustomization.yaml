@@ -1,0 +1,13 @@
+# clusters/mgmt/infra/kustomization.yaml
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: capi-providers
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./clusters/mgmt/infra/capi/providers
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system

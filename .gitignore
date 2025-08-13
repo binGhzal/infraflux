@@ -29,6 +29,8 @@ age.key
 kubeconfig
 talosconfig
 .kube/
+controlplane.yaml
+worker.yaml
 
 # Misc
 .env
