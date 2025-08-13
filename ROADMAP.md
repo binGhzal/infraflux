@@ -83,14 +83,15 @@
 
 - [ ] **4.1 Build `proxmox-vm` module**
 
-  - [ ] **4.1.1** Inputs: node `pve`, ISO storage `local`, VM disk storage `bigdisk`, bridge `vmbr0`.
-  - [ ] **4.1.2** Parameters: counts (3 CP / 9 workers), vCPU/RAM/disk sizes, extra **Longhorn data disk** on workers (default 200 GiB).
-  - [ ] **4.1.3** Cloud-init or equivalent to pass Talos kernel args if needed; attach the Talos image.
-  - [ ] **4.1.4** Enable QEMU Guest Agent for clean IP detection/shutdown. ([Terraform Registry][1])
+  - [x] **4.1.1** Inputs: node `pve`, ISO file ID, VM disk storage, bridge `vmbr0`.
+  - [x] **4.1.2** Parameters: counts (default 3 CP / 3 workers), vCPU/RAM/disk sizes, extra **Longhorn data disk** on workers (default 200 GiB).
+  - [x] **4.1.3** Attach the Talos ISO; Talos doesn’t require kernel args via cloud-init for this flow (N/A).
+  - [x] **4.1.4** Enable QEMU Guest Agent for clean IP detection/shutdown. ([Terraform Registry][1])
 
 - [ ] **4.2 Outputs to wire next stages**
-  - [ ] **4.2.1** Node MACs/IDs for DHCP reservations.
-  - [ ] **4.2.2** VM IP discovery via guest agent (best-effort).
+  - [x] **4.2.1** Node MACs/IDs for DHCP reservations.
+  - [x] **4.2.2** VM IP discovery via guest agent (best-effort).
+  - [x] **Docs:** [Proxmox VM module](docs/proxmox-vm.md)
 
 > ⚠️ **Pitfalls (Step 4)**
 >
