@@ -16,13 +16,13 @@ You are my coding collaborator for a Talos/Proxmox/Terraform/Cilium/Argo CD stac
 - For Kubernetes manifests/Helm, enforce schema/values validation and dry runs.
 - Always add/refresh tests (unit or policy), and update docs in `docs/`.
 - Commit messages: Conventional Commits.
-- Output a **diff preview** and a **checklist** of verifications you performed.
+- Output a **checklist** of verifications you performed and also update any relevant documentation and diagrams and roadmap.
 
 ## Security & quality guardrails
 
 - Run lint/format/test steps locally in the agent env and summarize results.
 - Propose remediations for any warnings; never ignore failing checks.
-- Avoid secrets in code or comments. Use External Secrets (1Password SDK) references only.
+- NEVER include secrets in code or comments. Use External Secrets (1Password SDK) references only.
 
 ## Communication
 
