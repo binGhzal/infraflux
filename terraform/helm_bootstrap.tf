@@ -8,15 +8,20 @@ resource "helm_release" "gateway_api_crds" {
   create_namespace = false
 }
 
-# Cilium
-data "template_file" "cilium_values" {
-  template = file("${path.module}/templates/cilium-values.yaml.tftpl")
-  vars = {
+locals {
+  cilium_values = templatefile("${path.module}/templates/cilium-values.yaml.tftpl", {
     kubeProxyReplacement = "strict"
     enableWireGuard      = var.enable_wireguard
     lbStart              = var.lb_ip_pool_start
     lbEnd                = var.lb_ip_pool_end
-  }
+  })
+
+  argocd_values = templatefile("${path.module}/templates/argocd-values.yaml.tftpl", {
+    baseDomain         = var.base_domain
+    argocdHost         = var.argocd_hostname
+    authentikIssuerURL = var.oidc_issuer_url
+    authentikClientID  = var.oidc_client_id
+  })
 }
 
 resource "helm_release" "cilium" {
@@ -25,20 +30,11 @@ resource "helm_release" "cilium" {
   chart      = "cilium"
   version    = var.cilium_version
   namespace  = "kube-system"
-  values     = [data.template_file.cilium_values.rendered]
+  values     = [local.cilium_values]
   depends_on = [helm_release.gateway_api_crds]
 }
 
 # Argo CD
-data "template_file" "argocd_values" {
-  template = file("${path.module}/templates/argocd-values.yaml.tftpl")
-  vars = {
-    baseDomain         = var.base_domain
-    argocdHost         = var.argocd_hostname
-    authentikIssuerURL = var.oidc_issuer_url
-    authentikClientID  = var.oidc_client_id
-  }
-}
 
 resource "helm_release" "argocd" {
   name             = "argo-cd"
@@ -47,7 +43,7 @@ resource "helm_release" "argocd" {
   version          = "5.51.6"
   namespace        = "argocd"
   create_namespace = true
-  values           = [data.template_file.argocd_values.rendered]
+  values           = [local.argocd_values]
   timeout          = 600
 }
 

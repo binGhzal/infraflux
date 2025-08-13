@@ -41,7 +41,6 @@ resource "proxmox_virtual_environment_vm" "cp" {
   }
 
   cdrom {
-    enabled = true
     file_id = local.common.iso_path
   }
 
@@ -52,9 +51,8 @@ resource "proxmox_virtual_environment_vm" "cp" {
 
   initialization {
     ip_config {
-      ipv4 {
-        dhcp = var.use_dhcp
-      }
+  # For DHCP, proxmox provider expects an empty ipv4 block
+  ipv4 {}
     }
   }
 }
@@ -102,7 +100,6 @@ resource "proxmox_virtual_environment_vm" "worker" {
   }
 
   cdrom {
-    enabled = true
     file_id = local.common.iso_path
   }
 
@@ -113,9 +110,8 @@ resource "proxmox_virtual_environment_vm" "worker" {
 
   initialization {
     ip_config {
-      ipv4 {
-        dhcp = var.use_dhcp
-      }
+  # For DHCP, proxmox provider expects an empty ipv4 block
+  ipv4 {}
     }
   }
 }
