@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-dns
+  namespace: argocd
+spec:
+  destination: { server: https://kubernetes.default.svc, namespace: external-dns }
+  source:
+    repoURL: https://kubernetes-sigs.github.io/external-dns/
+    chart: external-dns
+    targetRevision: 1.14.5
+    helm:
+      values: |
+        provider: cloudflare
+        domainFilters: ["binghzal.com"]  # make templated if needed
+        policy: sync
+        txtOwnerId: infraflux
+        extraEnv:
+          - name: CF_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: cloudflare-api-token
+                key: token
+        sources: ["service","ingress","gateway-httproute"]
+  syncPolicy: { automated: { prune: true, selfHeal: true } }

@@ -1,0 +1,9 @@
+# Talos Image Factory schematic
+# Docs: https://www.talos.dev/v1.10/learn-more/image-factory/
+customization:
+  systemExtensions:
+    officialExtensions:
+      - siderolabs/intel-ucode
+      - siderolabs/iscsi-tools
+      - siderolabs/util-linux-tools
+      - siderolabs/qemu-guest-agent

@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: velero
+  namespace: argocd
+spec:
+  destination: { server: https://kubernetes.default.svc, namespace: velero }
+  source:
+    repoURL: https://vmware-tanzu.github.io/helm-charts
+    chart: velero
+    targetRevision: 6.0.0
+    helm:
+      values: |
+        configuration:
+          provider: aws
+          backupStorageLocation:
+            - name: default
+              bucket: velero
+              prefix: infraflux
+              config:
+                s3Url: "http://10.0.0.49:9000"
+                s3ForcePathStyle: true
+                region: "us-east-1"
+        credentials:
+          useSecret: true
+          existingSecret: velero-credentials
+        schedules:
+          daily:
+            schedule: "0 3 * * *"
+            template:
+              ttl: 168h # 7 days
+  syncPolicy: { automated: { prune: true, selfHeal: true } }

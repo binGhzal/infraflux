@@ -1,0 +1,65 @@
+# --- Proxmox connection (no hardcoding in code) ---
+pm_api_url      = "https://pve:8006/api2/json"
+pm_user         = "root@pam"
+pm_password     = "CHANGE-ME"    # or use pm_api_token_id/pm_api_token_secret
+pm_tls_insecure = true           # or false if you trust your certs
+
+# --- Proxmox placement ---
+pve_node        = "pve"
+iso_storage     = "local"        # ISO store
+vm_disk_storage = "bigdisk"      # VM disks
+bridge          = "vmbr0"
+
+# --- Talos & cluster identity ---
+cluster_name    = "infraflux"
+talos_version   = "v1.7.5"      # or newer stable; keep schematic aligned
+schematic_id    = "PASTE-SCHEMATIC-ID"
+controlplane_vip = "10.0.1.50"  # your VIP (L2)
+
+# --- Counts & sizing ---
+controlplane_count = 3
+controlplane_vcpus = 4
+controlplane_mem_mb = 8192
+controlplane_disk_gb = 100
+
+worker_count    = 9
+worker_vcpus    = 4
+worker_mem_mb   = 8192
+worker_disk_gb  = 120
+
+# --- Network (DHCP per your choice) ---
+use_dhcp = true
+pod_cidr = "10.244.0.0/16"   # Cilium default works; override if needed
+svc_cidr = "10.96.0.0/12"
+
+# --- DNS & domain ---
+base_domain     = "binghzal.com"     # easily switch later
+ingress_domain  = "*.binghzal.com"
+
+# --- Cilium ---
+lb_ip_pool_start = "10.0.15.100"
+lb_ip_pool_end   = "10.0.15.250"
+enable_wireguard = false             # set true to enable encryption
+cilium_version   = "1.18.0"          # Cilium chart version; keep stable
+
+# --- Argo CD SSO (Authentik) ---
+authentik_issuer_url = "https://auth.${base_domain}/application/o/argocd/"
+authentik_client_id  = "argocd"
+# Client secret is sourced from env or 1Password later; not stored here
+
+# --- Cloudflare ---
+cloudflare_zone          = "binghzal.com"
+cloudflare_email         = ""             # optional for some tools
+# CF API token is delivered by External Secrets from 1Password; not here
+
+# --- 1Password Connect (ESO provider) ---
+onepassword_connect_url   = "http://onepassword-connect.onepassword:8080"
+# Connect token handled via Kubernetes secret; Argo will deploy connect
+
+# --- Storage / backups ---
+minio_endpoint  = "http://10.0.0.49:9000"
+minio_bucket    = "velero"
+velero_retention_days = 7
+
+# --- Infra labels ---
+org_prefix      = "infraflux"

@@ -1,0 +1,33 @@
+server:
+  extraArgs:
+    - --insecure
+  ingress:
+    enabled: true
+    ingressClassName: "" # We'll use Gateway API, not Ingress
+    hosts:
+      - argocd.${baseDomain}
+  config:
+    url: https://argocd.${baseDomain}
+    dex.config: |
+      connectors:
+      - type: oidc
+        id: authentik
+        name: Authentik
+        config:
+          issuer: ${authentikIssuerURL}
+          clientID: ${authentikClientID}
+          clientSecret: $dex.authentik.clientSecret
+          scopes:
+            - openid
+            - profile
+            - email
+            - groups
+  rbacConfig:
+    policy.default: role:readonly
+
+# Store OIDC client secret in argocd-secret (later rotated to ESO-managed)
+configs:
+  secret:
+    createSecret: true
+    extra:
+      dex.authentik.clientSecret: "CHANGE-ME"  # rotate via ESO after bootstrap
