@@ -1,0 +1,19 @@
+# Example backend config for Terraform state in MinIO (S3-compatible)
+# Copy to terraform/backend.config and edit for your environment. Do NOT commit secrets.
+# Use environment variables for credentials when possible:
+#   export AWS_ACCESS_KEY_ID=...
+#   export AWS_SECRET_ACCESS_KEY=...
+#   export AWS_ENDPOINT_URL_S3=https://minio.example.com
+#
+# Then initialize from env dir:
+#   terraform init -backend-config=../../backend.config
+
+bucket                      = "infraflux-tfstate"
+key                         = "prod/terraform.tfstate"
+region                      = "us-east-1"
+endpoint                    = "https://minio.example.com"
+skip_credentials_validation = true
+skip_requesting_account_id  = true
+skip_metadata_api_check     = true
+skip_region_validation      = true
+use_path_style              = true

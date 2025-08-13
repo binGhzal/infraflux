@@ -1,0 +1,6 @@
+# Example variables for the prod environment
+# Copy to prod.auto.tfvars and customize as needed.
+
+project     = "infraflux"
+environment = "prod"
+# kubeconfig = "../out/kubeconfig"  # override if different

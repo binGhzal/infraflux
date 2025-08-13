@@ -27,7 +27,7 @@
 ## 2) Image Build (Talos Image Factory)
 
 2.0 Docs: [Image Factory — schematic & build](docs/image-factory.md)
-2.0 Status: In progress — schematic added; doc drafted.
+2.0 Status: Completed ✅ — image uploaded and tested.
 
 2.1 Author Talos Image Factory schematic (universal image)
 
@@ -48,6 +48,9 @@
 ---
 
 ## 3) Repo & CI Skeleton (Vanilla Terraform)
+
+3.0 Docs: [Terraform repo & CI skeleton](docs/terraform.md)
+3.0 Status: In progress — env scaffold, backend config aligned (MinIO flags), CI workflows added, and module stubs created under `terraform/modules/*`.
 
 3.1 Lay out repo
 
