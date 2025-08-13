@@ -2,11 +2,9 @@
 
 1.1 Validate infra assumptions
 
-- 1.1.1 Confirm Proxmox: version 8.4.1, node `pve`, storages `local` (ISO) and `bigdisk` (VM disks), bridge `vmbr0`.
-- 1.1.2 Create/verify **root\@pam API token** with least privileges for VM create/clone and storage read; store creds outside Git (KMS/1Password). ([Terraform Registry][1], [GitHub][2])
-- 1.1.3 Reserve DHCP leases in UniFi for CP/worker nodes; keep `10.0.1.50` free for the Talos API VIP and `10.0.15.100–10.0.15.250` free for LB IPAM. ([TALOS LINUX][3], [docs.cilium.io][4])
-
-  1.2 Prepare Synology MinIO for state & backups
+1.1.4 Docs: [Preflight checklist](docs/preflight.md), [Secrets inventory & mapping](docs/secrets.md)
+1.1.5 Status: Preflight doc authored; secrets mapping drafted; links wired. Proceeding to image factory next.
+1.2 Prepare Synology MinIO for state & backups
 
 - 1.2.1 Deploy MinIO on Synology; create buckets `infraflux-velero` and `infraflux-longhorn`.
 - 1.2.2 Note endpoint (e.g., `http(s)://10.0.0.49`), access/secret keys (kept in 1Password).
