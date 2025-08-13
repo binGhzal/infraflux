@@ -1,14 +1,14 @@
-# 6.1 Gateway API CRDs (Wiremind chart tracks upstream CRD versions)
+# Gateway API CRDs first
 resource "helm_release" "gateway_api_crds" {
   name             = "gateway-api-crds"
   repository       = "https://charts.wiremind.io"
   chart            = "gateway-api-crds"
-  version          = "1.3.0" # matches Gateway API v1.3.0
+  version          = "1.3.0"
   namespace        = "kube-system"
   create_namespace = false
 }
 
-# 6.2 Cilium
+# Cilium
 data "template_file" "cilium_values" {
   template = file("${path.module}/templates/cilium-values.yaml.tftpl")
   vars = {
@@ -29,13 +29,14 @@ resource "helm_release" "cilium" {
   depends_on = [helm_release.gateway_api_crds]
 }
 
-# 6.3 Argo CD
+# Argo CD
 data "template_file" "argocd_values" {
   template = file("${path.module}/templates/argocd-values.yaml.tftpl")
   vars = {
     baseDomain         = var.base_domain
-    authentikIssuerURL = var.authentik_issuer_url
-    authentikClientID  = var.authentik_client_id
+    argocdHost         = var.argocd_hostname
+    authentikIssuerURL = var.oidc_issuer_url
+    authentikClientID  = var.oidc_client_id
   }
 }
 
@@ -47,9 +48,10 @@ resource "helm_release" "argocd" {
   namespace        = "argocd"
   create_namespace = true
   values           = [data.template_file.argocd_values.rendered]
+  timeout          = 600
 }
 
-# 6.4 Bootstrap root App (app-of-apps) so Argo CD manages platform
+# Seed the root app
 resource "kubectl_manifest" "root_app" {
   yaml_body  = file("${path.module}/../gitops/argocd/root-app.yaml")
   depends_on = [helm_release.argocd]

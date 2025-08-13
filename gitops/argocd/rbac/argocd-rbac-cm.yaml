@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -6,4 +7,5 @@ metadata:
 data:
   policy.csv: |
     g, infraflux-admins, role:admin
-  scopes: "[groups, email]"
+    g, infraflux-readers, role:readonly
+  scopes: "[email, groups]"

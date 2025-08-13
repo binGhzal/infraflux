@@ -46,3 +46,30 @@ hubble:
 encryption:
   enabled: ${enableWireGuard}
   type: "wireguard"
+
+# IPAM & L2 announcements for bare-metal LB
+externalIPs:
+  enabled: true
+l2announcements:
+  enabled: true
+loadBalancer:
+  algorithm: "maglev"
+ipam:
+  mode: "cluster-pool"
+  operator:
+    clusterPoolIPv4PodCIDRList: ["10.244.0.0/16"]
+
+# LB IPAM pool via CRD (applied by Argo CD app below). Cilium will discover.
+gatewayAPI:
+  enabled: true
+
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+  ui:
+    enabled: true
+
+encryption:
+  enabled: ${enableWireGuard}
+  type: "wireguard"

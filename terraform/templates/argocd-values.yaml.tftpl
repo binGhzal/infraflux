@@ -1,13 +1,8 @@
 server:
-  extraArgs:
-    - --insecure
   ingress:
-    enabled: true
-    ingressClassName: "" # We'll use Gateway API, not Ingress
-    hosts:
-      - argocd.${baseDomain}
+    enabled: false  # We'll expose via Gateway API (gitops/apps/examples/gateway-argocd.yaml)
   config:
-    url: https://argocd.${baseDomain}
+    url: https://${argocdHost}
     dex.config: |
       connectors:
       - type: oidc
@@ -17,17 +12,12 @@ server:
           issuer: ${authentikIssuerURL}
           clientID: ${authentikClientID}
           clientSecret: $dex.authentik.clientSecret
-          scopes:
-            - openid
-            - profile
-            - email
-            - groups
+          scopes: ["openid","profile","email","groups"]
   rbacConfig:
     policy.default: role:readonly
 
-# Store OIDC client secret in argocd-secret (later rotated to ESO-managed)
 configs:
   secret:
     createSecret: true
     extra:
-      dex.authentik.clientSecret: "CHANGE-ME"  # rotate via ESO after bootstrap
+      dex.authentik.clientSecret: "REPLACE_ME_ONCE_ESO_SYNCED"

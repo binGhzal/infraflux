@@ -7,7 +7,7 @@ terraform {
     }
     talos = {
       source  = "siderolabs/talos"
-      version = ">= 0.8.0" # or latest alpha if needed
+      version = ">= 0.8.0"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
@@ -27,7 +27,8 @@ terraform {
 provider "proxmox" {
   endpoint = var.pm_api_url
   username = var.pm_user
-  password = var.pm_password
+  token_id = var.pm_token_id
+  secret   = var.pm_token_secret
   insecure = var.pm_tls_insecure
 }
 

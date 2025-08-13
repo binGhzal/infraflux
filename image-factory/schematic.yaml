@@ -1,9 +1,9 @@
-# Talos Image Factory schematic
-# Docs: https://www.talos.dev/v1.10/learn-more/image-factory/
+# Talos Image Factory schematic (universal image for CP+workers)
+# Build via: curl -sS -X POST --data-binary @schematic.yaml https://factory.talos.dev/schematics
 customization:
   systemExtensions:
     officialExtensions:
-      - siderolabs/intel-ucode
-      - siderolabs/iscsi-tools
-      - siderolabs/util-linux-tools
-      - siderolabs/qemu-guest-agent
+  - siderolabs/qemu-guest-agent
+  - siderolabs/iscsi-tools
+  - siderolabs/util-linux-tools
+  - siderolabs/intel-ucode

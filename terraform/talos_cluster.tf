@@ -4,44 +4,11 @@ locals {
   endpoint = "https://${var.controlplane_vip}:6443"
 }
 
-# Generate base configs
-data "talos_machine_configuration" "cp_cfg" {
+# Control-plane machine config
+resource "talos_machine_configuration_controlplane" "cp_cfg" {
   cluster_name     = var.cluster_name
   cluster_endpoint = local.endpoint
-  machine_secrets  = talos_machine_secrets.cluster.machine_secrets
-  machine_type     = "controlplane"
-  talos_version    = var.talos_version
-
-  # Talos patches for CP
-  config_patches = [
-    yamlencode({
-      cluster = {
-        network = {
-          cni            = { name = "none" } # we'll install Cilium ourselves
-          podSubnets     = [var.pod_cidr]
-          serviceSubnets = [var.svc_cidr]
-        }
-        proxy = { disabled = true } # kube-proxy off for Cilium
-        apiServer = {
-          # advertise via VIP, KubePrism is separate
-        }
-        discovery = { enabled = true }
-        # Optionally: inlineManifests / extraManifests (we install via Helm)
-      }
-      machine = {
-        features = {
-          kubePrism = { enabled = true, port = 7445 }
-        }
-      }
-    })
-  ]
-}
-
-data "talos_machine_configuration" "wrk_cfg" {
-  cluster_name     = var.cluster_name
-  cluster_endpoint = local.endpoint
-  machine_secrets  = talos_machine_secrets.cluster.machine_secrets
-  machine_type     = "worker"
+  machine_secrets  = talos_machine_secrets.cluster
   talos_version    = var.talos_version
 
   config_patches = [
@@ -52,7 +19,8 @@ data "talos_machine_configuration" "wrk_cfg" {
           podSubnets     = [var.pod_cidr]
           serviceSubnets = [var.svc_cidr]
         }
-        proxy = { disabled = true }
+        proxy     = { disabled = true }
+        discovery = { enabled = true }
       }
       machine = {
         features = {
@@ -63,48 +31,79 @@ data "talos_machine_configuration" "wrk_cfg" {
   ]
 }
 
-# Apply machine configs by discovered IPs from Proxmox
+# Worker machine config
+resource "talos_machine_configuration_worker" "wrk_cfg" {
+  cluster_name     = var.cluster_name
+  cluster_endpoint = local.endpoint
+  machine_secrets  = talos_machine_secrets.cluster
+  talos_version    = var.talos_version
+
+  config_patches = [
+    yamlencode({
+      cluster = {
+        network = {
+          cni            = { name = "none" }
+          podSubnets     = [var.pod_cidr]
+          serviceSubnets = [var.svc_cidr]
+        }
+        proxy     = { disabled = true }
+        discovery = { enabled = true }
+      }
+      machine = {
+        features = {
+          kubePrism = { enabled = true, port = 7445 }
+        }
+      }
+    })
+  ]
+}
+
+# Apply configs to discovered IPs
 resource "talos_machine_configuration_apply" "cp_apply" {
-  count                       = var.controlplane_count
-  node                        = proxmox_virtual_environment_vm.cp[count.index].ipv4_addresses[0]
-  client_configuration        = talos_machine_secrets.cluster.client_configuration
-  machine_configuration_input = data.talos_machine_configuration.cp_cfg.machine_configuration
-  # leave mode default (auto)
+  count                 = var.controlplane_count
+  node                  = element(proxmox_virtual_environment_vm.cp.*.ipv4_addresses, count.index)[0]
+  client_configuration  = talos_machine_secrets.cluster.client_configuration
+  machine_configuration = talos_machine_configuration_controlplane.cp_cfg.machine_configuration
 }
 
 resource "talos_machine_configuration_apply" "wrk_apply" {
-  count                       = var.worker_count
-  node                        = proxmox_virtual_environment_vm.worker[count.index].ipv4_addresses[0]
-  client_configuration        = talos_machine_secrets.cluster.client_configuration
-  machine_configuration_input = data.talos_machine_configuration.wrk_cfg.machine_configuration
+  count                 = var.worker_count
+  node                  = element(proxmox_virtual_environment_vm.worker.*.ipv4_addresses, count.index)[0]
+  client_configuration  = talos_machine_secrets.cluster.client_configuration
+  machine_configuration = talos_machine_configuration_worker.wrk_cfg.machine_configuration
 }
 
-# Bootstrap etcd on first control plane
+# Bootstrap etcd
 resource "talos_machine_bootstrap" "bootstrap" {
   node                 = talos_machine_configuration_apply.cp_apply[0].node
   client_configuration = talos_machine_secrets.cluster.client_configuration
 }
 
-# kubeconfig & talosconfig
-resource "talos_cluster_kubeconfig" "admin" {
+# Kubeconfig for downstream providers
+resource "talos_kubeconfig" "admin" {
   node                 = talos_machine_configuration_apply.cp_apply[0].node
   client_configuration = talos_machine_secrets.cluster.client_configuration
   depends_on           = [talos_machine_bootstrap.bootstrap]
 }
 
-# Wire providers only after cluster is ready
+# Wire K8s & Helm providers after cluster is ready
 provider "kubernetes" {
-  host                   = talos_cluster_kubeconfig.admin.kubernetes_client_configuration.host
-  cluster_ca_certificate = base64decode(talos_cluster_kubeconfig.admin.kubernetes_client_configuration.ca_certificate)
-  client_certificate     = base64decode(talos_cluster_kubeconfig.admin.kubernetes_client_configuration.client_certificate)
-  client_key             = base64decode(talos_cluster_kubeconfig.admin.kubernetes_client_configuration.client_key)
+  host                   = local.endpoint
+  cluster_ca_certificate = base64decode(talos_kubeconfig.admin.kubeconfig["clusters"][0]["cluster"]["certificate-authority-data"])
+  token                  = talos_kubeconfig.admin.kubeconfig["users"][0]["user"]["token"]
 }
 
 provider "helm" {
-  kubernetes = {
-    host                   = talos_cluster_kubeconfig.admin.kubernetes_client_configuration.host
-    cluster_ca_certificate = base64decode(talos_cluster_kubeconfig.admin.kubernetes_client_configuration.ca_certificate)
-    client_certificate     = base64decode(talos_cluster_kubeconfig.admin.kubernetes_client_configuration.client_certificate)
-    client_key             = base64decode(talos_cluster_kubeconfig.admin.kubernetes_client_configuration.client_key)
+  kubernetes {
+    host                   = local.endpoint
+    cluster_ca_certificate = base64decode(talos_kubeconfig.admin.kubeconfig["clusters"][0]["cluster"]["certificate-authority-data"])
+    token                  = talos_kubeconfig.admin.kubeconfig["users"][0]["user"]["token"]
   }
+}
+
+provider "kubectl" {
+  host                   = local.endpoint
+  cluster_ca_certificate = base64decode(talos_kubeconfig.admin.kubeconfig["clusters"][0]["cluster"]["certificate-authority-data"])
+  token                  = talos_kubeconfig.admin.kubeconfig["users"][0]["user"]["token"]
+  load_config_file       = false
 }

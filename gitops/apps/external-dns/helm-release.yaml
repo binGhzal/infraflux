@@ -1,10 +1,13 @@
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: external-dns
   namespace: argocd
 spec:
-  destination: { server: https://kubernetes.default.svc, namespace: external-dns }
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: external-dns
   source:
     repoURL: https://kubernetes-sigs.github.io/external-dns/
     chart: external-dns
@@ -12,7 +15,8 @@ spec:
     helm:
       values: |
         provider: cloudflare
-        domainFilters: ["binghzal.com"]  # make templated if needed
+        domainFilters:
+          - "binghzal.com"  # make templated if needed
         policy: sync
         txtOwnerId: infraflux
         extraEnv:
@@ -21,5 +25,11 @@ spec:
               secretKeyRef:
                 name: cloudflare-api-token
                 key: token
-        sources: ["service","ingress","gateway-httproute"]
-  syncPolicy: { automated: { prune: true, selfHeal: true } }
+        sources:
+          - "service"
+          - "ingress"
+          - "gateway-httproute"
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

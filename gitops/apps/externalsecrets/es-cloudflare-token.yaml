@@ -1,0 +1,39 @@
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: cloudflare-api-token
+  namespace: cert-manager
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: onepassword
+    kind: SecretStore
+  target:
+    name: cloudflare-api-token
+    creationPolicy: Owner
+  data:
+    - secretKey: token
+      remoteRef:
+        # Adjust to your 1Password item path/name; using vault/item style is OK.
+        key: "infraflux-prod/Cloudflare external-dns token"
+        property: "api_token"
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: cloudflare-api-token
+  namespace: external-dns
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: onepassword
+    kind: SecretStore
+  target:
+    name: cloudflare-api-token
+    creationPolicy: Owner
+  data:
+    - secretKey: token
+      remoteRef:
+        key: "infraflux-prod/Cloudflare external-dns token"
+        property: "api_token"
