@@ -29,6 +29,13 @@ CI secrets
   - `MINIO_SECRET_ACCESS_KEY`
   - `MINIO_S3_ENDPOINT` (e.g., `https://minio.example.com`)
 
+Apply workflow
+
+- `terraform-apply.yml` is triggered manually with an `environment` input (e.g., `prod`).
+- The job uses environment-protected secrets for MinIO; ensure the environment in GitHub has access to the above secrets.
+- The workflow prefers `terraform/backend.config` if present; otherwise, it falls back to `terraform/backend.config.example`.
+- Environment variables exported for S3 compatibility: `AWS_S3_FORCE_PATH_STYLE=true`, `AWS_EC2_METADATA_DISABLED=true`, `AWS_DEFAULT_REGION=us-east-1`.
+
 Notes
 
 - Proxmox, Helm, and Kubernetes providers are declared. Kubernetes/Helm will use `var.kubeconfig` once the cluster is bootstrapped in later steps.

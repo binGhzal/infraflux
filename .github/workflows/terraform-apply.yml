@@ -11,7 +11,8 @@ on:
 jobs:
   apply:
     runs-on: ubuntu-latest
-    environment: production
+    environment:
+      name: ${{ github.event.inputs.environment }}
     defaults:
       run:
         shell: bash
@@ -19,6 +20,15 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    env:
+      # MinIO/S3 credentials come from repo or environment-protected secrets
+      AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_ACCESS_KEY }}
+      AWS_ENDPOINT_URL_S3: ${{ secrets.MINIO_S3_ENDPOINT }}
+      # Helpful defaults for S3-compatible endpoints
+      AWS_S3_FORCE_PATH_STYLE: 'true'
+      AWS_EC2_METADATA_DISABLED: 'true'
+      AWS_DEFAULT_REGION: 'us-east-1'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,25 +42,18 @@ jobs:
         run: terraform fmt -check -recursive
 
       - name: Terraform init (S3 backend)
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_ACCESS_KEY }}
-          AWS_ENDPOINT_URL_S3: ${{ secrets.MINIO_S3_ENDPOINT }}
         run: |
-          terraform init \
-            -backend-config=../../backend.config.example
+          # Prefer user-provided backend.config; fallback to example
+          CFG=../../backend.config
+          if [ ! -f "$CFG" ]; then
+            echo "backend.config not found; using example" >&2
+            CFG=../../backend.config.example
+          fi
+          terraform init -backend-config="$CFG"
 
       - name: Terraform plan
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_ACCESS_KEY }}
-          AWS_ENDPOINT_URL_S3: ${{ secrets.MINIO_S3_ENDPOINT }}
         run: terraform plan -out=tfplan
 
       - name: Terraform apply
         if: ${{ github.event.inputs.environment == 'prod' }}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_ACCESS_KEY }}
-          AWS_ENDPOINT_URL_S3: ${{ secrets.MINIO_S3_ENDPOINT }}
         run: terraform apply -auto-approve tfplan
