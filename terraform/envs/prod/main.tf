@@ -37,6 +37,13 @@ output "kubeconfig" {
   sensitive   = true
 }
 
+# Ensure kubeconfig file exists for providers that read from a path
+resource "local_file" "kubeconfig" {
+  content         = module.talos.kubeconfig
+  filename        = var.kubeconfig
+  file_permission = "0600"
+}
+
 module "cilium" {
   source = "../../modules/cilium"
 
@@ -48,3 +55,25 @@ module "cilium" {
 #   source = "../../modules/traefik"
 #   depends_on = [module.talos]
 # }
+
+# Step 7: Argo CD
+module "argocd" {
+  source = "../../modules/argocd"
+
+  # Optional exposure via Gateway API
+  # enable_gateway  = true
+  # hostname        = "argocd.binghzal.com"
+  # tls_secret_name = "wildcard-binghzal-tls"
+
+  depends_on = [module.talos, local_file.kubeconfig, module.cilium]
+}
+
+# Step 7.2: App-of-Apps (scaffold)
+module "gitops_root" {
+  source = "../../modules/gitops"
+
+  repo_url = "https://github.com/binGhzal/infraflux.git"
+  # path defaults to old/gitops/apps for initial bootstrap examples
+
+  depends_on = [module.argocd]
+}

@@ -13,6 +13,10 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "~> 2.28"
     }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.5"
+    }
     talos = {
       source  = "siderolabs/talos"
       version = ">= 0.6.0"

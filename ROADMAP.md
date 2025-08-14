@@ -143,14 +143,14 @@
 
 ## 7) Argo CD & GitOps Structure
 
-- [ ] **7.1 Deploy Argo CD (Helm)**
+- [x] **7.1 Deploy Argo CD (Helm)** — See docs: [Argo CD](docs/argocd.md)
 
-  - [ ] **7.1.1** Values to enable SSO (later); disable local admin only **after** SSO verified.
-  - [ ] **7.1.2** Expose via Gateway API (Cilium).
+  - [x] **7.1.1** Values placeholders for SSO (to be wired in Step 13); admin stays enabled until SSO verified.
+  - [x] **7.1.2** Optional Gateway API exposure (Cilium) — toggle via module variable.
 
-- [ ] **7.2 App-of-Apps + ApplicationSets**
-  - [ ] **7.2.1** Parent “root” Application (platform) → installs: Cilium (managed), cert-manager, external-dns, ESO, Longhorn, observability, Kyverno, (optional Traefik). ([Argo CD][18])
-  - [ ] **7.2.2** ApplicationSets: **Git directory generator** for apps, and **matrix** for future env/cluster fan-out. ([Argo CD][19])
+- [x] **7.2 App-of-Apps + ApplicationSets** (scaffolded)
+  - [x] **7.2.1** Parent “root” Application created (temporary path `old/gitops/apps` for examples). ([Argo CD][18])
+  - [ ] **7.2.2** ApplicationSets: Git directory generator + matrix (to be added as we split apps by env). ([Argo CD][19])
 
 > ⚠️ **Pitfalls (Step 7)**
 >
