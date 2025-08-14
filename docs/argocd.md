@@ -5,7 +5,7 @@ This step installs Argo CD via Helm and optionally exposes it using Gateway API 
 ## Design notes
 
 - Keep service as ClusterIP and expose via Gateway/HTTPRoute for consistency with Gateway API-first approach.
-- Defer SSO configuration to Step 13; placeholders are in values but OIDC is not active yet.
+- OIDC wiring can be enabled via Terraform (enable_oidc=true). Client secret is read from the ESO-managed `argocd-secret` key `oidc.clientSecret` using `$argo:` reference.
 
 ## Module wiring
 

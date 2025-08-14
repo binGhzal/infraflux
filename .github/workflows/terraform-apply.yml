@@ -24,7 +24,7 @@ jobs:
       # MinIO/S3 credentials come from repo or environment-protected secrets
       AWS_ACCESS_KEY_ID: ${{ secrets.MINIO_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.MINIO_SECRET_ACCESS_KEY }}
-      AWS_ENDPOINT_URL_S3: ${{ secrets.MINIO_S3_ENDPOINT }}
+  AWS_ENDPOINT_URL_S3: ${{ secrets.MINIO_S3_ENDPOINT }}
   AWS_ENDPOINT_URL: ${{ secrets.MINIO_S3_ENDPOINT }}
       # Helpful defaults for S3-compatible endpoints
       AWS_S3_FORCE_PATH_STYLE: 'true'

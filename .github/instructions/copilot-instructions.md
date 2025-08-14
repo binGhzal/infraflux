@@ -21,6 +21,7 @@ You are my coding collaborator for a Talos/Proxmox/Terraform/Cilium/Argo CD stac
 
 ## Security & quality guardrails
 
+- when running command in the terminal run each command seperatly to avoid crashing terminal sessions.
 - Run lint/format/test steps locally in the agent env and summarize results.
 - Propose remediations for any warnings; never ignore failing checks.
 - NEVER include secrets in code or comments. Use External Secrets (1Password SDK) references only.

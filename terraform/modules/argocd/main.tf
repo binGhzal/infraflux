@@ -55,6 +55,17 @@ resource "helm_release" "argocd" {
         params = {
           "server.insecure" = true
         }
+        cm = (
+          var.enable_oidc ? {
+            "oidc.config" = join("\n", concat([
+              "name: Authentik",
+              "issuer: ${var.oidc.issuer}",
+              "clientID: ${var.oidc.client_id}",
+              "clientSecret: $argo:oidc.clientSecret",
+              "requestedScopes:",
+            ], [for s in var.oidc.requested_scopes : "  - ${s}"]))
+          } : null
+        )
       }
     })
   ]

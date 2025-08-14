@@ -57,3 +57,25 @@ variable "tls_secret_name" {
   type        = string
   default     = "wildcard-binghzal-tls"
 }
+
+variable "enable_oidc" {
+  description = "Enable OIDC configuration for Argo CD (expects secret 'argocd-secret' with key 'oidc.clientSecret')"
+  type        = bool
+  default     = false
+}
+
+variable "oidc" {
+  description = "OIDC configuration values (issuer, clientID, requestedScopes/Claims). Client secret comes from K8s secret managed by ESO."
+  type = object({
+    issuer           = string
+    client_id        = string
+    requested_scopes = optional(list(string), ["openid", "profile", "email", "groups"])
+    requested_claims = optional(map(any), {})
+  })
+  default = {
+    issuer           = "https://auth.example.com/application/o/argocd/"
+    client_id        = "argocd"
+    requested_scopes = ["openid", "profile", "email", "groups"]
+    requested_claims = {}
+  }
+}

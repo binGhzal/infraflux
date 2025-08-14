@@ -4,6 +4,8 @@ kind: ExternalSecret
 metadata:
   name: cloudflare-api-token
   namespace: cert-manager
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   refreshInterval: 1h
   secretStoreRef:
@@ -24,6 +26,8 @@ kind: ExternalSecret
 metadata:
   name: cloudflare-api-token
   namespace: external-dns
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   refreshInterval: 1h
   secretStoreRef:
