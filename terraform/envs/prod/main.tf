@@ -84,3 +84,25 @@ module "external_secrets" {
 
   depends_on = [module.talos, local_file.kubeconfig, module.cilium]
 }
+
+# Step 10: Longhorn (storage)
+module "longhorn" {
+  source = "../../modules/longhorn"
+
+  count = var.enable_longhorn ? 1 : 0
+
+  # Optional backups (Step 10.2)
+  backup_target             = var.longhorn_backup_target
+  backup_credentials_secret = var.longhorn_backup_secret
+
+  depends_on = [module.talos, local_file.kubeconfig, module.cilium]
+}
+
+# Step 11: Observability (kube-prometheus-stack + Loki/Promtail)
+module "observability" {
+  source = "../../modules/observability"
+
+  count = var.enable_observability ? 1 : 0
+
+  depends_on = [module.talos, local_file.kubeconfig, module.cilium]
+}

@@ -55,7 +55,7 @@
 ## 3) Repo & CI Skeleton (Vanilla Terraform)
 
 - [x] **3.0 Docs:** [Terraform repo & CI skeleton](docs/terraform.md)
-- [x] **3.0 Status:** Complete — env scaffold, backend config aligned (MinIO flags), CI workflows added; validate/fmt pass.
+- [x] **3.0 Status:** Complete — env scaffold, backend config aligned (MinIO flags), CI workflows added; validate/fmt pass. Apply workflow YAML validated; secrets expected: `MINIO_ACCESS_KEY_ID`, `MINIO_SECRET_ACCESS_KEY`, `MINIO_S3_ENDPOINT`.
 
 - [x] **3.1 Lay out repo**
 
