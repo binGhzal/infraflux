@@ -77,3 +77,10 @@ module "gitops_root" {
 
   depends_on = [module.argocd]
 }
+
+# Step 8: External Secrets Operator
+module "external_secrets" {
+  source = "../../modules/external-secrets"
+
+  depends_on = [module.talos, local_file.kubeconfig, module.cilium]
+}

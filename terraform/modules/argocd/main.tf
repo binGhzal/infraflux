@@ -36,6 +36,9 @@ resource "helm_release" "argocd" {
           tag = var.argocd_version
         }
       }
+      applicationset = {
+        enabled = true
+      }
       server = {
         # Service as ClusterIP; we'll expose via Gateway API
         service = {

@@ -23,6 +23,6 @@ variable "revision" {
 
 variable "path" {
   type        = string
-  default     = "old/gitops/apps"
-  description = "Path in the repo to sync (temporary scaffold)"
+  default     = "old/gitops/applicationsets"
+  description = "Path in the repo to sync (root manifests e.g., ApplicationSets)"
 }

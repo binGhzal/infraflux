@@ -1,0 +1,23 @@
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: proxmox-api-token
+  namespace: kube-system
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: onepassword
+    kind: SecretStore
+  target:
+    name: proxmox-api-token
+    creationPolicy: Owner
+  data:
+    - secretKey: token
+      remoteRef:
+        key: "infraflux-prod/Proxmox API Token"
+        property: "token"
+    - secretKey: url
+      remoteRef:
+        key: "infraflux-prod/Proxmox API Token"
+        property: "url"

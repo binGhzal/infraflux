@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: apps-dir
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/binGhzal/infraflux.git
+        revision: main
+        directories:
+          - path: old/gitops/apps/*
+  template:
+    metadata:
+      name: '{{path.basename}}'
+      labels:
+        app.kubernetes.io/part-of: platform
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/binGhzal/infraflux.git
+        targetRevision: main
+        path: '{{path}}'
+      destination:
+        server: https://kubernetes.default.svc
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
