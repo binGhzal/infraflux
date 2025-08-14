@@ -42,3 +42,9 @@ module "cilium" {
 
   depends_on = [module.talos]
 }
+
+# Optional: Traefik Gateway API (fallback)
+# module "traefik" {
+#   source = "../../modules/traefik"
+#   depends_on = [module.talos]
+# }

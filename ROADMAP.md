@@ -130,9 +130,9 @@
   - [x] **6.1.4** Enable **WireGuard** encryption + **Hubble** + UI.
   - [x] **6.1.5** Enable **Gateway API** implementation in Cilium. ([docs.cilium.io][15])
 
-- [ ] **6.2 Optional: Traefik Gateway API fallback (off by default)**
-  - [ ] **6.2.1** Install Gateway API CRDs (standard channel) if needed.
-  - [ ] **6.2.2** Deploy Traefik with Kubernetes Gateway provider & RBAC. ([Traefik Docs][16])
+- [x] **6.2 Optional: Traefik Gateway API fallback (off by default)**
+  - [x] **6.2.1** Install Gateway API CRDs (standard channel) if needed.
+  - [x] **6.2.2** Deploy Traefik with Kubernetes Gateway provider & RBAC. ([Traefik Docs][16])
 
 > ⚠️ **Pitfalls (Step 6)**
 >
