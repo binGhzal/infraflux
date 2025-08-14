@@ -55,7 +55,7 @@
 ## 3) Repo & CI Skeleton (Vanilla Terraform)
 
 - [x] **3.0 Docs:** [Terraform repo & CI skeleton](docs/terraform.md)
-- [x] **3.0 Status:** In progress — env scaffold, backend config aligned (MinIO flags), CI workflows added, module stubs under `terraform/modules/*`.
+- [x] **3.0 Status:** Complete — env scaffold, backend config aligned (MinIO flags), CI workflows added; validate/fmt pass.
 
 - [x] **3.1 Lay out repo**
 
@@ -81,14 +81,14 @@
 
 ## 4) Proxmox Module (VMs)
 
-- [ ] **4.1 Build `proxmox-vm` module**
+- [x] **4.1 Build `proxmox-vm` module**
 
   - [x] **4.1.1** Inputs: node `pve`, ISO file ID, VM disk storage, bridge `vmbr0`.
   - [x] **4.1.2** Parameters: counts (default 3 CP / 3 workers), vCPU/RAM/disk sizes, extra **Longhorn data disk** on workers (default 200 GiB).
   - [x] **4.1.3** Attach the Talos ISO; Talos doesn’t require kernel args via cloud-init for this flow (N/A).
   - [x] **4.1.4** Enable QEMU Guest Agent for clean IP detection/shutdown. ([Terraform Registry][1])
 
-- [ ] **4.2 Outputs to wire next stages**
+- [x] **4.2 Outputs to wire next stages**
   - [x] **4.2.1** Node MACs/IDs for DHCP reservations.
   - [x] **4.2.2** VM IP discovery via guest agent (best-effort).
   - [x] **Docs:** [Proxmox VM module](docs/proxmox-vm.md)
@@ -102,16 +102,16 @@
 
 ## 5) Talos Cluster Module (Bootstrap, VIP, KubePrism)
 
-- [ ] **5.1 Generate Talos machine configs**
+- [x] **5.1 Generate Talos machine configs**
 
-  - [ ] **5.1.1** Set `cni.name: none` (install CNI later).
-  - [ ] **5.1.2** **Disable kube-proxy** (use Cilium KPR). ([docs.cilium.io][11])
-  - [ ] **5.1.3** Configure **VIP = 10.0.1.50** for API HA. ([TALOS LINUX][3])
-  - [ ] **5.1.4** Enable **KubePrism** on all nodes for in-cluster API HA. ([TALOS LINUX][12])
+  - [x] **5.1.1** Set `cni.name: none` (install CNI later).
+  - [x] **5.1.2** **Disable kube-proxy** (use Cilium KPR). ([docs.cilium.io][11])
+  - [x] **5.1.3** Configure **VIP = 10.0.1.50** for API HA. ([TALOS LINUX][3])
+  - [x] **5.1.4** Enable **KubePrism** on all nodes for in-cluster API HA. ([TALOS LINUX][12])
 
-- [ ] **5.2 Bootstrap etcd & fetch kubeconfig**
-  - [ ] **5.2.1** Orchestrate first-control-plane bootstrap → join remaining CPs → join workers.
-  - [ ] **5.2.2** Export kubeconfig (artifact for Helm/K8s providers). ([TALOS LINUX][13])
+- [x] **5.2 Bootstrap etcd & fetch kubeconfig**
+  - [x] **5.2.1** Orchestrate first-control-plane bootstrap → join remaining CPs → join workers.
+  - [x] **5.2.2** Export kubeconfig (artifact for Helm/K8s providers). ([TALOS LINUX][13])
 
 > ⚠️ **Pitfalls (Step 5)**
 >

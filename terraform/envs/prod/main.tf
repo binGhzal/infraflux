@@ -20,9 +20,22 @@ module "proxmox_vms" {
   # Defaults are fine; override if needed via tfvars
 }
 
-# module "talos" {
-#   source = "../../modules/talos-cluster"
-# }
+module "talos" {
+  source = "../../modules/talos-cluster"
+
+  cluster_name     = local.name_prefix
+  cluster_vip      = "10.0.1.50"
+  controlplane_ips = module.proxmox_vms.controlplane_ipv4
+  worker_ips       = module.proxmox_vms.worker_ipv4
+  # talos_version  = null  # use provider default
+  # install_disk   = "/dev/sda"  # override if needed
+}
+
+output "kubeconfig" {
+  description = "Kubeconfig from Talos cluster"
+  value       = module.talos.kubeconfig
+  sensitive   = true
+}
 
 # module "cilium" {
 #   source = "../../modules/cilium"

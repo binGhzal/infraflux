@@ -13,7 +13,7 @@ locals {
     machine   = "q35"
     on_boot   = true
     bridge    = var.bridge
-  iso_path  = var.iso_file_id
+    iso_path  = var.iso_file_id
   }
 }
 

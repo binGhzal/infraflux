@@ -13,5 +13,9 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "~> 2.28"
     }
+    talos = {
+      source  = "siderolabs/talos"
+      version = ">= 0.6.0"
+    }
   }
 }
