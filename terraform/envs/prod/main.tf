@@ -37,6 +37,8 @@ output "kubeconfig" {
   sensitive   = true
 }
 
-# module "cilium" {
-#   source = "../../modules/cilium"
-# }
+module "cilium" {
+  source = "../../modules/cilium"
+
+  depends_on = [module.talos]
+}

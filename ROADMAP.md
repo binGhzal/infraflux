@@ -122,13 +122,13 @@
 
 ## 6) CNI, LoadBalancer & Gateway
 
-- [ ] **6.1 Install Cilium via Helm (module `cilium`)**
+- [x] **6.1 Install Cilium via Helm (module `cilium`)**
 
-  - [ ] **6.1.1** Enable **kube-proxy replacement (strict)** + **socket LB**. ([docs.cilium.io][11])
-  - [ ] **6.1.2** Enable **LB IPAM** with pool `10.0.15.100–10.0.15.250`. ([docs.cilium.io][4])
-  - [ ] **6.1.3** Turn on **L2 Announcements** to expose `LoadBalancer` on flat LANs. ([docs.cilium.io][14])
-  - [ ] **6.1.4** Enable **WireGuard** encryption + **Hubble** + UI.
-  - [ ] **6.1.5** Enable **Gateway API** implementation in Cilium. ([docs.cilium.io][15])
+  - [x] **6.1.1** Enable **kube-proxy replacement (strict)** + **socket LB**. ([docs.cilium.io][11])
+  - [x] **6.1.2** Enable **LB IPAM** with pool `10.0.15.100–10.0.15.250`. ([docs.cilium.io][4])
+  - [x] **6.1.3** Turn on **L2 Announcements** to expose `LoadBalancer` on flat LANs. ([docs.cilium.io][14])
+  - [x] **6.1.4** Enable **WireGuard** encryption + **Hubble** + UI.
+  - [x] **6.1.5** Enable **Gateway API** implementation in Cilium. ([docs.cilium.io][15])
 
 - [ ] **6.2 Optional: Traefik Gateway API fallback (off by default)**
   - [ ] **6.2.1** Install Gateway API CRDs (standard channel) if needed.
