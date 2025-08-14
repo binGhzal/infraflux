@@ -197,10 +197,11 @@
 
 ## 10) Storage: Longhorn
 
-- [ ] **10.1 Deploy Longhorn via Argo**
+- [x] **10.1 Deploy Longhorn via Argo**
 
-  - [ ] **10.1.1** Ensure Talos image includes **iscsi** and **util-linux** extensions.
-  - [ ] **10.1.2** Configure default `StorageClass`; add worker data disk (200 GiB by default).
+  - [x] **10.1.1** Ensure Talos image includes **iscsi** and **util-linux** extensions.
+  - [x] **10.1.2** Configure default `StorageClass`; add worker data disk (200 GiB by default).
+  - [x] **Docs:** [Longhorn install](docs/longhorn.md)
 
 - [ ] **10.2 Optional: Longhorn backups to MinIO**
   - [ ] **10.2.1** Set backup target to `s3://infraflux-longhorn` with MinIO creds from ESO.
