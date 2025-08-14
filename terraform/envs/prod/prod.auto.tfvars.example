@@ -12,3 +12,10 @@ environment = "prod"
 # bridge          = "vmbr0"
 # controlplane_count = 3
 # worker_count       = 3
+
+# Step 10.2: Longhorn backups (optional)
+# longhorn_backup_target = "s3://infraflux-longhorn@us-east-1/"  # ensure bucket exists in MinIO
+# longhorn_backup_secret = "longhorn-backup-credentials"         # created by ESO in longhorn-system
+
+# Step 11: Observability (optional)
+# enable_observability = true

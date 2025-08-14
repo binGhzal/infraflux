@@ -1,0 +1,37 @@
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: longhorn-backup-credentials
+  namespace: longhorn-system
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: onepassword
+    kind: SecretStore
+  target:
+    name: longhorn-backup-credentials
+    creationPolicy: Owner
+  data:
+    - secretKey: AWS_ACCESS_KEY_ID
+      remoteRef:
+        key: "infraflux-prod/MinIO Credentials"
+        property: "access_key_id"
+    - secretKey: AWS_SECRET_ACCESS_KEY
+      remoteRef:
+        key: "infraflux-prod/MinIO Credentials"
+        property: "secret_access_key"
+    - secretKey: AWS_ENDPOINT_URL
+      remoteRef:
+        key: "infraflux-prod/MinIO Credentials"
+        property: "endpoint"
+    - secretKey: AWS_ENDPOINT_URL_S3
+      remoteRef:
+        key: "infraflux-prod/MinIO Credentials"
+        property: "endpoint"
+    - secretKey: AWS_DEFAULT_REGION
+      remoteRef:
+        key: "infraflux-prod/MinIO Credentials"
+        property: "region"

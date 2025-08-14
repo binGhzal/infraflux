@@ -204,7 +204,8 @@
   - [x] **Docs:** [Longhorn install](docs/longhorn.md)
 
 - [ ] **10.2 Optional: Longhorn backups to MinIO**
-  - [ ] **10.2.1** Set backup target to `s3://infraflux-longhorn` with MinIO creds from ESO.
+  - [x] **10.2.1** Create ESO secret for MinIO creds in `longhorn-system` (`longhorn-backup-credentials`).
+  - [ ] **10.2.2** Set backup target to `s3://infraflux-longhorn` and reference secret in Terraform (`longhorn_backup_target`, `longhorn_backup_secret`).
 
 > ⚠️ **Pitfalls (Step 10)**
 >
