@@ -34,7 +34,10 @@ resource "helm_release" "loki" {
   create_namespace = true
 
   values = [yamlencode({
-    monitoring = { selfMonitoring = { enabled = false } }
+    monitoring = { selfMonitoring = { enabled = false } },
+    limits_config = {
+      retention_period = "168h"
+    }
   })]
 }
 
